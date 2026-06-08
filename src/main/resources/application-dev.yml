@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/formflow_dev
+    username: formflow
+    password: formflow123
+    hikari:
+      maximum-pool-size: 5
+
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.kodelabs.formflow: DEBUG
+    org.springframework.security: DEBUG
+
+springdoc:
+  swagger-ui:
+    enabled: true
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200

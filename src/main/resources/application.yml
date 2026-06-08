@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: formflow-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # JPA
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Flyway
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# OpenAPI / Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# Configuración de la aplicación
+app:
+  jwt:
+    secret: ${JWT_SECRET:cambiar-esto-en-produccion-usar-variable-de-entorno}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}       # 24 horas
+    refresh-expiration-ms: ${JWT_REFRESH_MS:604800000} # 7 días
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
