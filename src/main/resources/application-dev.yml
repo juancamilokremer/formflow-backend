@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/formflow_dev
+    url: jdbc:postgresql://localhost:5434/formflow_dev
     username: formflow
     password: formflow123
     hikari:
