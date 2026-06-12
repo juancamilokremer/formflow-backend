@@ -1,9 +1,10 @@
 package com.kodelabs.formflow.modules.auth.domain.model;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -11,9 +12,10 @@ import java.util.UUID;
 /**
  * Representa una empresa cliente (tenant) en la plataforma.
  * Cada tenant tiene su propio espacio de datos aislado.
+ *
+ * POJO puro de dominio — sin dependencias de JPA/Hibernate.
+ * Su representación en base de datos es TenantJpaEntity (infrastructure/persistence).
  */
-@Entity
-@Table(name = "tenants")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,40 +23,31 @@ import java.util.UUID;
 @Builder
 public class Tenant {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 100)
     private String slug; // identificador único URL-friendly: "empresa-abc"
 
-    @Column(nullable = false, length = 150)
     private String name; // nombre visible: "Empresa ABC S.A.S"
 
-    @Column(length = 200)
     private String logoUrl;
 
-    @Column(length = 7)
     private String primaryColor; // hex: "#3B82F6"
 
-    @Column(length = 7)
     private String secondaryColor;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     @Builder.Default
     private TenantPlan plan = TenantPlan.FREE;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     @Builder.Default
     private TenantStatus status = TenantStatus.ACTIVE;
 
-    @CreationTimestamp
     private Instant createdAt;
 
-    @UpdateTimestamp
     private Instant updatedAt;
+
+    public boolean isActive() {
+        return status == TenantStatus.ACTIVE;
+    }
 
     public enum TenantPlan {
         FREE, STARTER, PRO, BUSINESS, ENTERPRISE

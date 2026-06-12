@@ -40,6 +40,38 @@ formflow-backend/
 - Los repositorios JPA van en `infrastructure/persistence/`
 - NUNCA acceder al repositorio de otro módulo directamente — usar la interfaz de servicio
 
+### Separación dominio / persistencia (OBLIGATORIA)
+El modelo de dominio y el modelo de persistencia son clases DISTINTAS. Esto prepara la
+extracción futura de módulos a microservicios: el dominio y los casos de uso se mueven
+tal cual, solo se reescriben adaptadores.
+
+- `domain/model/` — POJOs puros. PROHIBIDO importar `jakarta.persistence.*` u
+  `org.hibernate.*`. Lombok está permitido (solo compile-time).
+- `infrastructure/persistence/entity/` — entidades JPA (`XxxJpaEntity`) con las anotaciones
+  `@Entity`, `@Column`, etc. Sin relaciones `@ManyToOne` entre agregados: usar columnas
+  UUID planas (`tenant_id`, `user_id`) — facilita separar BDs después.
+- `infrastructure/persistence/mapper/` — `XxxPersistenceMapper` convierte JPA ↔ dominio.
+- `infrastructure/persistence/adapter/` — `XxxRepositoryAdapter` implementa el puerto del
+  dominio usando el repositorio Spring Data + mapper.
+- La capa web tampoco expone dominio: siempre DTOs de request/response.
+
+Estructura completa por módulo:
+```
+[modulo]/
+├── domain/
+│   ├── model/       # POJOs puros de dominio
+│   └── port/        # Interfaces (puertos)
+├── application/
+│   └── usecase/     # Casos de uso — solo conocen puertos
+└── infrastructure/
+    ├── web/         # Controllers REST + DTOs
+    └── persistence/
+        ├── entity/      # Entidades JPA
+        ├── repository/  # Interfaces Spring Data JPA
+        ├── mapper/      # JPA ↔ dominio
+        └── adapter/     # Implementación de los puertos
+```
+
 ## Multi-tenancy
 - Cada request lleva header `X-Tenant-ID`
 - `TenantContext` (ThreadLocal) disponible en toda la request — se limpia en `finally`
