@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.auth.domain.port.in;
+package com.kodelabs.formflow.modules.auth.domain.port.in.result;
 
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;

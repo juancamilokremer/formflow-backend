@@ -4,7 +4,7 @@ import com.kodelabs.formflow.modules.auth.domain.model.GeneratedRefreshToken;
 import com.kodelabs.formflow.modules.auth.domain.model.RefreshToken;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
-import com.kodelabs.formflow.modules.auth.domain.port.in.AuthResult;
+import com.kodelabs.formflow.modules.auth.domain.port.in.result.AuthResult;
 import com.kodelabs.formflow.modules.auth.domain.port.out.RefreshTokenRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TokenServicePort;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,8 @@
 package com.kodelabs.formflow.modules.auth.domain.port.in;
 
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.RefreshTokenCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.result.AuthResult;
+
 /**
  * Input port: single-use refresh token rotation — validates the incoming
  * token, revokes it and issues a new access + refresh pair.

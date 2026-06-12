@@ -66,7 +66,9 @@ Estructura completa por módulo:
 ├── domain/
 │   ├── model/       # POJOs puros de dominio
 │   └── port/
-│       ├── in/      # Puertos de entrada: interfaces XxxUseCase + commands + results
+│       ├── in/      # Puertos de entrada: solo interfaces XxxUseCase
+│       │   ├── command/  # Entradas del contrato (XxxCommand)
+│       │   └── result/   # Salidas del contrato (XxxResult)
 │       └── out/     # Puertos de salida: persistencia, tokens, etc.
 ├── application/
 │   ├── usecase/     # XxxService — implementaciones de los puertos de entrada

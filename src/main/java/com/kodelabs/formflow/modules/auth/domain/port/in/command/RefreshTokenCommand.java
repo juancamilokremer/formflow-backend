@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.auth.domain.port.in;
+package com.kodelabs.formflow.modules.auth.domain.port.in.command;
 
 /**
  * Input of RefreshTokenUseCase — part of the input port contract.

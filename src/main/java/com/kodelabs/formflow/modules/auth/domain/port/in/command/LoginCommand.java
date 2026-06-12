@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.auth.domain.port.in;
+package com.kodelabs.formflow.modules.auth.domain.port.in.command;
 
 /**
  * Input of LoginUseCase — part of the input port contract.

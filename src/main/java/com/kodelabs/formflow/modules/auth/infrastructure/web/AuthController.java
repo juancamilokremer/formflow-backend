@@ -1,10 +1,10 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.web;
 
-import com.kodelabs.formflow.modules.auth.domain.port.in.LoginCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.LoginCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.LoginUseCase;
-import com.kodelabs.formflow.modules.auth.domain.port.in.RefreshTokenCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.RefreshTokenCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.RefreshTokenUseCase;
-import com.kodelabs.formflow.modules.auth.domain.port.in.RegisterTenantCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.RegisterTenantCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.RegisterTenantUseCase;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.AuthResponse;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.LoginRequest;
