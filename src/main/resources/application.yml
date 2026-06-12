@@ -20,6 +20,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+# Logging — el MDC (requestId, tenantId, userId) lo puebla RequestLoggingFilter + JwtAuthenticationFilter
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-}] [t:%X{tenantId:-}] [u:%X{userId:-}] %logger{36} : %msg%n"
+
 # Actuator
 management:
   endpoints:
