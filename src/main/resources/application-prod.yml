@@ -1,4 +1,12 @@
 spring:
+  mail:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}

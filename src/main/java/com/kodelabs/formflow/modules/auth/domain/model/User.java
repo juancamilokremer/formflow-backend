@@ -41,6 +41,9 @@ public class User {
     @Builder.Default
     private boolean active = true;
 
+    @Builder.Default
+    private boolean emailVerified = false;
+
     private Instant createdAt;
 
     private Instant updatedAt;
