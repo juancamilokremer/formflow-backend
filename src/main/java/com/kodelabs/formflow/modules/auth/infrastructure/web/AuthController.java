@@ -10,6 +10,7 @@ import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.AuthResponse;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.LoginRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.RefreshTokenRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.RegisterRequest;
+import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -41,6 +42,7 @@ public class AuthController {
     private final RegisterTenantUseCase registerTenantUseCase;
     private final LoginUseCase loginUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
+    private final Messages messages;
 
     @PostMapping("/register")
     @Operation(
@@ -60,7 +62,7 @@ public class AuthController {
                 request.companyName(), request.slug(), request.email(),
                 request.password(), request.firstName(), request.lastName()));
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Empresa registrada exitosamente", AuthResponse.from(result)));
+                .body(ApiResponse.ok(messages.get("success.tenant.registered"), AuthResponse.from(result)));
     }
 
     @PostMapping("/login")

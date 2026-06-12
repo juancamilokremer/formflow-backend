@@ -4,23 +4,34 @@ import org.springframework.http.HttpStatus;
 
 /**
  * Base exception for business errors.
- * Associates an HTTP status code with each domain error.
- * Messages are user-facing and therefore stay in Spanish (MessageSource in #26).
+ * Carries a message KEY (resolved against MessageSource by the
+ * GlobalExceptionHandler) plus optional MessageFormat arguments —
+ * never a final user-facing text.
  */
 public class BusinessException extends RuntimeException {
 
     private final HttpStatus status;
+    private final transient Object[] args;
 
-    public BusinessException(String message, HttpStatus status) {
-        super(message);
+    public BusinessException(String messageKey, HttpStatus status, Object... args) {
+        super(messageKey);
         this.status = status;
+        this.args = args;
     }
 
-    public BusinessException(String message) {
-        this(message, HttpStatus.BAD_REQUEST);
+    public BusinessException(String messageKey) {
+        this(messageKey, HttpStatus.BAD_REQUEST);
+    }
+
+    public String getMessageKey() {
+        return getMessage();
     }
 
     public HttpStatus getStatus() {
         return status;
+    }
+
+    public Object[] getArgs() {
+        return args;
     }
 }

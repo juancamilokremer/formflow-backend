@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!-- Variables: userName, tenantName, tenantLogoUrl (optional), appUrl -->
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<body>
+<div th:replace="~{email/base-styles :: layout(~{::content})}">
+    <th:block th:fragment="content">
+        <img th:if="${tenantLogoUrl}" th:src="${tenantLogoUrl}" alt="Logo"
+             style="max-height:48px; margin-bottom:16px;"/>
+        <h1 style="color:#111827; font-size:22px; margin:0 0 16px;" th:text="#{email.welcome.title}">¡Bienvenido!</h1>
+        <p style="color:#374151; font-size:15px; margin:0 0 8px;"
+           th:text="#{email.welcome.greeting(${userName})}">Hola</p>
+        <p style="color:#374151; font-size:15px; line-height:1.6; margin:0 0 24px;"
+           th:text="#{email.welcome.body(${tenantName})}">Tu cuenta fue creada.</p>
+        <a th:href="${appUrl}"
+           style="display:inline-block; background-color:#3B82F6; color:#ffffff; text-decoration:none;
+                  padding:12px 28px; border-radius:6px; font-size:15px; font-weight:bold;"
+           th:text="#{email.welcome.cta}">Ir a FormFlow</a>
+    </th:block>
+</div>
+</body>
+</html>

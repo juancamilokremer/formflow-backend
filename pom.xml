@@ -78,6 +78,12 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
+        <!-- ===== PLANTILLAS (emails) ===== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
         <!-- ===== EXPORTACIÓN ===== -->
         <dependency>
             <groupId>org.apache.poi</groupId>

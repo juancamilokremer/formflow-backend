@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LoginService implements LoginUseCase {
 
-    private static final String INVALID_CREDENTIALS = "Credenciales inválidas";
+    private static final String INVALID_CREDENTIALS = "error.auth.invalid_credentials";
 
     private final TenantRepositoryPort tenantRepository;
     private final UserRepositoryPort userRepository;
@@ -46,7 +46,7 @@ public class LoginService implements LoginUseCase {
                 .orElseThrow(this::invalidCredentials);
 
         if (!tenant.isActive()) {
-            throw new BusinessException("La empresa está suspendida o cancelada", HttpStatus.FORBIDDEN);
+            throw new BusinessException("error.tenant.suspended", HttpStatus.FORBIDDEN);
         }
         return tenant;
     }

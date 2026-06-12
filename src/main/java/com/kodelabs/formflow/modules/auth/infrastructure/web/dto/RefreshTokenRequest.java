@@ -7,6 +7,6 @@ public record RefreshTokenRequest(
 
         @Schema(description = "Refresh token recibido en el login o en la última rotación",
                 example = "NhvnVsj-VR8tRPrFhmmrYmrEjrvM92EJlhQGng-q8p0")
-        @NotBlank(message = "El refresh token es obligatorio")
+        @NotBlank(message = "{validation.refresh_token.required}")
         String refreshToken
 ) {}

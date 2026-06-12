@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.shared.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +45,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ObjectMapper objectMapper;
+    private final Messages messages;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -74,7 +76,7 @@ public class SecurityConfig {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write(objectMapper.writeValueAsString(
-                    ApiResponse.error("No autenticado: token ausente, inválido o expirado")));
+                    ApiResponse.error(messages.get("error.auth.unauthorized"))));
         };
     }
 

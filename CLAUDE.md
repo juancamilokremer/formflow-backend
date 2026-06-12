@@ -128,7 +128,7 @@ Al resetear contraseña se invalidan todos los `refresh_tokens` activos del usua
 ## Issues por milestone
 | Milestone | Issues |
 |-----------|--------|
-| M1 | #11 ✅ #12 ✅ #13 ✅ #14 🔄 #15 #25 #26 |
+| M1 | #11 ✅ #12 ✅ #13 ✅ #14 🔄(solo infra) #15 ✅ #25 #26 ✅ |
 | M2 | #1 #2 #3 #4 #20 #21 #27 |
 | M3 | #16 #17 #18 #19 |
 | M4 | #5 #6 #7 #8 |

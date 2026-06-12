@@ -7,15 +7,15 @@ import jakarta.validation.constraints.NotBlank;
 public record LoginRequest(
 
         @Schema(description = "Slug de la empresa a la que pertenece el usuario", example = "empresa-demo")
-        @NotBlank(message = "El identificador de la empresa es obligatorio")
+        @NotBlank(message = "{validation.tenant_slug.required}")
         String tenantSlug,
 
         @Schema(description = "Email del usuario", example = "admin@demo.com")
-        @NotBlank(message = "El email es obligatorio")
-        @Email(message = "El email no tiene un formato válido")
+        @NotBlank(message = "{validation.email.required}")
+        @Email(message = "{validation.email.format}")
         String email,
 
         @Schema(description = "Contraseña del usuario", example = "password123")
-        @NotBlank(message = "La contraseña es obligatoria")
+        @NotBlank(message = "{validation.password.required}")
         String password
 ) {}

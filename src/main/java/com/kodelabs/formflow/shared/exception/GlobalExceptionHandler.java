@@ -1,6 +1,8 @@
 package com.kodelabs.formflow.shared.exception;
 
+import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.web.ApiResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,17 +18,21 @@ import java.util.Map;
 
 /**
  * Centralized exception handling for all controllers.
- * Response messages are user-facing (Spanish); log messages are in English.
+ * User-facing texts are resolved from MessageSource (no hardcoded strings);
+ * log messages are in English.
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final Messages messages;
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
-        log.warn("Business error: {}", ex.getMessage());
+        log.warn("Business error [{}] status={}", ex.getMessageKey(), ex.getStatus().value());
         return ResponseEntity.status(ex.getStatus())
-                .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.error(messages.get(ex.getMessageKey(), ex.getArgs())));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -38,25 +44,25 @@ public class GlobalExceptionHandler {
             errors.put(field, error.getDefaultMessage());
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Error de validación"));
+                .body(ApiResponse.error(messages.get("error.validation"), errors));
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("No autenticado: " + ex.getMessage()));
+                .body(ApiResponse.error(messages.get("error.auth.unauthorized")));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("Acceso denegado"));
+                .body(ApiResponse.error(messages.get("error.access_denied")));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
         log.error("Unexpected error: ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Error interno del servidor"));
+                .body(ApiResponse.error(messages.get("error.internal")));
     }
 }
