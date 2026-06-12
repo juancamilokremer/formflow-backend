@@ -3,13 +3,16 @@
 > Para contexto completo del proyecto ver: `E:\emprendimiento\KodeLabs\formflow\CLAUDE.md`
 
 ## Stack
-- Java 17 (migrar a 21 LTS cuando sea posible)
-- Spring Boot 3 + Maven
-- PostgreSQL + Flyway
-- Spring Security + JWT
-- Redis (caché y rate limiting)
-- springdoc-openapi (Swagger)
-- Apache POI (exportación Excel)
+- Java 17 (migrar a Java 21 LTS cuando sea posible)
+- Spring Boot 3.3.4 + Maven
+- PostgreSQL + Flyway (migraciones)
+- Spring Security + JWT (jjwt 0.12.5)
+- Thymeleaf — plantillas HTML para emails
+- springdoc-openapi 2.5.0 — Swagger UI en /swagger-ui.html
+- Apache POI — exportación Excel
+- Spring Actuator + Micrometer — observabilidad
+- Bucket4j — rate limiting en memoria (sin Redis)
+- stripe-java 25.x — billing y pagos
 
 ## Arquitectura
 Monolito Modular con Arquitectura Hexagonal por módulo.
@@ -18,16 +21,16 @@ Monolito Modular con Arquitectura Hexagonal por módulo.
 formflow-backend/
 └── src/main/java/com/kodelabs/formflow/
     ├── shared/              — utilidades, excepciones, configuración global
+    │   ├── tenant/          — TenantContext (ThreadLocal), TenantFilter
+    │   ├── web/             — ApiResponse wrapper
+    │   └── exception/       — GlobalExceptionHandler, BusinessException
     └── modules/
-        ├── auth/            — autenticación, JWT, usuarios
-        │   ├── domain/      — entidades, value objects, puertos
-        │   ├── application/ — casos de uso
-        │   └── infrastructure/ — repositorios, controladores, adaptadores
-        ├── tenants/         — gestión de empresas clientes
-        ├── forms/           — formularios, secciones, preguntas
-        ├── responses/       — recolección de respuestas
-        ├── reports/         — estadísticas y exportación
-        └── notifications/   — emails y alertas
+        ├── auth/            — JWT, usuarios, password reset, verificación email
+        ├── billing/         — Stripe Customer, subscriptions, invoices, webhooks
+        ├── forms/           — formularios, secciones, preguntas, convocatorias
+        ├── responses/       — recolección de respuestas + snapshot
+        ├── reports/         — estadísticas y exportación Excel
+        └── notifications/   — emails con Thymeleaf + JavaMailSender
 ```
 
 ## Reglas de arquitectura hexagonal
@@ -38,10 +41,36 @@ formflow-backend/
 - NUNCA acceder al repositorio de otro módulo directamente — usar la interfaz de servicio
 
 ## Multi-tenancy
-- Cada request lleva header `X-Tenant-ID` o subdominio
-- `TenantContext` (ThreadLocal) disponible en toda la request
+- Cada request lleva header `X-Tenant-ID`
+- `TenantContext` (ThreadLocal) disponible en toda la request — se limpia en `finally`
 - Todas las entidades tienen campo `tenantId`
 - Validar siempre que el recurso pertenece al tenant activo
+
+## Decisiones técnicas clave
+
+### Soft delete
+`deleted_at TIMESTAMPTZ NULL` en: `forms`, `form_sections`, `form_questions`, `answer_options`, `convocatorias`.
+Los repositorios filtran automáticamente `WHERE deleted_at IS NULL`.
+
+### Snapshot de formulario
+Al guardar una respuesta, `FormResponse.form_snapshot JSONB` almacena la estructura completa
+del formulario en ese momento. Esto hace inmutables los datos históricos aunque el formulario se edite.
+
+### Mensajes i18n
+Todos los mensajes visibles al usuario en `messages_es.properties`. Usar `MessageSource` en
+`GlobalExceptionHandler`. Nunca strings hardcodeados en código Java.
+
+### Seguridad — password reset
+Tokens de 64 chars generados con `SecureRandom`, expiran en 1 hora, uso único.
+Al resetear contraseña se invalidan todos los `refresh_tokens` activos del usuario.
+`POST /auth/forgot-password` retorna 200 siempre (no revelar si el email existe).
+
+### Billing — Stripe
+- Crear Stripe Customer de forma **asíncrona** al registrar tenant
+- `POST /api/v1/webhooks/stripe` excluido de JWT y TenantFilter
+- Verificar `Stripe-Signature` header en CADA webhook — rechazar si inválido
+- Idempotencia por `stripe_event_id UNIQUE` en `invoices`
+- Plan se actualiza SOLO desde webhook, nunca desde redirect del frontend
 
 ## Convenciones
 - Idioma del código: inglés
@@ -49,13 +78,17 @@ formflow-backend/
 - Branches: `feature/nombre`, `fix/nombre`
 - Tests: JUnit 5 + Mockito, mínimo en casos de uso
 
-## Issues activos (M1)
-- [ ] #11 Inicializar proyecto Spring Boot 3
-- [ ] #12 Configurar PostgreSQL + Flyway
-- [ ] #13 Implementar autenticación JWT multi-tenant
-- [ ] #14 Configurar CI/CD con GitHub Actions
-- [ ] #15 Configurar Swagger / OpenAPI
+## Issues por milestone
+| Milestone | Issues |
+|-----------|--------|
+| M1 | #11 ✅ #12 ✅ #13 🔄 #14 #15 #25 #26 |
+| M2 | #1 #2 #3 #4 #20 #21 #27 |
+| M3 | #16 #17 #18 #19 |
+| M4 | #5 #6 #7 #8 |
+| M5 | #9 #10 #28 |
+| M6 | #22 #23 #24 |
 
 ## Links
 - Issues: https://github.com/juancamilokremer/formflow-backend/issues
 - Proyecto: https://github.com/users/juancamilokremer/projects/2
+- Swagger (local): http://localhost:8080/swagger-ui.html
