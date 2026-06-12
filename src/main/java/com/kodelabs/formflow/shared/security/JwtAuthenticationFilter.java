@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -63,5 +64,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         TenantContext.setTenantId(tenantId);
+
+        // Log correlation: every line of this request can be filtered by tenant/user.
+        // Cleared by RequestLoggingFilter's MDC.clear() at the end of the request.
+        MDC.put("tenantId", tenantId);
+        MDC.put("userId", userId);
     }
 }

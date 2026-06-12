@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Centralized exception handling for all controllers.
@@ -61,8 +62,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
-        log.error("Unexpected error: ", ex);
+        // Support code: returned to the client AND logged with the stack trace,
+        // so a user report can be matched to the exact log entry
+        String errorId = UUID.randomUUID().toString().substring(0, 8);
+        log.error("Unexpected error [errorId={}]: ", errorId, ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(messages.get("error.internal")));
+                .body(ApiResponse.error(messages.get("error.internal", errorId)));
     }
 }

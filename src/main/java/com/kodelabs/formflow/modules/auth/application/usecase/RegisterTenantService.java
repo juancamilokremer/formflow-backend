@@ -12,6 +12,7 @@ import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Implementation of the RegisterTenantUseCase input port.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegisterTenantService implements RegisterTenantUseCase {
@@ -36,6 +38,8 @@ public class RegisterTenantService implements RegisterTenantUseCase {
         Tenant tenant = createTenant(command);
         User admin = createAdminUser(command, tenant);
 
+        log.info("Tenant registered: slug='{}' tenantId={} admin='{}'",
+                tenant.getSlug(), tenant.getId(), admin.getEmail());
         return tokenIssuer.issueFor(admin, tenant);
     }
 
