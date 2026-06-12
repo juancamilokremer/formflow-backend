@@ -18,9 +18,12 @@ logging:
     com.kodelabs.formflow: INFO
     root: WARN
 
+# Swagger stays enabled in production for MVP (issue #15, option 2):
+# it eases client demos and the API only exposes tenant data behind JWT.
+# Revisit before GA: restrict by IP or disable.
 springdoc:
   swagger-ui:
-    enabled: false  # deshabilitado en producción
+    enabled: true
 
 app:
   cors:

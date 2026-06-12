@@ -17,7 +17,16 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("FormFlow API")
-                        .description("API REST para la plataforma de formularios dinámicos FormFlow — Kode Labs")
+                        .description("""
+                                API REST para la plataforma de formularios dinámicos FormFlow — Kode Labs.
+
+                                **Cómo autenticarse:**
+                                1. Registra una empresa con `POST /api/v1/auth/register` (o usa `POST /api/v1/auth/login` si ya tienes cuenta)
+                                2. Copia el `accessToken` de la respuesta
+                                3. Haz clic en el botón **Authorize** (candado) y pega el token
+                                4. Todos los endpoints protegidos usarán ese Bearer token automáticamente
+
+                                El access token expira en 24h — usa `POST /api/v1/auth/refresh` para rotarlo.""")
                         .version("v1.0.0")
                         .contact(new Contact()
                                 .name("Kode Labs")
