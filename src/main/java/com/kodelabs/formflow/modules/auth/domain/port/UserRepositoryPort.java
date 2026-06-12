@@ -6,8 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Puerto de salida: define qué operaciones de persistencia necesita el dominio.
- * El dominio solo conoce esta interfaz, nunca la implementación JPA.
+ * Output port: persistence operations the domain needs for User.
+ * The domain only knows this interface, never the JPA implementation.
  */
 public interface UserRepositoryPort {
 

@@ -1,6 +1,6 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.persistence.entity;
 
-import com.kodelabs.formflow.modules.auth.domain.model.User.UserRole;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,8 +22,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Entidad JPA de la tabla "users". Referencia al tenant por UUID plano
- * (sin @ManyToOne) para mantener los agregados desacoplados.
+ * JPA entity for the "users" table. References the tenant by plain UUID
+ * (no @ManyToOne) to keep aggregates decoupled.
  */
 @Entity
 @Table(name = "users",

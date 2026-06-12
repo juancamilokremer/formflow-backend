@@ -1,8 +1,9 @@
 package com.kodelabs.formflow.shared.tenant;
 
 /**
- * Almacena el tenantId del request actual usando ThreadLocal.
- * Se inicializa en TenantFilter y se limpia al finalizar el request.
+ * Holds the tenantId of the current request using a ThreadLocal.
+ * Set by JwtAuthenticationFilter (from the signed token claim) or by
+ * TenantFilter (from the X-Tenant-ID header) and cleared when the request ends.
  */
 public class TenantContext {
 

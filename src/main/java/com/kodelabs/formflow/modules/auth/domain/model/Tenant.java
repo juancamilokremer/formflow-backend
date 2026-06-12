@@ -10,11 +10,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Representa una empresa cliente (tenant) en la plataforma.
- * Cada tenant tiene su propio espacio de datos aislado.
+ * A client company (tenant) in the platform. Each tenant has its own
+ * isolated data space.
  *
- * POJO puro de dominio — sin dependencias de JPA/Hibernate.
- * Su representación en base de datos es TenantJpaEntity (infrastructure/persistence).
+ * Pure domain POJO — no JPA/Hibernate dependencies.
+ * Its database representation is TenantJpaEntity (infrastructure/persistence).
  */
 @Getter
 @Setter
@@ -25,13 +25,16 @@ public class Tenant {
 
     private UUID id;
 
-    private String slug; // identificador único URL-friendly: "empresa-abc"
+    /** Unique URL-friendly identifier, e.g. "empresa-abc". */
+    private String slug;
 
-    private String name; // nombre visible: "Empresa ABC S.A.S"
+    /** Display name, e.g. "Empresa ABC S.A.S". */
+    private String name;
 
     private String logoUrl;
 
-    private String primaryColor; // hex: "#3B82F6"
+    /** Hex color, e.g. "#3B82F6". */
+    private String primaryColor;
 
     private String secondaryColor;
 
@@ -47,13 +50,5 @@ public class Tenant {
 
     public boolean isActive() {
         return status == TenantStatus.ACTIVE;
-    }
-
-    public enum TenantPlan {
-        FREE, STARTER, PRO, BUSINESS, ENTERPRISE
-    }
-
-    public enum TenantStatus {
-        ACTIVE, SUSPENDED, CANCELLED
     }
 }

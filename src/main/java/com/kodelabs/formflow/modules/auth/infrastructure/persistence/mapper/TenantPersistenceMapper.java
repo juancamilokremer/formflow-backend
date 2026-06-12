@@ -5,7 +5,7 @@ import com.kodelabs.formflow.modules.auth.infrastructure.persistence.entity.Tena
 import org.springframework.stereotype.Component;
 
 /**
- * Convierte entre el modelo de dominio Tenant y la entidad JPA TenantJpaEntity.
+ * Converts between the Tenant domain model and the TenantJpaEntity JPA entity.
  */
 @Component
 public class TenantPersistenceMapper {

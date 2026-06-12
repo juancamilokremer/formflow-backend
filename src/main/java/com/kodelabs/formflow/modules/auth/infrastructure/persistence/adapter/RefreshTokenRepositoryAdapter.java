@@ -6,6 +6,7 @@ import com.kodelabs.formflow.modules.auth.infrastructure.persistence.mapper.Refr
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -13,7 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Adaptador de persistencia: implementa el puerto del dominio usando Spring Data JPA.
+ * Persistence adapter: implements the domain port using Spring Data JPA.
  */
 @Component
 @RequiredArgsConstructor
@@ -33,8 +34,11 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepositoryPort
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllByUserId(UUID userId) {
+        // REQUIRES_NEW: the bulk revocation happens as a response to a security
+        // event (token reuse) and must persist even if the triggering use case
+        // ends up throwing an exception and rolling back its own transaction
         jpaRepository.revokeAllByUserId(userId, Instant.now());
     }
 

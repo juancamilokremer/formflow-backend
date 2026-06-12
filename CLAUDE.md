@@ -106,6 +106,10 @@ Al resetear contraseña se invalidan todos los `refresh_tokens` activos del usua
 
 ## Convenciones
 - Idioma del código: inglés
+- **Comentarios de código y mensajes de log: SIEMPRE en inglés**
+- Mensajes visibles al usuario (errores de negocio, validaciones): español (migrarán a MessageSource en #26)
+- **No usar records, clases ni enums anidados** — cada tipo en su propio archivo
+- Las migraciones Flyway ya aplicadas son INMUTABLES (el checksum rompe el arranque) — no editarlas nunca, ni siquiera comentarios
 - Commits en español referenciando el issue: `feat: agregar endpoint de login (#13)`
 - Branches: `feature/nombre`, `fix/nombre`
 - Tests: JUnit 5 + Mockito, mínimo en casos de uso

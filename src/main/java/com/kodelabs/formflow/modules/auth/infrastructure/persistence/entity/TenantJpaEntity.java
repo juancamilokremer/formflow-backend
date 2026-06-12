@@ -1,7 +1,7 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.persistence.entity;
 
-import com.kodelabs.formflow.modules.auth.domain.model.Tenant.TenantPlan;
-import com.kodelabs.formflow.modules.auth.domain.model.Tenant.TenantStatus;
+import com.kodelabs.formflow.modules.auth.domain.model.TenantPlan;
+import com.kodelabs.formflow.modules.auth.domain.model.TenantStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,8 +22,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Entidad JPA de la tabla "tenants". Solo persistencia —
- * la lógica de negocio vive en el modelo de dominio Tenant.
+ * JPA entity for the "tenants" table. Persistence only —
+ * business logic lives in the Tenant domain model.
  */
 @Entity
 @Table(name = "tenants")

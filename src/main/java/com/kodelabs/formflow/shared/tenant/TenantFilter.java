@@ -10,10 +10,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Filtro que extrae el tenantId de cada request y lo almacena en TenantContext.
+ * Filter that extracts the tenantId from each request and stores it in TenantContext.
  *
- * Estrategia: lee el header X-Tenant-ID.
- * En el futuro se puede extender para resolución por subdominio.
+ * Strategy: reads the X-Tenant-ID header.
+ * Can be extended in the future to resolve the tenant by subdomain.
  */
 @Component
 public class TenantFilter extends OncePerRequestFilter {
@@ -26,12 +26,15 @@ public class TenantFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             String tenantId = request.getHeader(TENANT_HEADER);
-            if (tenantId != null && !tenantId.isBlank()) {
+            // The header only applies when the JWT did not already set the tenant:
+            // the signed token claim is the trusted source and a client must not
+            // be able to spoof it by sending another tenant's X-Tenant-ID
+            if (tenantId != null && !tenantId.isBlank() && !TenantContext.hasTenant()) {
                 TenantContext.setTenantId(tenantId.trim());
             }
             filterChain.doFilter(request, response);
         } finally {
-            // Siempre limpiar para evitar leaks entre requests en el thread pool
+            // Always clear to avoid leaks across pooled threads
             TenantContext.clear();
         }
     }

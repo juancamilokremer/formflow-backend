@@ -6,8 +6,8 @@ import lombok.Getter;
 import java.time.Instant;
 
 /**
- * Wrapper estándar para todas las respuestas de la API.
- * Garantiza una estructura consistente en todos los endpoints.
+ * Standard wrapper for every API response.
+ * Guarantees a consistent structure across all endpoints.
  */
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)

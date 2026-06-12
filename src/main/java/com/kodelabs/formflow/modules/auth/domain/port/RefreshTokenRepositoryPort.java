@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Puerto de salida para operaciones de persistencia de RefreshToken.
+ * Output port for RefreshToken persistence operations.
  */
 public interface RefreshTokenRepositoryPort {
 
@@ -14,9 +14,9 @@ public interface RefreshTokenRepositoryPort {
 
     Optional<RefreshToken> findByTokenHash(String tokenHash);
 
-    /** Revoca todos los tokens activos de un usuario (logout global / password reset). */
+    /** Revokes every active token of a user (global logout / password reset). */
     void revokeAllByUserId(UUID userId);
 
-    /** Limpieza de tokens expirados (job programado). */
+    /** Cleanup of expired tokens (scheduled job). */
     void deleteAllExpired();
 }

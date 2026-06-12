@@ -5,7 +5,7 @@ import com.kodelabs.formflow.modules.auth.infrastructure.persistence.entity.User
 import org.springframework.stereotype.Component;
 
 /**
- * Convierte entre el modelo de dominio User y la entidad JPA UserJpaEntity.
+ * Converts between the User domain model and the UserJpaEntity JPA entity.
  */
 @Component
 public class UserPersistenceMapper {

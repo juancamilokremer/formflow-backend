@@ -10,6 +10,6 @@ class FormFlowApplicationTests {
 
     @Test
     void contextLoads() {
-        // Verifica que el contexto de Spring arranca correctamente
+        // Verifies that the Spring context starts correctly
     }
 }

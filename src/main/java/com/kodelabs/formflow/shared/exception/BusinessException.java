@@ -3,8 +3,9 @@ package com.kodelabs.formflow.shared.exception;
 import org.springframework.http.HttpStatus;
 
 /**
- * Excepción base para errores de negocio.
- * Permite asociar un HTTP status code a cada error de dominio.
+ * Base exception for business errors.
+ * Associates an HTTP status code with each domain error.
+ * Messages are user-facing and therefore stay in Spanish (MessageSource in #26).
  */
 public class BusinessException extends RuntimeException {
 

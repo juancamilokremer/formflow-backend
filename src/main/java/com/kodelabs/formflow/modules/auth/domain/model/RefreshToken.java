@@ -10,10 +10,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Refresh token de un usuario. Se almacena solo el hash SHA-256 del token,
- * nunca el valor en claro. Uso único: al rotarlo se marca como revocado.
+ * A user's refresh token. Only the SHA-256 hash of the token is stored,
+ * never the raw value. Single use: rotating it marks it as revoked.
  *
- * POJO puro de dominio — sin dependencias de JPA/Hibernate.
+ * Pure domain POJO — no JPA/Hibernate dependencies.
  */
 @Getter
 @Setter
@@ -28,7 +28,8 @@ public class RefreshToken {
 
     private UUID tenantId;
 
-    private String tokenHash; // SHA-256 hex del token (64 chars)
+    /** SHA-256 hex of the token (64 chars). */
+    private String tokenHash;
 
     private Instant expiresAt;
 
@@ -44,7 +45,7 @@ public class RefreshToken {
         return revokedAt != null;
     }
 
-    /** Un token es usable solo si no expiró y no fue revocado (rotación de uso único). */
+    /** A token is usable only if it has not expired nor been revoked (single-use rotation). */
     public boolean isUsable() {
         return !isExpired() && !isRevoked();
     }

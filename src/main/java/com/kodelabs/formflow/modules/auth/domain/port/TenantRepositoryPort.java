@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Puerto de salida para operaciones de persistencia de Tenant.
+ * Output port for Tenant persistence operations.
  */
 public interface TenantRepositoryPort {
 

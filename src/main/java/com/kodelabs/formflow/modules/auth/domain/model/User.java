@@ -10,11 +10,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Usuario de la plataforma. Siempre pertenece a un Tenant.
+ * Platform user. Always belongs to a tenant.
  *
- * POJO puro de dominio — sin dependencias de JPA/Hibernate.
- * Referencia al tenant por id (no por objeto) para mantener los agregados
- * desacoplados y facilitar la futura separación en microservicios.
+ * Pure domain POJO — no JPA/Hibernate dependencies.
+ * References the tenant by id (not by object) to keep aggregates decoupled
+ * and ease a future split into microservices.
  */
 @Getter
 @Setter
@@ -47,11 +47,5 @@ public class User {
 
     public String getFullName() {
         return firstName + " " + lastName;
-    }
-
-    public enum UserRole {
-        TENANT_ADMIN,  // Administrador de la empresa
-        EDITOR,        // Puede crear y editar formularios
-        VIEWER         // Solo puede ver resultados
     }
 }

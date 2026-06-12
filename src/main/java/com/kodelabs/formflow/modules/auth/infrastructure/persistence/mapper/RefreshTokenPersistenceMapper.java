@@ -5,7 +5,7 @@ import com.kodelabs.formflow.modules.auth.infrastructure.persistence.entity.Refr
 import org.springframework.stereotype.Component;
 
 /**
- * Convierte entre el modelo de dominio RefreshToken y la entidad JPA RefreshTokenJpaEntity.
+ * Converts between the RefreshToken domain model and the RefreshTokenJpaEntity JPA entity.
  */
 @Component
 public class RefreshTokenPersistenceMapper {

@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Adaptador de persistencia: implementa el puerto del dominio usando Spring Data JPA.
+ * Persistence adapter: implements the domain port using Spring Data JPA.
  */
 @Component
 @RequiredArgsConstructor

@@ -17,7 +17,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Entidad JPA de la tabla "refresh_tokens".
+ * JPA entity for the "refresh_tokens" table.
  */
 @Entity
 @Table(name = "refresh_tokens")
