@@ -1,19 +1,21 @@
 package com.kodelabs.formflow.modules.auth.domain.model;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Representa una empresa cliente (tenant) en la plataforma.
- * Cada tenant tiene su propio espacio de datos aislado.
+ * A client company (tenant) in the platform. Each tenant has its own
+ * isolated data space.
+ *
+ * Pure domain POJO — no JPA/Hibernate dependencies.
+ * Its database representation is TenantJpaEntity (infrastructure/persistence).
  */
-@Entity
-@Table(name = "tenants")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,46 +23,32 @@ import java.util.UUID;
 @Builder
 public class Tenant {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String slug; // identificador único URL-friendly: "empresa-abc"
+    /** Unique URL-friendly identifier, e.g. "empresa-abc". */
+    private String slug;
 
-    @Column(nullable = false, length = 150)
-    private String name; // nombre visible: "Empresa ABC S.A.S"
+    /** Display name, e.g. "Empresa ABC S.A.S". */
+    private String name;
 
-    @Column(length = 200)
     private String logoUrl;
 
-    @Column(length = 7)
-    private String primaryColor; // hex: "#3B82F6"
+    /** Hex color, e.g. "#3B82F6". */
+    private String primaryColor;
 
-    @Column(length = 7)
     private String secondaryColor;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     @Builder.Default
     private TenantPlan plan = TenantPlan.FREE;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     @Builder.Default
     private TenantStatus status = TenantStatus.ACTIVE;
 
-    @CreationTimestamp
     private Instant createdAt;
 
-    @UpdateTimestamp
     private Instant updatedAt;
 
-    public enum TenantPlan {
-        FREE, STARTER, PRO, BUSINESS, ENTERPRISE
-    }
-
-    public enum TenantStatus {
-        ACTIVE, SUSPENDED, CANCELLED
+    public boolean isActive() {
+        return status == TenantStatus.ACTIVE;
     }
 }

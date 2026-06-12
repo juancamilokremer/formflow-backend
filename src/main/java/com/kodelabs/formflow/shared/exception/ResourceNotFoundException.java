@@ -3,7 +3,8 @@ package com.kodelabs.formflow.shared.exception;
 import org.springframework.http.HttpStatus;
 
 /**
- * Lanzada cuando un recurso no existe o no pertenece al tenant activo.
+ * Thrown when a resource does not exist or does not belong to the active tenant.
+ * The exception message is user-facing and therefore stays in Spanish.
  */
 public class ResourceNotFoundException extends BusinessException {
 
