@@ -1,15 +1,15 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
-import com.kodelabs.formflow.modules.auth.domain.model.GeneratedRefreshToken;
+import com.kodelabs.formflow.modules.auth.application.service.TokenIssuer;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.TenantStatus;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
 import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
-import com.kodelabs.formflow.modules.auth.domain.port.PasswordHasherPort;
-import com.kodelabs.formflow.modules.auth.domain.port.RefreshTokenRepositoryPort;
-import com.kodelabs.formflow.modules.auth.domain.port.TenantRepositoryPort;
-import com.kodelabs.formflow.modules.auth.domain.port.TokenServicePort;
-import com.kodelabs.formflow.modules.auth.domain.port.UserRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.in.AuthResult;
+import com.kodelabs.formflow.modules.auth.domain.port.in.LoginCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.out.PasswordHasherPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,26 +19,26 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class LoginUseCaseTest {
+class LoginServiceTest {
 
     @Mock private TenantRepositoryPort tenantRepository;
     @Mock private UserRepositoryPort userRepository;
-    @Mock private RefreshTokenRepositoryPort refreshTokenRepository;
     @Mock private PasswordHasherPort passwordHasher;
-    @Mock private TokenServicePort tokenService;
+    @Mock private TokenIssuer tokenIssuer;
 
     @InjectMocks
-    private LoginUseCase useCase;
+    private LoginService service;
 
     private Tenant tenant;
     private User user;
@@ -64,29 +64,24 @@ class LoginUseCaseTest {
     }
 
     @Test
-    void authenticatesAndReturnsTokens() {
+    void authenticatesAndDelegatesTokenIssuing() {
         when(tenantRepository.findBySlug("empresa-abc")).thenReturn(Optional.of(tenant));
         when(userRepository.findByEmailAndTenantId("admin@abc.com", tenant.getId()))
                 .thenReturn(Optional.of(user));
         when(passwordHasher.matches("password123", "$2a$hashed")).thenReturn(true);
-        when(tokenService.generateAccessToken(user)).thenReturn("jwt-access");
-        when(tokenService.generateRefreshToken()).thenReturn(
-                new GeneratedRefreshToken("raw-refresh", "hash-refresh",
-                        Instant.now().plusSeconds(3600)));
-        when(tokenService.accessTokenValidityMs()).thenReturn(86400000L);
+        AuthResult issued = new AuthResult("jwt", "refresh", 86400000L, user, tenant);
+        when(tokenIssuer.issueFor(user, tenant)).thenReturn(issued);
 
-        AuthResult result = useCase.execute(command);
+        AuthResult result = service.execute(command);
 
-        assertThat(result.accessToken()).isEqualTo("jwt-access");
-        assertThat(result.refreshToken()).isEqualTo("raw-refresh");
-        assertThat(result.user().getId()).isEqualTo(user.getId());
+        assertThat(result).isSameAs(issued);
     }
 
     @Test
     void failsWithGenericMessageWhenTenantDoesNotExist() {
         when(tenantRepository.findBySlug("empresa-abc")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Credenciales inválidas");
     }
@@ -96,7 +91,7 @@ class LoginUseCaseTest {
         when(tenantRepository.findBySlug("empresa-abc")).thenReturn(Optional.of(tenant));
         when(userRepository.findByEmailAndTenantId(any(), any())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Credenciales inválidas");
     }
@@ -108,11 +103,13 @@ class LoginUseCaseTest {
                 .thenReturn(Optional.of(user));
         when(passwordHasher.matches("password123", "$2a$hashed")).thenReturn(false);
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Credenciales inválidas")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
                         .isEqualTo(HttpStatus.UNAUTHORIZED));
+
+        verify(tokenIssuer, never()).issueFor(any(), any());
     }
 
     @Test
@@ -120,7 +117,7 @@ class LoginUseCaseTest {
         tenant.setStatus(TenantStatus.SUSPENDED);
         when(tenantRepository.findBySlug("empresa-abc")).thenReturn(Optional.of(tenant));
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
                         .isEqualTo(HttpStatus.FORBIDDEN));
@@ -133,7 +130,7 @@ class LoginUseCaseTest {
         when(userRepository.findByEmailAndTenantId("admin@abc.com", tenant.getId()))
                 .thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Credenciales inválidas");
     }

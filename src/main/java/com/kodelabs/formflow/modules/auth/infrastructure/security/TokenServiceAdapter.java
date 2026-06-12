@@ -2,7 +2,7 @@ package com.kodelabs.formflow.modules.auth.infrastructure.security;
 
 import com.kodelabs.formflow.modules.auth.domain.model.GeneratedRefreshToken;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
-import com.kodelabs.formflow.modules.auth.domain.port.TokenServicePort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TokenServicePort;
 import com.kodelabs.formflow.shared.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

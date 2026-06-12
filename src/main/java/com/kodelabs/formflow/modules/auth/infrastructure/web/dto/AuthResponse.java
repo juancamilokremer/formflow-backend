@@ -1,6 +1,6 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.web.dto;
 
-import com.kodelabs.formflow.modules.auth.application.usecase.AuthResult;
+import com.kodelabs.formflow.modules.auth.domain.port.in.AuthResult;
 
 /**
  * Response of the authentication endpoints.

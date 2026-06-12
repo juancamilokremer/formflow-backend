@@ -35,7 +35,12 @@ formflow-backend/
 
 ## Reglas de arquitectura hexagonal
 - El dominio NO depende de ningún framework
-- Los casos de uso solo conocen interfaces (puertos), nunca implementaciones
+- Los casos de uso solo conocen interfaces (puertos de salida), nunca implementaciones
+- Los adaptadores de entrada (controllers) dependen de los **puertos de entrada** (interfaces
+  en `domain/port/in/`), nunca de las implementaciones (`XxxService` en `application/usecase/`)
+- Los commands y results de un caso de uso son parte del contrato del puerto de entrada —
+  viven en `domain/port/in/` junto a la interfaz
+- Lógica compartida entre casos de uso → colaboradores en `application/service/`
 - Los controladores REST van en `infrastructure/web/`
 - Los repositorios JPA van en `infrastructure/persistence/`
 - NUNCA acceder al repositorio de otro módulo directamente — usar la interfaz de servicio
@@ -60,16 +65,20 @@ Estructura completa por módulo:
 [modulo]/
 ├── domain/
 │   ├── model/       # POJOs puros de dominio
-│   └── port/        # Interfaces (puertos)
+│   └── port/
+│       ├── in/      # Puertos de entrada: interfaces XxxUseCase + commands + results
+│       └── out/     # Puertos de salida: persistencia, tokens, etc.
 ├── application/
-│   └── usecase/     # Casos de uso — solo conocen puertos
+│   ├── usecase/     # XxxService — implementaciones de los puertos de entrada
+│   └── service/     # Colaboradores compartidos de la capa de aplicación
 └── infrastructure/
-    ├── web/         # Controllers REST + DTOs
+    ├── web/         # Controllers REST + DTOs (dependen de los puertos de entrada)
+    ├── security/    # Adaptadores de seguridad (hashing, tokens)
     └── persistence/
         ├── entity/      # Entidades JPA
         ├── repository/  # Interfaces Spring Data JPA
         ├── mapper/      # JPA ↔ dominio
-        └── adapter/     # Implementación de los puertos
+        └── adapter/     # Implementación de los puertos de salida
 ```
 
 ## Multi-tenancy

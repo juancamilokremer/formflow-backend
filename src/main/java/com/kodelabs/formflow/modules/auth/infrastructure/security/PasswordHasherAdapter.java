@@ -1,6 +1,6 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.security;
 
-import com.kodelabs.formflow.modules.auth.domain.port.PasswordHasherPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.PasswordHasherPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;

@@ -1,14 +1,16 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
-import com.kodelabs.formflow.modules.auth.domain.model.GeneratedRefreshToken;
+import com.kodelabs.formflow.modules.auth.application.service.TokenIssuer;
 import com.kodelabs.formflow.modules.auth.domain.model.RefreshToken;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
 import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
-import com.kodelabs.formflow.modules.auth.domain.port.RefreshTokenRepositoryPort;
-import com.kodelabs.formflow.modules.auth.domain.port.TenantRepositoryPort;
-import com.kodelabs.formflow.modules.auth.domain.port.TokenServicePort;
-import com.kodelabs.formflow.modules.auth.domain.port.UserRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.in.AuthResult;
+import com.kodelabs.formflow.modules.auth.domain.port.in.RefreshTokenCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.out.RefreshTokenRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TokenServicePort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,21 +26,22 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class RefreshTokenUseCaseTest {
+class RefreshTokenServiceTest {
 
     @Mock private RefreshTokenRepositoryPort refreshTokenRepository;
     @Mock private UserRepositoryPort userRepository;
     @Mock private TenantRepositoryPort tenantRepository;
     @Mock private TokenServicePort tokenService;
+    @Mock private TokenIssuer tokenIssuer;
 
     @InjectMocks
-    private RefreshTokenUseCase useCase;
+    private RefreshTokenService service;
 
     private Tenant tenant;
     private User user;
@@ -71,37 +74,29 @@ class RefreshTokenUseCaseTest {
     }
 
     @Test
-    void rotatesTokensRevokingTheUsedOneAndIssuingNewPair() {
+    void rotatesTokenRevokingTheUsedOneBeforeIssuingNewPair() {
         when(refreshTokenRepository.findByTokenHash("hash-token")).thenReturn(Optional.of(storedToken));
         when(userRepository.findByIdAndTenantId(user.getId(), tenant.getId())).thenReturn(Optional.of(user));
         when(tenantRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));
-        when(tokenService.generateAccessToken(user)).thenReturn("new-jwt");
-        when(tokenService.generateRefreshToken()).thenReturn(
-                new GeneratedRefreshToken("new-raw", "new-hash",
-                        Instant.now().plusSeconds(3600)));
-        when(tokenService.accessTokenValidityMs()).thenReturn(86400000L);
+        AuthResult issued = new AuthResult("new-jwt", "new-raw", 86400000L, user, tenant);
+        when(tokenIssuer.issueFor(user, tenant)).thenReturn(issued);
 
-        AuthResult result = useCase.execute(command);
+        AuthResult result = service.execute(command);
 
-        assertThat(result.accessToken()).isEqualTo("new-jwt");
-        assertThat(result.refreshToken()).isEqualTo("new-raw");
+        assertThat(result).isSameAs(issued);
 
-        // The used token was revoked and the new one persisted
+        // The used token was persisted as revoked (single-use rotation)
         ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
-        verify(refreshTokenRepository, atLeastOnce()).save(captor.capture());
-        assertThat(captor.getAllValues())
-                .anySatisfy(t -> {
-                    assertThat(t.getTokenHash()).isEqualTo("hash-token");
-                    assertThat(t.isRevoked()).isTrue();
-                })
-                .anySatisfy(t -> assertThat(t.getTokenHash()).isEqualTo("new-hash"));
+        verify(refreshTokenRepository).save(captor.capture());
+        assertThat(captor.getValue().getTokenHash()).isEqualTo("hash-token");
+        assertThat(captor.getValue().isRevoked()).isTrue();
     }
 
     @Test
     void failsWhenTokenDoesNotExist() {
         when(refreshTokenRepository.findByTokenHash("hash-token")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Refresh token inválido o expirado");
     }
@@ -111,7 +106,7 @@ class RefreshTokenUseCaseTest {
         storedToken.setExpiresAt(Instant.now().minusSeconds(10));
         when(refreshTokenRepository.findByTokenHash("hash-token")).thenReturn(Optional.of(storedToken));
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Refresh token inválido o expirado");
     }
@@ -121,12 +116,12 @@ class RefreshTokenUseCaseTest {
         storedToken.setRevokedAt(Instant.now().minusSeconds(60));
         when(refreshTokenRepository.findByTokenHash("hash-token")).thenReturn(Optional.of(storedToken));
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Refresh token inválido o expirado");
 
         verify(refreshTokenRepository).revokeAllByUserId(user.getId());
-        verify(tokenService, never()).generateAccessToken(user);
+        verify(tokenIssuer, never()).issueFor(any(), any());
     }
 
     @Test
@@ -135,7 +130,7 @@ class RefreshTokenUseCaseTest {
         when(refreshTokenRepository.findByTokenHash("hash-token")).thenReturn(Optional.of(storedToken));
         when(userRepository.findByIdAndTenantId(user.getId(), tenant.getId())).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Refresh token inválido o expirado");
     }

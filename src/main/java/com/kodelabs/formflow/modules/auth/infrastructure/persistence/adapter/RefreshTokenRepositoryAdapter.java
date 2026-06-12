@@ -1,7 +1,7 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.persistence.adapter;
 
 import com.kodelabs.formflow.modules.auth.domain.model.RefreshToken;
-import com.kodelabs.formflow.modules.auth.domain.port.RefreshTokenRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.RefreshTokenRepositoryPort;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.mapper.RefreshTokenPersistenceMapper;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import lombok.RequiredArgsConstructor;

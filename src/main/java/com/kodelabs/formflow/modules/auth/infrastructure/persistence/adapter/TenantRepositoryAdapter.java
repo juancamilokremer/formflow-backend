@@ -1,7 +1,7 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.persistence.adapter;
 
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
-import com.kodelabs.formflow.modules.auth.domain.port.TenantRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.mapper.TenantPersistenceMapper;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.repository.TenantJpaRepository;
 import lombok.RequiredArgsConstructor;

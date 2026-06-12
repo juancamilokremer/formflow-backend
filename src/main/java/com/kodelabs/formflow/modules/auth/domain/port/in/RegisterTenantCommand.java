@@ -1,7 +1,7 @@
-package com.kodelabs.formflow.modules.auth.application.usecase;
+package com.kodelabs.formflow.modules.auth.domain.port.in;
 
 /**
- * Input for RegisterTenantUseCase.
+ * Input of RegisterTenantUseCase — part of the input port contract.
  */
 public record RegisterTenantCommand(
         String companyName,

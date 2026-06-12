@@ -1,7 +1,7 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.persistence.adapter;
 
 import com.kodelabs.formflow.modules.auth.domain.model.User;
-import com.kodelabs.formflow.modules.auth.domain.port.UserRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.mapper.UserPersistenceMapper;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.repository.UserJpaRepository;
 import lombok.RequiredArgsConstructor;

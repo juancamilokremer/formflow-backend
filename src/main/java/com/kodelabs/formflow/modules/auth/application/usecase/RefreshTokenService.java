@@ -1,13 +1,16 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
-import com.kodelabs.formflow.modules.auth.domain.model.GeneratedRefreshToken;
+import com.kodelabs.formflow.modules.auth.application.service.TokenIssuer;
 import com.kodelabs.formflow.modules.auth.domain.model.RefreshToken;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
-import com.kodelabs.formflow.modules.auth.domain.port.RefreshTokenRepositoryPort;
-import com.kodelabs.formflow.modules.auth.domain.port.TenantRepositoryPort;
-import com.kodelabs.formflow.modules.auth.domain.port.TokenServicePort;
-import com.kodelabs.formflow.modules.auth.domain.port.UserRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.in.AuthResult;
+import com.kodelabs.formflow.modules.auth.domain.port.in.RefreshTokenCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.RefreshTokenUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.out.RefreshTokenRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TokenServicePort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Refresh token rotation (single use): validates the incoming token,
- * revokes it and issues a new access + refresh pair.
+ * Implementation of the RefreshTokenUseCase input port.
  *
  * Reuse detection: if an already-revoked token arrives, theft is assumed
  * and ALL active tokens of the user are revoked.
@@ -25,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RefreshTokenUseCase {
+public class RefreshTokenService implements RefreshTokenUseCase {
 
     private static final String INVALID_TOKEN = "Refresh token inválido o expirado";
 
@@ -33,49 +35,55 @@ public class RefreshTokenUseCase {
     private final UserRepositoryPort userRepository;
     private final TenantRepositoryPort tenantRepository;
     private final TokenServicePort tokenService;
+    private final TokenIssuer tokenIssuer;
 
+    @Override
     @Transactional
     public AuthResult execute(RefreshTokenCommand command) {
-        String hash = tokenService.hashRefreshToken(command.refreshToken());
+        RefreshToken stored = findStoredToken(command.refreshToken());
+        ensureUsable(stored);
 
-        RefreshToken stored = refreshTokenRepository.findByTokenHash(hash)
+        User user = loadActiveUser(stored);
+        Tenant tenant = loadActiveTenant(stored);
+
+        rotate(stored);
+        return tokenIssuer.issueFor(user, tenant);
+    }
+
+    private RefreshToken findStoredToken(String rawToken) {
+        String hash = tokenService.hashRefreshToken(rawToken);
+        return refreshTokenRepository.findByTokenHash(hash)
                 .orElseThrow(this::invalidToken);
+    }
 
+    private void ensureUsable(RefreshToken stored) {
         if (stored.isRevoked()) {
             log.warn("Reuse of revoked refresh token detected for user {} — revoking all their tokens",
                     stored.getUserId());
             refreshTokenRepository.revokeAllByUserId(stored.getUserId());
             throw invalidToken();
         }
-
         if (stored.isExpired()) {
             throw invalidToken();
         }
+    }
 
-        User user = userRepository.findByIdAndTenantId(stored.getUserId(), stored.getTenantId())
+    private User loadActiveUser(RefreshToken stored) {
+        return userRepository.findByIdAndTenantId(stored.getUserId(), stored.getTenantId())
                 .filter(User::isActive)
                 .orElseThrow(this::invalidToken);
+    }
 
-        Tenant tenant = tenantRepository.findById(stored.getTenantId())
+    private Tenant loadActiveTenant(RefreshToken stored) {
+        return tenantRepository.findById(stored.getTenantId())
                 .filter(Tenant::isActive)
                 .orElseThrow(this::invalidToken);
+    }
 
-        // Rotation: the used token gets revoked and a new one is issued
+    /** Single-use rotation: the incoming token is revoked before issuing a new pair. */
+    private void rotate(RefreshToken stored) {
         stored.revoke();
         refreshTokenRepository.save(stored);
-
-        String accessToken = tokenService.generateAccessToken(user);
-        GeneratedRefreshToken newRefreshToken = tokenService.generateRefreshToken();
-
-        refreshTokenRepository.save(RefreshToken.builder()
-                .userId(user.getId())
-                .tenantId(user.getTenantId())
-                .tokenHash(newRefreshToken.hash())
-                .expiresAt(newRefreshToken.expiresAt())
-                .build());
-
-        return new AuthResult(accessToken, newRefreshToken.rawValue(),
-                tokenService.accessTokenValidityMs(), user, tenant);
     }
 
     private BusinessException invalidToken() {

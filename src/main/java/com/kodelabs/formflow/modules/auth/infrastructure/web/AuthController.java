@@ -1,11 +1,11 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.web;
 
-import com.kodelabs.formflow.modules.auth.application.usecase.LoginCommand;
-import com.kodelabs.formflow.modules.auth.application.usecase.LoginUseCase;
-import com.kodelabs.formflow.modules.auth.application.usecase.RefreshTokenCommand;
-import com.kodelabs.formflow.modules.auth.application.usecase.RefreshTokenUseCase;
-import com.kodelabs.formflow.modules.auth.application.usecase.RegisterTenantCommand;
-import com.kodelabs.formflow.modules.auth.application.usecase.RegisterTenantUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.LoginCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.LoginUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.RefreshTokenCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.RefreshTokenUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.RegisterTenantCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.RegisterTenantUseCase;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.AuthResponse;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.LoginRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.RefreshTokenRequest;
@@ -22,6 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Inbound adapter: depends only on the input ports (interfaces),
+ * never on the use case implementations.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor

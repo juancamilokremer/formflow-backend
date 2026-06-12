@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.auth.domain.port;
+package com.kodelabs.formflow.modules.auth.domain.port.out;
 
 import com.kodelabs.formflow.modules.auth.domain.model.User;
 
