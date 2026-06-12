@@ -1,5 +1,7 @@
 # FormFlow — Backend
 
+[![CI - Build & Test](https://github.com/juancamilokremer/formflow-backend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/juancamilokremer/formflow-backend/actions/workflows/ci.yml)
+
 API REST de la plataforma SaaS de formularios dinámicos FormFlow.
 
 **Kode Labs** | Java 17 · Spring Boot 3 · PostgreSQL · Arquitectura Hexagonal
