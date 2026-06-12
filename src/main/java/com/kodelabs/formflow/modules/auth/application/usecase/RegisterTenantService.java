@@ -41,9 +41,7 @@ public class RegisterTenantService implements RegisterTenantUseCase {
 
     private void ensureSlugIsAvailable(String slug) {
         if (tenantRepository.existsBySlug(slug)) {
-            throw new BusinessException(
-                    "Ya existe una empresa registrada con el identificador '" + slug + "'",
-                    HttpStatus.CONFLICT);
+            throw new BusinessException("error.tenant.slug_exists", HttpStatus.CONFLICT, slug);
         }
     }
 

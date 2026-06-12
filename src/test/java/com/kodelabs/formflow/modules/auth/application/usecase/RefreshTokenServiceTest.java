@@ -98,7 +98,7 @@ class RefreshTokenServiceTest {
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Refresh token inválido o expirado");
+                .hasMessage("error.auth.refresh_token_invalid");
     }
 
     @Test
@@ -108,7 +108,7 @@ class RefreshTokenServiceTest {
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Refresh token inválido o expirado");
+                .hasMessage("error.auth.refresh_token_invalid");
     }
 
     @Test
@@ -118,7 +118,7 @@ class RefreshTokenServiceTest {
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Refresh token inválido o expirado");
+                .hasMessage("error.auth.refresh_token_invalid");
 
         verify(refreshTokenRepository).revokeAllByUserId(user.getId());
         verify(tokenIssuer, never()).issueFor(any(), any());
@@ -132,6 +132,6 @@ class RefreshTokenServiceTest {
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Refresh token inválido o expirado");
+                .hasMessage("error.auth.refresh_token_invalid");
     }
 }

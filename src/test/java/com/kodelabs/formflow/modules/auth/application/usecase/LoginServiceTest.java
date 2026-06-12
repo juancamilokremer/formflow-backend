@@ -83,7 +83,7 @@ class LoginServiceTest {
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Credenciales inválidas");
+                .hasMessage("error.auth.invalid_credentials");
     }
 
     @Test
@@ -93,7 +93,7 @@ class LoginServiceTest {
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Credenciales inválidas");
+                .hasMessage("error.auth.invalid_credentials");
     }
 
     @Test
@@ -105,7 +105,7 @@ class LoginServiceTest {
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Credenciales inválidas")
+                .hasMessage("error.auth.invalid_credentials")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
                         .isEqualTo(HttpStatus.UNAUTHORIZED));
 
@@ -132,6 +132,6 @@ class LoginServiceTest {
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Credenciales inválidas");
+                .hasMessage("error.auth.invalid_credentials");
     }
 }

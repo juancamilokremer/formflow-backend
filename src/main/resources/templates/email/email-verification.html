@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!-- Variables: userName, verificationUrl, expirationHours -->
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<body>
+<div th:replace="~{email/base-styles :: layout(~{::content})}">
+    <th:block th:fragment="content">
+        <h1 style="color:#111827; font-size:22px; margin:0 0 16px;" th:text="#{email.verification.title}">Confirma tu correo</h1>
+        <p style="color:#374151; font-size:15px; margin:0 0 8px;"
+           th:text="#{email.verification.greeting(${userName})}">Hola</p>
+        <p style="color:#374151; font-size:15px; line-height:1.6; margin:0 0 24px;"
+           th:text="#{email.verification.body(${expirationHours})}">Verifica tu correo.</p>
+        <a th:href="${verificationUrl}"
+           style="display:inline-block; background-color:#3B82F6; color:#ffffff; text-decoration:none;
+                  padding:12px 28px; border-radius:6px; font-size:15px; font-weight:bold;"
+           th:text="#{email.verification.cta}">Verificar correo</a>
+    </th:block>
+</div>
+</body>
+</html>

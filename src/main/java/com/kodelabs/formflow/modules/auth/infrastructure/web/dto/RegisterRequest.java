@@ -9,35 +9,34 @@ import jakarta.validation.constraints.Size;
 public record RegisterRequest(
 
         @Schema(description = "Nombre visible de la empresa", example = "Empresa Demo S.A.S")
-        @NotBlank(message = "El nombre de la empresa es obligatorio")
-        @Size(max = 150, message = "El nombre de la empresa no puede superar 150 caracteres")
+        @NotBlank(message = "{validation.company_name.required}")
+        @Size(max = 150, message = "{validation.company_name.size}")
         String companyName,
 
         @Schema(description = "Identificador único URL-friendly de la empresa", example = "empresa-demo")
-        @NotBlank(message = "El identificador (slug) es obligatorio")
-        @Size(min = 3, max = 100, message = "El slug debe tener entre 3 y 100 caracteres")
-        @Pattern(regexp = "^[a-z0-9]+(-[a-z0-9]+)*$",
-                 message = "El slug solo puede contener minúsculas, números y guiones (ej: empresa-abc)")
+        @NotBlank(message = "{validation.slug.required}")
+        @Size(min = 3, max = 100, message = "{validation.slug.size}")
+        @Pattern(regexp = "^[a-z0-9]+(-[a-z0-9]+)*$", message = "{validation.slug.pattern}")
         String slug,
 
         @Schema(description = "Email del usuario administrador", example = "admin@demo.com")
-        @NotBlank(message = "El email es obligatorio")
-        @Email(message = "El email no tiene un formato válido")
-        @Size(max = 150, message = "El email no puede superar 150 caracteres")
+        @NotBlank(message = "{validation.email.required}")
+        @Email(message = "{validation.email.format}")
+        @Size(max = 150, message = "{validation.email.size}")
         String email,
 
         @Schema(description = "Contraseña del administrador (mínimo 8 caracteres)", example = "password123")
-        @NotBlank(message = "La contraseña es obligatoria")
-        @Size(min = 8, max = 100, message = "La contraseña debe tener entre 8 y 100 caracteres")
+        @NotBlank(message = "{validation.password.required}")
+        @Size(min = 8, max = 100, message = "{validation.password.size}")
         String password,
 
         @Schema(description = "Nombre del administrador", example = "Juan")
-        @NotBlank(message = "El nombre es obligatorio")
-        @Size(max = 100, message = "El nombre no puede superar 100 caracteres")
+        @NotBlank(message = "{validation.first_name.required}")
+        @Size(max = 100, message = "{validation.first_name.size}")
         String firstName,
 
         @Schema(description = "Apellido del administrador", example = "Kremer")
-        @NotBlank(message = "El apellido es obligatorio")
-        @Size(max = 100, message = "El apellido no puede superar 100 caracteres")
+        @NotBlank(message = "{validation.last_name.required}")
+        @Size(max = 100, message = "{validation.last_name.size}")
         String lastName
 ) {}

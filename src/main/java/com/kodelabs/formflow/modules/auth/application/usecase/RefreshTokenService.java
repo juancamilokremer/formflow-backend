@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RefreshTokenService implements RefreshTokenUseCase {
 
-    private static final String INVALID_TOKEN = "Refresh token inválido o expirado";
+    private static final String INVALID_TOKEN = "error.auth.refresh_token_invalid";
 
     private final RefreshTokenRepositoryPort refreshTokenRepository;
     private final UserRepositoryPort userRepository;
