@@ -2,6 +2,7 @@ package com.kodelabs.formflow.shared.config;
 
 import com.kodelabs.formflow.shared.tenant.TenantContext;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskDecorator;
@@ -14,17 +15,28 @@ import java.util.Map;
  * Async execution setup. ThreadLocal-based context (MDC, TenantContext) does
  * not flow to pool threads by itself — the TaskDecorator copies it from the
  * submitting thread so async logs keep requestId/tenantId correlation.
+ *
+ * Pool sizing is configurable via app.async.email.* properties.
  */
 @Configuration
 @EnableAsync
 public class AsyncConfig {
 
+    @Value("${app.async.email.core-pool-size:2}")
+    private int emailCorePoolSize;
+
+    @Value("${app.async.email.max-pool-size:4}")
+    private int emailMaxPoolSize;
+
+    @Value("${app.async.email.queue-capacity:100}")
+    private int emailQueueCapacity;
+
     @Bean(name = "emailExecutor")
     public ThreadPoolTaskExecutor emailExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(100);
+        executor.setCorePoolSize(emailCorePoolSize);
+        executor.setMaxPoolSize(emailMaxPoolSize);
+        executor.setQueueCapacity(emailQueueCapacity);
         executor.setThreadNamePrefix("email-");
         executor.setTaskDecorator(contextPropagatingDecorator());
         executor.initialize();

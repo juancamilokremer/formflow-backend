@@ -64,3 +64,9 @@ app:
     from-name: ${MAIL_FROM_NAME:FormFlow}
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+  # Executor del envío asíncrono de correos (AsyncConfig)
+  async:
+    email:
+      core-pool-size: ${EMAIL_POOL_CORE:2}
+      max-pool-size: ${EMAIL_POOL_MAX:4}
+      queue-capacity: ${EMAIL_QUEUE_CAPACITY:100}
