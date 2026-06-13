@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
+import com.kodelabs.formflow.modules.auth.application.service.AuthEmailSender;
 import com.kodelabs.formflow.modules.auth.application.service.TokenIssuer;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
@@ -29,6 +30,7 @@ public class RegisterTenantService implements RegisterTenantUseCase {
     private final UserRepositoryPort userRepository;
     private final PasswordHasherPort passwordHasher;
     private final TokenIssuer tokenIssuer;
+    private final AuthEmailSender authEmailSender;
 
     @Override
     @Transactional
@@ -40,6 +42,10 @@ public class RegisterTenantService implements RegisterTenantUseCase {
 
         log.info("Tenant registered: slug='{}' tenantId={} admin='{}'",
                 tenant.getSlug(), tenant.getId(), admin.getEmail());
+
+        authEmailSender.sendWelcome(admin, tenant);
+        authEmailSender.sendEmailVerification(admin, tenant);
+
         return tokenIssuer.issueFor(admin, tenant);
     }
 

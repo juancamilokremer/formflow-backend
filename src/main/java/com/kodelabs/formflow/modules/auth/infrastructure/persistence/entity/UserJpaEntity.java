@@ -61,6 +61,9 @@ public class UserJpaEntity {
     @Column(nullable = false)
     private boolean active;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
     @CreationTimestamp
     @Column(updatable = false)
     private Instant createdAt;

@@ -17,14 +17,14 @@ import java.util.HexFormat;
 
 /**
  * Token adapter: JWT access token (delegated to JwtService) and opaque
- * refresh token (256-bit SecureRandom, persisted as SHA-256 hex).
+ * tokens (256-bit SecureRandom, persisted as SHA-256 hex).
  */
 @Component
 @RequiredArgsConstructor
 public class TokenServiceAdapter implements TokenServicePort {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-    private static final int REFRESH_TOKEN_BYTES = 32;
+    private static final int OPAQUE_TOKEN_BYTES = 32;
 
     private final JwtService jwtService;
 
@@ -41,15 +41,20 @@ public class TokenServiceAdapter implements TokenServicePort {
 
     @Override
     public GeneratedRefreshToken generateRefreshToken() {
-        byte[] bytes = new byte[REFRESH_TOKEN_BYTES];
-        SECURE_RANDOM.nextBytes(bytes);
-        String rawValue = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        String rawValue = generateOpaqueToken();
         Instant expiresAt = Instant.now().plusMillis(jwtService.getRefreshTokenValidityMs());
-        return new GeneratedRefreshToken(rawValue, hashRefreshToken(rawValue), expiresAt);
+        return new GeneratedRefreshToken(rawValue, hashToken(rawValue), expiresAt);
     }
 
     @Override
-    public String hashRefreshToken(String rawToken) {
+    public String generateOpaqueToken() {
+        byte[] bytes = new byte[OPAQUE_TOKEN_BYTES];
+        SECURE_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    @Override
+    public String hashToken(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));

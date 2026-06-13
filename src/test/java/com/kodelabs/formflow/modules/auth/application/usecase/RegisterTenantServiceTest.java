@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
+import com.kodelabs.formflow.modules.auth.application.service.AuthEmailSender;
 import com.kodelabs.formflow.modules.auth.application.service.TokenIssuer;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
@@ -36,6 +37,7 @@ class RegisterTenantServiceTest {
     @Mock private UserRepositoryPort userRepository;
     @Mock private PasswordHasherPort passwordHasher;
     @Mock private TokenIssuer tokenIssuer;
+    @Mock private AuthEmailSender authEmailSender;
 
     @InjectMocks
     private RegisterTenantService service;
@@ -74,6 +76,10 @@ class RegisterTenantServiceTest {
         assertThat(admin.getPasswordHash()).isEqualTo("$2a$hashed");
         assertThat(admin.getTenantId()).isEqualTo(tenantId);
         assertThat(admin.getRole()).isEqualTo(UserRole.TENANT_ADMIN);
+
+        // Registration triggers both onboarding emails
+        verify(authEmailSender).sendWelcome(any(User.class), any(Tenant.class));
+        verify(authEmailSender).sendEmailVerification(any(User.class), any(Tenant.class));
     }
 
     @Test

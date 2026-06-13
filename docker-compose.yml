@@ -18,5 +18,14 @@ services:
       timeout: 5s
       retries: 5
 
+  # SMTP de desarrollo: captura todos los correos sin enviarlos realmente.
+  # UI web para verlos: http://localhost:8025
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: formflow-mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # UI web
+
 volumes:
   postgres_data:

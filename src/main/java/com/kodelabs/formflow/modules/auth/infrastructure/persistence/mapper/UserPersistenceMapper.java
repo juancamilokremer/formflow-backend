@@ -23,6 +23,7 @@ public class UserPersistenceMapper {
                 .lastName(entity.getLastName())
                 .role(entity.getRole())
                 .active(entity.isActive())
+                .emailVerified(entity.isEmailVerified())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -41,6 +42,7 @@ public class UserPersistenceMapper {
                 .lastName(domain.getLastName())
                 .role(domain.getRole())
                 .active(domain.isActive())
+                .emailVerified(domain.isEmailVerified())
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
                 .build();

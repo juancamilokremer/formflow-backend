@@ -1,25 +1,41 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.web;
 
+import com.kodelabs.formflow.modules.auth.domain.port.in.ForgotPasswordUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.LoginUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.RefreshTokenUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.RegisterTenantUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.ResendVerificationUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.ResetPasswordUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.VerifyEmailUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.ForgotPasswordCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.LoginCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.RefreshTokenCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.RegisterTenantCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.ResendVerificationCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.ResetPasswordCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.VerifyEmailCommand;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.AuthResponse;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.ForgotPasswordRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.LoginRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.RefreshTokenRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.RegisterRequest;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.ResetPasswordRequest;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.VerifyEmailRequest;
+import com.kodelabs.formflow.shared.tenant.TenantContext;
 import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+
+import java.util.UUID;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +58,10 @@ public class AuthController {
     private final RegisterTenantUseCase registerTenantUseCase;
     private final LoginUseCase loginUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
+    private final ForgotPasswordUseCase forgotPasswordUseCase;
+    private final ResetPasswordUseCase resetPasswordUseCase;
+    private final VerifyEmailUseCase verifyEmailUseCase;
+    private final ResendVerificationUseCase resendVerificationUseCase;
     private final Messages messages;
 
     @PostMapping("/register")
@@ -99,5 +119,65 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         var result = refreshTokenUseCase.execute(new RefreshTokenCommand(request.refreshToken()));
         return ResponseEntity.ok(ApiResponse.ok(AuthResponse.from(result)));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(
+            summary = "Solicitar el restablecimiento de contraseña",
+            description = "Envía un correo con el enlace de restablecimiento (expira en 1 hora). " +
+                    "SIEMPRE responde 200, exista o no la cuenta — no revela si un email está registrado.")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        forgotPasswordUseCase.execute(new ForgotPasswordCommand(request.tenantSlug(), request.email()));
+        return ResponseEntity.ok(ApiResponse.ok(messages.get("success.auth.forgot_password"), null));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(
+            summary = "Restablecer la contraseña con el token del correo",
+            description = "Token de un solo uso. Al cambiar la contraseña se revocan todos los " +
+                    "refresh tokens activos del usuario (cierra cualquier sesión robada).")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Contraseña actualizada"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Token inválido, usado o expirado", content = @io.swagger.v3.oas.annotations.media.Content)
+    })
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        resetPasswordUseCase.execute(new ResetPasswordCommand(request.token(), request.newPassword()));
+        return ResponseEntity.ok(ApiResponse.ok(messages.get("success.auth.password_reset"), null));
+    }
+
+    @PostMapping("/verify-email")
+    @Operation(
+            summary = "Confirmar el correo con el token de verificación",
+            description = "Token de un solo uso que expira en 24 horas.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Correo verificado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Token inválido, usado o expirado", content = @io.swagger.v3.oas.annotations.media.Content)
+    })
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        verifyEmailUseCase.execute(new VerifyEmailCommand(request.token()));
+        return ResponseEntity.ok(ApiResponse.ok(messages.get("success.auth.email_verified"), null));
+    }
+
+    @PostMapping("/resend-verification")
+    @Operation(
+            summary = "Reenviar el correo de verificación al usuario autenticado",
+            security = @SecurityRequirement(name = "Bearer Auth"))
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Correo de verificación reenviado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "El correo ya está verificado", content = @io.swagger.v3.oas.annotations.media.Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @io.swagger.v3.oas.annotations.media.Content)
+    })
+    public ResponseEntity<ApiResponse<Void>> resendVerification(Authentication authentication) {
+        UUID userId = UUID.fromString((String) authentication.getPrincipal());
+        UUID tenantId = UUID.fromString(TenantContext.getTenantId());
+        resendVerificationUseCase.execute(new ResendVerificationCommand(userId, tenantId));
+        return ResponseEntity.ok(ApiResponse.ok(messages.get("success.auth.verification_sent"), null));
     }
 }

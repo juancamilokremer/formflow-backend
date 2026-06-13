@@ -19,6 +19,14 @@ public interface TokenServicePort {
     /** Generates an opaque refresh token: raw value for the client + hash to persist. */
     GeneratedRefreshToken generateRefreshToken();
 
-    /** Deterministic hash (SHA-256 hex) of an incoming refresh token, used for DB lookup. */
-    String hashRefreshToken(String rawToken);
+    /** Generates a generic opaque token (256-bit SecureRandom, URL-safe) — email links, etc. */
+    String generateOpaqueToken();
+
+    /** Deterministic hash (SHA-256 hex, 64 chars) of an opaque token, used for DB lookup. */
+    String hashToken(String rawToken);
+
+    /** Alias of {@link #hashToken(String)} kept for refresh-token call sites. */
+    default String hashRefreshToken(String rawToken) {
+        return hashToken(rawToken);
+    }
 }
