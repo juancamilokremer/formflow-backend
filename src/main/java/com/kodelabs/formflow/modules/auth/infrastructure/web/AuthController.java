@@ -19,6 +19,7 @@ import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.ForgotPasswordR
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.LoginRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.RefreshTokenRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.RegisterRequest;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.RegisterResponse;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.ResetPasswordRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.VerifyEmailRequest;
 import com.kodelabs.formflow.shared.tenant.TenantContext;
@@ -67,22 +68,23 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(
             summary = "Registrar una nueva empresa junto con su usuario administrador",
-            description = "Crea el tenant con plan FREE, su usuario TENANT_ADMIN con la contraseña " +
-                    "hasheada (BCrypt) y devuelve el par de tokens de la sesión inicial.")
+            description = "Crea el tenant con plan FREE y su usuario TENANT_ADMIN con la contraseña " +
+                    "hasheada (BCrypt). Envía un correo de verificación — el usuario debe confirmar " +
+                    "su correo antes de poder iniciar sesión, por lo que esta respuesta NO incluye tokens.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201", description = "Empresa registrada exitosamente"),
+                    responseCode = "201", description = "Empresa registrada, correo de verificación enviado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400", description = "Datos de entrada inválidos", content = @io.swagger.v3.oas.annotations.media.Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409", description = "Ya existe una empresa con ese slug", content = @io.swagger.v3.oas.annotations.media.Content)
     })
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest request) {
         var result = registerTenantUseCase.execute(new RegisterTenantCommand(
                 request.companyName(), request.slug(), request.email(),
                 request.password(), request.firstName(), request.lastName()));
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(messages.get("success.tenant.registered"), AuthResponse.from(result)));
+                .body(ApiResponse.ok(messages.get("success.tenant.registered"), RegisterResponse.from(result)));
     }
 
     @PostMapping("/login")

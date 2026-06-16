@@ -1,13 +1,14 @@
 package com.kodelabs.formflow.modules.auth.domain.port.in;
 
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.RegisterTenantCommand;
-import com.kodelabs.formflow.modules.auth.domain.port.in.result.AuthResult;
+import com.kodelabs.formflow.modules.auth.domain.port.in.result.RegisterTenantResult;
 
 /**
- * Input port: registers a new company (tenant) together with its admin user
- * and returns the tokens for the initial session.
+ * Input port: registers a new company (tenant) together with its admin user.
+ * Does not issue session tokens — the admin must confirm their email via the
+ * verification link before being able to log in.
  */
 public interface RegisterTenantUseCase {
 
-    AuthResult execute(RegisterTenantCommand command);
+    RegisterTenantResult execute(RegisterTenantCommand command);
 }

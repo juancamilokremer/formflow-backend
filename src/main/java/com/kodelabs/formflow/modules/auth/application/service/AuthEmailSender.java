@@ -43,8 +43,7 @@ public class AuthEmailSender {
                 VERIFICATION_TOKEN_VALIDITY);
         Map<String, Object> model = new HashMap<>();
         model.put("userName", user.getFirstName());
-        model.put("verificationUrl",
-                frontendBaseUrl + "/" + tenant.getSlug() + "/verify-email?token=" + rawToken);
+        model.put("verificationUrl", frontendBaseUrl + "/verify-email?token=" + rawToken);
         model.put("expirationHours", VERIFICATION_TOKEN_VALIDITY.toHours());
         sendEmail.send(EmailType.EMAIL_VERIFICATION, user.getEmail(), model);
     }
@@ -54,8 +53,7 @@ public class AuthEmailSender {
                 RESET_TOKEN_VALIDITY);
         Map<String, Object> model = new HashMap<>();
         model.put("userName", user.getFirstName());
-        model.put("resetUrl",
-                frontendBaseUrl + "/" + tenant.getSlug() + "/reset-password?token=" + rawToken);
+        model.put("resetUrl", frontendBaseUrl + "/reset-password?token=" + rawToken);
         model.put("expirationHours", RESET_TOKEN_VALIDITY.toHours());
         sendEmail.send(EmailType.PASSWORD_RESET, user.getEmail(), model);
     }
