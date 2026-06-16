@@ -1,11 +1,10 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
 import com.kodelabs.formflow.modules.auth.application.service.AuthEmailSender;
-import com.kodelabs.formflow.modules.auth.application.service.TokenIssuer;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
 import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
-import com.kodelabs.formflow.modules.auth.domain.port.in.result.AuthResult;
+import com.kodelabs.formflow.modules.auth.domain.port.in.result.RegisterTenantResult;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.RegisterTenantCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.out.PasswordHasherPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
@@ -36,7 +35,6 @@ class RegisterTenantServiceTest {
     @Mock private TenantRepositoryPort tenantRepository;
     @Mock private UserRepositoryPort userRepository;
     @Mock private PasswordHasherPort passwordHasher;
-    @Mock private TokenIssuer tokenIssuer;
     @Mock private AuthEmailSender authEmailSender;
 
     @InjectMocks
@@ -52,7 +50,7 @@ class RegisterTenantServiceTest {
     }
 
     @Test
-    void registersTenantAndAdminAndDelegatesTokenIssuing() {
+    void registersTenantAndAdminWithoutIssuingTokens() {
         UUID tenantId = UUID.randomUUID();
         when(tenantRepository.existsBySlug("empresa-abc")).thenReturn(false);
         when(tenantRepository.save(any(Tenant.class))).thenAnswer(inv -> {
@@ -62,12 +60,11 @@ class RegisterTenantServiceTest {
         });
         when(passwordHasher.hash("password123")).thenReturn("$2a$hashed");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-        AuthResult issued = new AuthResult("jwt", "refresh", 86400000L, null, null);
-        when(tokenIssuer.issueFor(any(User.class), any(Tenant.class))).thenReturn(issued);
 
-        AuthResult result = service.execute(command);
+        RegisterTenantResult result = service.execute(command);
 
-        assertThat(result).isSameAs(issued);
+        assertThat(result.tenant().getId()).isEqualTo(tenantId);
+        assertThat(result.user().getEmail()).isEqualTo("admin@abc.com");
 
         // The admin user is created with the hashed password, never plain text
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -101,8 +98,6 @@ class RegisterTenantServiceTest {
         when(tenantRepository.save(any(Tenant.class))).thenAnswer(inv -> inv.getArgument(0));
         when(passwordHasher.hash(anyString())).thenReturn("$2a$hashed");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(tokenIssuer.issueFor(any(), any())).thenReturn(
-                new AuthResult("jwt", "refresh", 1L, null, null));
 
         var uppercasedEmail = new RegisterTenantCommand(
                 "Empresa ABC", "empresa-abc", "  Admin@ABC.com ",

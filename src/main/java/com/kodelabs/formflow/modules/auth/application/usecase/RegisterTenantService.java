@@ -1,11 +1,10 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
 import com.kodelabs.formflow.modules.auth.application.service.AuthEmailSender;
-import com.kodelabs.formflow.modules.auth.application.service.TokenIssuer;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
 import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
-import com.kodelabs.formflow.modules.auth.domain.port.in.result.AuthResult;
+import com.kodelabs.formflow.modules.auth.domain.port.in.result.RegisterTenantResult;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.RegisterTenantCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.RegisterTenantUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.out.PasswordHasherPort;
@@ -29,12 +28,11 @@ public class RegisterTenantService implements RegisterTenantUseCase {
     private final TenantRepositoryPort tenantRepository;
     private final UserRepositoryPort userRepository;
     private final PasswordHasherPort passwordHasher;
-    private final TokenIssuer tokenIssuer;
     private final AuthEmailSender authEmailSender;
 
     @Override
     @Transactional
-    public AuthResult execute(RegisterTenantCommand command) {
+    public RegisterTenantResult execute(RegisterTenantCommand command) {
         ensureSlugIsAvailable(command.slug());
 
         Tenant tenant = createTenant(command);
@@ -46,7 +44,7 @@ public class RegisterTenantService implements RegisterTenantUseCase {
         authEmailSender.sendWelcome(admin, tenant);
         authEmailSender.sendEmailVerification(admin, tenant);
 
-        return tokenIssuer.issueFor(admin, tenant);
+        return new RegisterTenantResult(admin, tenant);
     }
 
     private void ensureSlugIsAvailable(String slug) {
