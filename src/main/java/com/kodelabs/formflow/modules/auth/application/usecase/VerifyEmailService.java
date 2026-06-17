@@ -1,11 +1,14 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
+import com.kodelabs.formflow.modules.auth.application.service.AuthEmailSender;
 import com.kodelabs.formflow.modules.auth.domain.model.EmailToken;
 import com.kodelabs.formflow.modules.auth.domain.model.EmailTokenType;
+import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
 import com.kodelabs.formflow.modules.auth.domain.port.in.VerifyEmailUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.VerifyEmailCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.out.EmailTokenRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TokenServicePort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
@@ -27,7 +30,9 @@ public class VerifyEmailService implements VerifyEmailUseCase {
 
     private final EmailTokenRepositoryPort emailTokenRepository;
     private final UserRepositoryPort userRepository;
+    private final TenantRepositoryPort tenantRepository;
     private final TokenServicePort tokenService;
+    private final AuthEmailSender authEmailSender;
 
     @Override
     @Transactional
@@ -47,5 +52,9 @@ public class VerifyEmailService implements VerifyEmailUseCase {
         emailTokenRepository.save(token);
 
         log.info("Email verified for user {}", user.getId());
+
+        Tenant tenant = tenantRepository.findById(user.getTenantId())
+                .orElseThrow(() -> new BusinessException(INVALID_TOKEN, HttpStatus.BAD_REQUEST));
+        authEmailSender.sendWelcome(user, tenant);
     }
 }
