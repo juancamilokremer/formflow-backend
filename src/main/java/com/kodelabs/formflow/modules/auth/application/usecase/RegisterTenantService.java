@@ -41,7 +41,6 @@ public class RegisterTenantService implements RegisterTenantUseCase {
         log.info("Tenant registered: slug='{}' tenantId={} admin='{}'",
                 tenant.getSlug(), tenant.getId(), admin.getEmail());
 
-        authEmailSender.sendWelcome(admin, tenant);
         authEmailSender.sendEmailVerification(admin, tenant);
 
         return new RegisterTenantResult(admin, tenant);

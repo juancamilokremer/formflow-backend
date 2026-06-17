@@ -1,10 +1,13 @@
 package com.kodelabs.formflow.modules.auth.application.usecase;
 
+import com.kodelabs.formflow.modules.auth.application.service.AuthEmailSender;
 import com.kodelabs.formflow.modules.auth.domain.model.EmailToken;
 import com.kodelabs.formflow.modules.auth.domain.model.EmailTokenType;
+import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.User;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.VerifyEmailCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.out.EmailTokenRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TokenServicePort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
@@ -32,12 +35,15 @@ class VerifyEmailServiceTest {
 
     @Mock private EmailTokenRepositoryPort emailTokenRepository;
     @Mock private UserRepositoryPort userRepository;
+    @Mock private TenantRepositoryPort tenantRepository;
     @Mock private TokenServicePort tokenService;
+    @Mock private AuthEmailSender authEmailSender;
 
     @InjectMocks
     private VerifyEmailService service;
 
     private User user;
+    private Tenant tenant;
     private EmailToken token;
     private final VerifyEmailCommand command = new VerifyEmailCommand("raw-token");
 
@@ -49,6 +55,11 @@ class VerifyEmailServiceTest {
                 .email("admin@abc.com")
                 .firstName("Juan")
                 .lastName("K")
+                .build();
+        tenant = Tenant.builder()
+                .id(user.getTenantId())
+                .slug("empresa-abc")
+                .name("Empresa ABC")
                 .build();
         token = EmailToken.builder()
                 .userId(user.getId())
@@ -66,6 +77,8 @@ class VerifyEmailServiceTest {
                 .thenReturn(Optional.of(token));
         when(userRepository.findByIdAndTenantId(user.getId(), user.getTenantId()))
                 .thenReturn(Optional.of(user));
+        when(tenantRepository.findById(user.getTenantId()))
+                .thenReturn(Optional.of(tenant));
 
         service.execute(command);
 
@@ -76,6 +89,8 @@ class VerifyEmailServiceTest {
         ArgumentCaptor<EmailToken> tokenCaptor = ArgumentCaptor.forClass(EmailToken.class);
         verify(emailTokenRepository).save(tokenCaptor.capture());
         assertThat(tokenCaptor.getValue().isUsed()).isTrue();
+
+        verify(authEmailSender).sendWelcome(any(User.class), any(Tenant.class));
     }
 
     @Test

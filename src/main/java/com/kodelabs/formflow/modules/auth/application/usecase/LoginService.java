@@ -65,6 +65,12 @@ public class LoginService implements LoginUseCase {
             throw invalidCredentials(
                     "wrong password or inactive user for '" + email + "' on tenant '" + tenant.getSlug() + "'");
         }
+
+        if (!user.isEmailVerified()) {
+            log.warn("Login rejected: email not verified for '{}' on tenant '{}'", email, tenant.getSlug());
+            throw new BusinessException("error.auth.email_not_verified", HttpStatus.FORBIDDEN);
+        }
+
         return user;
     }
 

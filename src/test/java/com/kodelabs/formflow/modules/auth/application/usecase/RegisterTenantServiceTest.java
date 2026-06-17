@@ -74,8 +74,8 @@ class RegisterTenantServiceTest {
         assertThat(admin.getTenantId()).isEqualTo(tenantId);
         assertThat(admin.getRole()).isEqualTo(UserRole.TENANT_ADMIN);
 
-        // Registration triggers both onboarding emails
-        verify(authEmailSender).sendWelcome(any(User.class), any(Tenant.class));
+        // Registration sends only the verification email; welcome is sent after verification
+        verify(authEmailSender, never()).sendWelcome(any(User.class), any(Tenant.class));
         verify(authEmailSender).sendEmailVerification(any(User.class), any(Tenant.class));
     }
 
