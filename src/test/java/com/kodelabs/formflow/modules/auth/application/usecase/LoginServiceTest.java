@@ -59,6 +59,7 @@ class LoginServiceTest {
                 .firstName("Juan")
                 .lastName("Kremer")
                 .role(UserRole.TENANT_ADMIN)
+                .emailVerified(true)
                 .build();
         command = new LoginCommand("empresa-abc", "admin@abc.com", "password123");
     }
@@ -121,6 +122,23 @@ class LoginServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
                         .isEqualTo(HttpStatus.FORBIDDEN));
+    }
+
+    @Test
+    void failsWithForbiddenWhenEmailNotVerified() {
+        user.setEmailVerified(false);
+        when(tenantRepository.findBySlug("empresa-abc")).thenReturn(Optional.of(tenant));
+        when(userRepository.findByEmailAndTenantId("admin@abc.com", tenant.getId()))
+                .thenReturn(Optional.of(user));
+        when(passwordHasher.matches("password123", "$2a$hashed")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.auth.email_not_verified")
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
+                        .isEqualTo(HttpStatus.FORBIDDEN));
+
+        verify(tokenIssuer, never()).issueFor(any(), any());
     }
 
     @Test
