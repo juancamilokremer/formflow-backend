@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,12 +44,11 @@ public class ReorderSectionsService implements ReorderSectionsUseCase {
             throw new BusinessException("error.section.reorder_invalid", HttpStatus.BAD_REQUEST);
         }
 
-        List<FormSection> reordered = new ArrayList<>();
-        for (int i = 0; i < command.orderedSectionIds().size(); i++) {
-            FormSection s = byId.get(command.orderedSectionIds().get(i));
-            s.setPosition(i);
-            reordered.add(s);
+        List<UUID> ordered = command.orderedSectionIds();
+        for (int i = 0; i < ordered.size(); i++) {
+            byId.get(ordered.get(i)).setPosition(i);
         }
+        List<FormSection> reordered = ordered.stream().map(byId::get).toList();
 
         sectionRepository.saveAll(reordered);
 

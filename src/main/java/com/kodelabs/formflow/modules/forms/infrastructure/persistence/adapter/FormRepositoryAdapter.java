@@ -1,13 +1,10 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.adapter;
 
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
-import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.mapper.FormPersistenceMapper;
-import com.kodelabs.formflow.modules.forms.infrastructure.persistence.mapper.FormSectionPersistenceMapper;
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository.FormJpaRepository;
-import com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository.FormSectionJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,14 +14,11 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class FormRepositoryAdapter implements FormRepositoryPort, FormSectionRepositoryPort {
+public class FormRepositoryAdapter implements FormRepositoryPort {
 
     private final FormJpaRepository formJpa;
-    private final FormSectionJpaRepository sectionJpa;
     private final FormPersistenceMapper formMapper;
-    private final FormSectionPersistenceMapper sectionMapper;
-
-    // ── FormRepositoryPort ──────────────────────────────────────────────────
+    private final FormSectionRepositoryPort sectionRepository;
 
     @Override
     public Form save(Form form) {
@@ -40,10 +34,7 @@ public class FormRepositoryAdapter implements FormRepositoryPort, FormSectionRep
     public Optional<Form> findByIdAndTenantIdWithSections(UUID id, UUID tenantId) {
         return formJpa.findActiveByIdAndTenantId(id, tenantId).map(entity -> {
             Form form = formMapper.toDomain(entity);
-            List<FormSection> sections = sectionJpa
-                    .findActiveByFormIdAndTenantId(id, tenantId)
-                    .stream().map(sectionMapper::toDomain).toList();
-            form.setSections(sections);
+            form.setSections(sectionRepository.findActiveByFormIdAndTenantId(id, tenantId));
             return form;
         });
     }
@@ -57,34 +48,5 @@ public class FormRepositoryAdapter implements FormRepositoryPort, FormSectionRep
     @Override
     public boolean existsByIdAndTenantId(UUID id, UUID tenantId) {
         return formJpa.existsActiveByIdAndTenantId(id, tenantId);
-    }
-
-    // ── FormSectionRepositoryPort ───────────────────────────────────────────
-
-    @Override
-    public FormSection save(FormSection section) {
-        return sectionMapper.toDomain(sectionJpa.save(sectionMapper.toEntity(section)));
-    }
-
-    @Override
-    public void saveAll(List<FormSection> sections) {
-        sectionJpa.saveAll(sections.stream().map(sectionMapper::toEntity).toList());
-    }
-
-    @Override
-    public Optional<FormSection> findByIdAndFormIdAndTenantId(UUID id, UUID formId, UUID tenantId) {
-        return sectionJpa.findActiveByIdAndFormIdAndTenantId(id, formId, tenantId)
-                .map(sectionMapper::toDomain);
-    }
-
-    @Override
-    public List<FormSection> findActiveByFormIdAndTenantId(UUID formId, UUID tenantId) {
-        return sectionJpa.findActiveByFormIdAndTenantId(formId, tenantId)
-                .stream().map(sectionMapper::toDomain).toList();
-    }
-
-    @Override
-    public int countActiveByFormId(UUID formId) {
-        return sectionJpa.countActiveByFormId(formId);
     }
 }

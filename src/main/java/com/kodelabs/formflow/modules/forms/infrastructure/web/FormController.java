@@ -1,34 +1,23 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
-import com.kodelabs.formflow.modules.forms.domain.port.in.AddSectionUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.CreateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteFormUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteSectionUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ListFormsUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.ReorderSectionsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateSectionUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddSectionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteFormCommand;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteSectionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListFormsQuery;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.ReorderSectionsCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormCommand;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateSectionCommand;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.CreateFormRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.CreateSectionRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.FormDetailResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.FormSummaryResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.ReorderSectionsRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.SectionResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.UpdateFormRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.UpdateSectionRequest;
-import com.kodelabs.formflow.shared.tenant.TenantContext;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -48,10 +37,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
+import static com.kodelabs.formflow.shared.web.ControllerUtils.tenantId;
+import static com.kodelabs.formflow.shared.web.ControllerUtils.userId;
+
 @RestController
 @RequestMapping("/api/v1/forms")
 @RequiredArgsConstructor
-@Tag(name = "Formularios", description = "CRUD de formularios y secciones. Requiere autenticación.")
+@Tag(name = "Formularios", description = "CRUD de formularios. Requiere autenticacion.")
 @SecurityRequirement(name = "Bearer Auth")
 public class FormController {
 
@@ -60,28 +52,41 @@ public class FormController {
     private final GetFormUseCase getForm;
     private final UpdateFormUseCase updateForm;
     private final DeleteFormUseCase deleteForm;
-    private final AddSectionUseCase addSection;
-    private final UpdateSectionUseCase updateSection;
-    private final DeleteSectionUseCase deleteSection;
-    private final ReorderSectionsUseCase reorderSections;
-
-    // ── Forms ────────────────────────────────────────────────────────────────
 
     @PostMapping
-    @Operation(summary = "Crear un nuevo formulario")
+    @Operation(
+            summary = "Crear un nuevo formulario",
+            description = "Crea un formulario vacio (sin secciones) para el tenant activo. " +
+                    "El tipo determina si el formulario soporta scoring (CANDIDATES, DIAGNOSTIC) " +
+                    "o es solo recoleccion de datos (REGISTRATION).")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201", description = "Formulario creado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    })
     public ResponseEntity<ApiResponse<FormSummaryResponse>> create(
             @Valid @RequestBody CreateFormRequest request, Authentication auth) {
-        UUID tenantId = tenantId();
-        UUID userId = userId(auth);
         var result = createForm.execute(new CreateFormCommand(
-                tenantId, userId, request.name(), request.description(),
+                tenantId(), userId(auth), request.name(), request.description(),
                 request.type(), request.timeLimitSeconds()));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(FormSummaryResponse.from(result)));
     }
 
     @GetMapping
-    @Operation(summary = "Listar formularios del tenant")
+    @Operation(
+            summary = "Listar formularios del tenant",
+            description = "Retorna todos los formularios activos (no eliminados) del tenant. " +
+                    "Incluye el conteo de secciones de cada formulario.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Lista de formularios"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    })
     public ResponseEntity<ApiResponse<List<FormSummaryResponse>>> list() {
         var results = listForms.execute(new ListFormsQuery(tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(
@@ -89,14 +94,37 @@ public class FormController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener un formulario con sus secciones")
+    @Operation(
+            summary = "Obtener un formulario con sus secciones",
+            description = "Retorna el formulario con la lista completa de secciones activas ordenadas por posicion.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Formulario con secciones"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
+    })
     public ResponseEntity<ApiResponse<FormDetailResponse>> get(@PathVariable UUID id) {
         var result = getForm.execute(new GetFormQuery(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(FormDetailResponse.from(result)));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar metadatos de un formulario")
+    @Operation(
+            summary = "Actualizar metadatos del formulario",
+            description = "Actualiza nombre, descripcion y tiempo limite. No incrementa la version " +
+                    "del formulario — solo los cambios estructurales (secciones) lo hacen.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Formulario actualizado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
+    })
     public ResponseEntity<ApiResponse<FormSummaryResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateFormRequest request, Authentication auth) {
@@ -107,61 +135,20 @@ public class FormController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar (soft delete) un formulario")
+    @Operation(
+            summary = "Eliminar un formulario (soft delete)",
+            description = "Marca el formulario como eliminado sin borrar datos historicos. " +
+                    "Las respuestas existentes y sus snapshots se conservan.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Formulario eliminado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
+    })
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         deleteForm.execute(new DeleteFormCommand(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(null));
-    }
-
-    // ── Sections ─────────────────────────────────────────────────────────────
-
-    @PostMapping("/{formId}/sections")
-    @Operation(summary = "Agregar una sección al formulario")
-    public ResponseEntity<ApiResponse<SectionResponse>> addSection(
-            @PathVariable UUID formId,
-            @Valid @RequestBody CreateSectionRequest request, Authentication auth) {
-        var result = addSection.execute(new AddSectionCommand(
-                formId, tenantId(), userId(auth), request.title(), request.description()));
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(SectionResponse.from(result)));
-    }
-
-    @PutMapping("/{formId}/sections/{sectionId}")
-    @Operation(summary = "Actualizar una sección")
-    public ResponseEntity<ApiResponse<SectionResponse>> updateSection(
-            @PathVariable UUID formId, @PathVariable UUID sectionId,
-            @Valid @RequestBody UpdateSectionRequest request) {
-        var result = updateSection.execute(new UpdateSectionCommand(
-                sectionId, formId, tenantId(), request.title(), request.description()));
-        return ResponseEntity.ok(ApiResponse.ok(SectionResponse.from(result)));
-    }
-
-    @DeleteMapping("/{formId}/sections/{sectionId}")
-    @Operation(summary = "Eliminar (soft delete) una sección")
-    public ResponseEntity<ApiResponse<Void>> deleteSection(
-            @PathVariable UUID formId, @PathVariable UUID sectionId, Authentication auth) {
-        deleteSection.execute(new DeleteSectionCommand(sectionId, formId, tenantId(), userId(auth)));
-        return ResponseEntity.ok(ApiResponse.ok(null));
-    }
-
-    @PutMapping("/{formId}/sections/reorder")
-    @Operation(summary = "Reordenar secciones del formulario")
-    public ResponseEntity<ApiResponse<List<SectionResponse>>> reorder(
-            @PathVariable UUID formId,
-            @Valid @RequestBody ReorderSectionsRequest request, Authentication auth) {
-        var results = reorderSections.execute(new ReorderSectionsCommand(
-                formId, tenantId(), userId(auth), request.orderedSectionIds()));
-        return ResponseEntity.ok(ApiResponse.ok(
-                results.stream().map(SectionResponse::from).toList()));
-    }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    private UUID tenantId() {
-        return UUID.fromString(TenantContext.getTenantId());
-    }
-
-    private UUID userId(Authentication auth) {
-        return UUID.fromString((String) auth.getPrincipal());
     }
 }
