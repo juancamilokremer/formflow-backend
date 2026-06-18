@@ -6,7 +6,5 @@ import java.util.Map;
 
 public record QuestionTypeInfo(
         QuestionType type,
-        String label,
-        String description,
         Map<String, Object> configSchema
 ) {}

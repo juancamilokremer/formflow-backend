@@ -21,23 +21,23 @@ import java.util.Map;
 public class QuestionTypesController {
 
     private static final List<QuestionTypeInfo> TYPES = List.of(
-            new QuestionTypeInfo(QuestionType.TEXT, "Texto", "Respuesta de texto libre",
+            new QuestionTypeInfo(QuestionType.TEXT,
                     Map.of("maxLength", 2000, "placeholder", "", "rows", 1)),
-            new QuestionTypeInfo(QuestionType.SINGLE, "Opcion unica", "Radio buttons — el respondente elige una opcion",
-                    Map.of("options", List.of(Map.of("id", "uuid", "label", "Opcion", "score", 0)), "randomize", false)),
-            new QuestionTypeInfo(QuestionType.MULTIPLE, "Opcion multiple", "Checkboxes — el respondente elige una o mas opciones",
-                    Map.of("options", List.of(Map.of("id", "uuid", "label", "Opcion", "score", 0)), "maxSelections", null, "randomize", false)),
-            new QuestionTypeInfo(QuestionType.SCALE, "Escala", "Escala numerica o Likert con scoring opcional",
+            new QuestionTypeInfo(QuestionType.SINGLE,
+                    Map.of("options", List.of(Map.of("id", "uuid", "label", "Option", "score", 0)), "randomize", false)),
+            new QuestionTypeInfo(QuestionType.MULTIPLE,
+                    Map.of("options", List.of(Map.of("id", "uuid", "label", "Option", "score", 0)), "randomize", false)),
+            new QuestionTypeInfo(QuestionType.SCALE,
                     Map.of("min", 1, "max", 5, "minLabel", "", "maxLabel", "", "scoringType", "NONE")),
-            new QuestionTypeInfo(QuestionType.DATE, "Fecha", "Selector de fecha con tiempo opcional",
-                    Map.of("includeTime", false, "minDate", null, "maxDate", null)),
-            new QuestionTypeInfo(QuestionType.FILE, "Archivo", "Carga de archivos con tipo y tamano limitados",
+            new QuestionTypeInfo(QuestionType.DATE,
+                    Map.of("includeTime", false)),
+            new QuestionTypeInfo(QuestionType.FILE,
                     Map.of("maxSizeMb", 5, "allowedTypes", List.of("pdf", "jpg", "png"))),
-            new QuestionTypeInfo(QuestionType.MATRIX, "Matriz", "Grilla de filas x columnas con puntaje por columna",
-                    Map.of("rows", List.of(Map.of("id", "uuid", "label", "Fila")),
-                            "columns", List.of(Map.of("id", "uuid", "label", "Columna", "score", 0)))),
-            new QuestionTypeInfo(QuestionType.NPS, "NPS", "Net Promoter Score — escala 0 a 10",
-                    Map.of("minLabel", "Nada probable", "maxLabel", "Extremadamente probable"))
+            new QuestionTypeInfo(QuestionType.MATRIX,
+                    Map.of("rows", List.of(Map.of("id", "uuid", "label", "Row")),
+                            "columns", List.of(Map.of("id", "uuid", "label", "Column", "score", 0)))),
+            new QuestionTypeInfo(QuestionType.NPS,
+                    Map.of("minLabel", "", "maxLabel", ""))
     );
 
     @GetMapping
