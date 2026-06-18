@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.domain.model;
 
+import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -7,28 +8,31 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
- * A section within a Form. Pure domain POJO — no JPA dependencies.
+ * A question within a FormSection. Pure domain POJO — no JPA dependencies.
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FormSection {
+public class FormQuestion {
 
     private UUID id;
+    private UUID sectionId;
     private UUID formId;
     private UUID tenantId;
     private String title;
     private String description;
+    private QuestionType type;
     private int position;
     @Builder.Default
-    private List<FormQuestion> questions = new ArrayList<>();
+    private boolean required = false;
+    private UUID categoryId;
+    private Integer timeLimitSeconds;
+    private QuestionConfig config;
     private Instant deletedAt;
     private Instant createdAt;
     private Instant updatedAt;
