@@ -5,6 +5,10 @@ import org.springframework.http.HttpStatus;
 
 public abstract class QuestionConfig {
 
+    /** Maximum score a respondent can obtain for a question with this config. */
+    public int maxScore() {
+        return 0;
+    }
 
     protected void require(Object value, String field) {
         if (value == null) {

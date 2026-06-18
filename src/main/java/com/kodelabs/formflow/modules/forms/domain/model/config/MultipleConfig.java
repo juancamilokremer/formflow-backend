@@ -22,6 +22,12 @@ public class MultipleConfig extends QuestionConfig implements Validatable {
     @Builder.Default
     private boolean randomize = false;
 
+    /** For multiple-choice, all scorable options can be selected simultaneously. */
+    @Override
+    public int maxScore() {
+        return options.stream().mapToInt(AnswerOption::getScore).sum();
+    }
+
     @Override
     public void validate() {
         require(options, "options");

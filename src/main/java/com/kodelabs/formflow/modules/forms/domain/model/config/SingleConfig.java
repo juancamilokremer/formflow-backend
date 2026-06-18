@@ -22,6 +22,11 @@ public class SingleConfig extends QuestionConfig implements Validatable {
     private boolean randomize = false;
 
     @Override
+    public int maxScore() {
+        return options.stream().mapToInt(AnswerOption::getScore).max().orElse(0);
+    }
+
+    @Override
     public void validate() {
         require(options, "options");
     }
