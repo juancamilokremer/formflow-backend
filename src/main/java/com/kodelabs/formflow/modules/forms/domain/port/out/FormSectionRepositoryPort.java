@@ -22,4 +22,7 @@ public interface FormSectionRepositoryPort {
 
     /** Returns active section counts keyed by formId — single query, avoids N+1 on list views. */
     Map<UUID, Integer> countAllActiveByFormIds(List<UUID> formIds);
+
+    /** Returns IDs of active sections for a form — used to fetch questions without loading full section objects. */
+    List<UUID> findActiveSectionIdsByFormId(UUID formId);
 }
