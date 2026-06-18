@@ -7,5 +7,6 @@ public record AddSectionCommand(
         UUID tenantId,
         UUID userId,
         String title,
-        String description
+        String description,
+        Integer timeLimitSeconds
 ) {}

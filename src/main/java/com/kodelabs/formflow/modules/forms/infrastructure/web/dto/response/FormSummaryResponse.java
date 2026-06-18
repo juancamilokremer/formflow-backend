@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.forms.infrastructure.web.dto;
+package com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response;
 
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormSummaryResult;

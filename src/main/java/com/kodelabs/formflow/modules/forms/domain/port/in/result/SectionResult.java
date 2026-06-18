@@ -12,6 +12,7 @@ public record SectionResult(
         String title,
         String description,
         int position,
+        Integer timeLimitSeconds,
         List<QuestionResult> questions,
         Instant createdAt,
         Instant updatedAt
@@ -21,6 +22,6 @@ public record SectionResult(
                 .map(QuestionResult::from).toList();
         return new SectionResult(
                 s.getId(), s.getFormId(), s.getTitle(), s.getDescription(),
-                s.getPosition(), questions, s.getCreatedAt(), s.getUpdatedAt());
+                s.getPosition(), s.getTimeLimitSeconds(), questions, s.getCreatedAt(), s.getUpdatedAt());
     }
 }

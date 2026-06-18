@@ -54,7 +54,7 @@ class AddSectionServiceTest {
         when(sectionRepository.save(any())).thenReturn(saved);
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        SectionResult result = service.execute(new AddSectionCommand(formId, tenantId, userId, "S3", null));
+        SectionResult result = service.execute(new AddSectionCommand(formId, tenantId, userId, "S3", null, null));
 
         assertThat(result.title()).isEqualTo("S3");
         assertThat(result.position()).isEqualTo(2);
@@ -71,7 +71,7 @@ class AddSectionServiceTest {
         when(sectionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.execute(new AddSectionCommand(formId, tenantId, userId, "Primera", null));
+        service.execute(new AddSectionCommand(formId, tenantId, userId, "Primera", null, null));
 
         ArgumentCaptor<FormSection> captor = ArgumentCaptor.forClass(FormSection.class);
         verify(sectionRepository).save(captor.capture());
@@ -79,10 +79,24 @@ class AddSectionServiceTest {
     }
 
     @Test
+    void propagatesTimeLimitSecondsToPersistedSection() {
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(sectionRepository.countActiveByFormId(formId)).thenReturn(0);
+        when(sectionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.execute(new AddSectionCommand(formId, tenantId, userId, "Timed", null, 90));
+
+        ArgumentCaptor<FormSection> captor = ArgumentCaptor.forClass(FormSection.class);
+        verify(sectionRepository).save(captor.capture());
+        assertThat(captor.getValue().getTimeLimitSeconds()).isEqualTo(90);
+    }
+
+    @Test
     void throwsNotFoundWhenFormDoesNotBelongToTenant() {
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new AddSectionCommand(formId, tenantId, userId, "S", null)))
+        assertThatThrownBy(() -> service.execute(new AddSectionCommand(formId, tenantId, userId, "S", null, null)))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.form.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));

@@ -8,10 +8,10 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddQuestionCom
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteQuestionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ReorderQuestionsCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateQuestionCommand;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.AddQuestionRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.QuestionResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.ReorderQuestionsRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.UpdateQuestionRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.AddQuestionRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.QuestionResponse;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.ReorderQuestionsRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateQuestionRequest;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

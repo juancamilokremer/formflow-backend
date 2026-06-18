@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.forms.infrastructure.web.dto;
+package com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response;
 
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SectionResult;
 
@@ -12,6 +12,7 @@ public record SectionResponse(
         String title,
         String description,
         int position,
+        Integer timeLimitSeconds,
         List<QuestionResponse> questions,
         Instant createdAt,
         Instant updatedAt
@@ -21,6 +22,6 @@ public record SectionResponse(
                 .map(QuestionResponse::from).toList();
         return new SectionResponse(
                 r.id(), r.formId(), r.title(), r.description(),
-                r.position(), questions, r.createdAt(), r.updatedAt());
+                r.position(), r.timeLimitSeconds(), questions, r.createdAt(), r.updatedAt());
     }
 }

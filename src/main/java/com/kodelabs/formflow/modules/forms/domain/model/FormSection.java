@@ -27,6 +27,7 @@ public class FormSection {
     private String title;
     private String description;
     private int position;
+    private Integer timeLimitSeconds;
     @Builder.Default
     private List<FormQuestion> questions = new ArrayList<>();
     private Instant deletedAt;
