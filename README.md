@@ -42,6 +42,137 @@ mvn test
 3. Botón **Authorize** (candado) → pega el token
 4. Los endpoints protegidos quedan autenticados; los correos enviados se ven en MailHog
 
+## Funcionalidad actual (M2)
+
+### Formularios, secciones y preguntas
+
+- **CRUD de formularios**: crear, listar, obtener, actualizar y eliminar formularios con
+  soft delete y versionamiento automático (`version` se incrementa en cada cambio estructural)
+- **CRUD de secciones**: agregar, actualizar, eliminar y reordenar secciones dentro de un formulario
+- **CRUD de preguntas**: agregar, actualizar, eliminar y reordenar preguntas dentro de una sección
+- **Motor de tipos de campo extensible**: 8 tipos soportados con validación, post-procesamiento
+  y schema por defecto encapsulados en un handler por tipo (ver [Patrón TypeHandler](#patrón-questiontypehandler))
+- **Auto-scoring para tipo SCALE**: distribución lineal de puntajes `score = round(value × 10 / max)`
+- **Catálogo de tipos**: `GET /api/v1/forms/question-types` retorna todos los tipos con su schema
+  de configuración esperado (consumido por el constructor drag & drop del frontend)
+
+---
+
+## Patrón QuestionTypeHandler
+
+### El problema
+
+Cada tipo de pregunta (`TEXT`, `SCALE`, `MATRIX`…) tiene su propia estructura de configuración,
+reglas de validación y lógica de post-procesamiento. El enfoque naive usa `switch` en cada punto
+del sistema que necesita saber el tipo:
+
+```java
+// ❌ Cada nuevo tipo obliga a modificar 3 archivos existentes
+switch (type) {
+    case TEXT   -> objectMapper.convertValue(raw, TextConfig.class);
+    case SCALE  -> buildScale(raw);  // lógica especial aquí
+    case MATRIX -> ...
+}
+```
+
+Esto viola el **principio Open/Closed**: agregar un tipo requiere abrir y modificar clases ya
+probadas en producción.
+
+### La solución
+
+Cada tipo encapsula **todo** su comportamiento en un `QuestionTypeHandler` propio, descubierto
+automáticamente por Spring. El sistema central nunca necesita conocer los tipos concretos.
+
+```
+QuestionTypeHandler<T> (interfaz)
+  ├── type()            → identidad del tipo (QuestionType record)
+  ├── build(Map)        → deserializar + post-procesar + validar (desde HTTP request)
+  ├── deserialize(json) → reconstruir desde BD
+  └── defaultSchema()   → schema de ejemplo para el catálogo del frontend
+```
+
+`QuestionType` es un `record(String code)` en lugar de un enum, lo que permite agregar tipos
+externos sin modificar el core.
+
+### Flujo de una request
+
+```
+POST /questions  { type: "SCALE", config: { min:1, max:5, scoringType:"AUTO" } }
+        │
+        ▼
+QuestionConfigFactory
+  → QuestionTypeRegistry.get(QuestionType("SCALE"))
+        │
+        ▼
+ScaleTypeHandler.build(rawConfig)
+  1. objectMapper.convertValue(raw, ScaleConfig.class)
+  2. config.calculateAutoScores()   ← lógica exclusiva de SCALE
+  3. config.validate()              ← ScaleConfig implements Validatable
+  4. retorna ScaleConfig listo
+        │
+        ▼
+FormQuestionPersistenceMapper.toEntity()
+  → type = "SCALE" (String en BD)
+  → config = JSON serializado
+
+// En lectura, el mapper hace lo contrario:
+  → registry.get(new QuestionType("SCALE")).deserialize(json)
+```
+
+### Cómo agregar un nuevo tipo
+
+1. Agregar el tipo al enum (una línea):
+```java
+// QuestionType no es enum, es record — solo crear los archivos de abajo
+```
+
+2. Crear `RankingConfig.java`:
+```java
+public class RankingConfig extends QuestionConfig implements Validatable {
+    private List<String> items;
+    @Override public void validate() { require(items, "items"); }
+}
+```
+
+3. Crear `RankingTypeHandler.java`:
+```java
+@Component
+public class RankingTypeHandler implements QuestionTypeHandler<RankingConfig> {
+    public static final QuestionType TYPE = new QuestionType("RANKING");
+    // build(), deserialize(), defaultSchema()
+}
+```
+
+**Spring descubre el handler automáticamente. `QuestionConfigFactory`,
+`FormQuestionPersistenceMapper` y `QuestionTypesController` no se tocan.**
+
+### Estructura de clases
+
+```
+application/service/
+├── QuestionTypeRegistry.java          # Mapa tipo → handler (singleton, construido al arrancar)
+├── QuestionConfigFactory.java         # Fachada delgada usada por los casos de uso
+└── handler/
+    ├── QuestionTypeHandler.java        # Interfaz + helper validateIfNeeded()
+    ├── TextTypeHandler.java
+    ├── SingleTypeHandler.java
+    ├── MultipleTypeHandler.java
+    ├── ScaleTypeHandler.java           # Incluye lógica calculateAutoScores
+    ├── DateTypeHandler.java
+    ├── FileTypeHandler.java
+    ├── MatrixTypeHandler.java
+    └── NpsTypeHandler.java
+
+domain/model/
+├── QuestionType.java                   # record(String code) — no enum
+└── config/
+    ├── QuestionConfig.java             # Clase base abstracta con helper require()
+    ├── Validatable.java                # Interface para configs con reglas de validación
+    └── [TextConfig, ScaleConfig, ...]  # 8 POJOs de configuración
+```
+
+---
+
 ## Funcionalidad actual (M1)
 
 - **Autenticación JWT multi-tenant**: registro de empresa, login por tenant, refresh tokens
@@ -70,6 +201,7 @@ src/main/java/com/kodelabs/formflow/
 │   └── web/                   # ApiResponse wrapper
 └── modules/
     ├── auth/                  # Tenants, usuarios, JWT, password reset, verificación email
+    ├── forms/                 # Formularios, secciones, preguntas (ver Patrón TypeHandler)
     └── notifications/         # Emails: composers (Strategy), plantillas, SMTP
 ```
 
@@ -102,6 +234,27 @@ Cada módulo sigue **arquitectura hexagonal** con separación estricta dominio/p
 | POST | `/api/v1/auth/reset-password` | Pública | Cambiar contraseña con token del correo |
 | POST | `/api/v1/auth/verify-email` | Pública | Confirmar correo con token |
 | POST | `/api/v1/auth/resend-verification` | JWT | Reenviar correo de verificación |
+
+## Endpoints de formularios y preguntas
+
+| Método | Path | Descripción |
+|--------|------|-------------|
+| GET | `/api/v1/forms/question-types` | Catálogo de tipos con schema de configuración |
+| POST | `/api/v1/forms` | Crear formulario |
+| GET | `/api/v1/forms` | Listar formularios del tenant |
+| GET | `/api/v1/forms/{id}` | Obtener formulario con secciones y preguntas |
+| PUT | `/api/v1/forms/{id}` | Actualizar formulario |
+| DELETE | `/api/v1/forms/{id}` | Eliminar formulario (soft delete) |
+| POST | `/api/v1/forms/{formId}/sections` | Agregar sección |
+| PUT | `/api/v1/forms/{formId}/sections/{id}` | Actualizar sección |
+| DELETE | `/api/v1/forms/{formId}/sections/{id}` | Eliminar sección |
+| PUT | `/api/v1/forms/{formId}/sections/reorder` | Reordenar secciones |
+| POST | `/api/v1/forms/{formId}/sections/{sectionId}/questions` | Agregar pregunta |
+| PUT | `/api/v1/forms/{formId}/sections/{sectionId}/questions/{id}` | Actualizar pregunta |
+| DELETE | `/api/v1/forms/{formId}/sections/{sectionId}/questions/{id}` | Eliminar pregunta |
+| PUT | `/api/v1/forms/{formId}/sections/{sectionId}/questions/reorder` | Reordenar preguntas |
+
+Todos los endpoints de formularios requieren JWT. Documentación interactiva en `/swagger-ui.html`.
 
 ## Variables de entorno (producción)
 
