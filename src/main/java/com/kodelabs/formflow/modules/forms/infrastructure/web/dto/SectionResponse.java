@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.infrastructure.web.dto;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SectionResult;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record SectionResponse(
@@ -11,12 +12,15 @@ public record SectionResponse(
         String title,
         String description,
         int position,
+        List<QuestionResponse> questions,
         Instant createdAt,
         Instant updatedAt
 ) {
     public static SectionResponse from(SectionResult r) {
+        List<QuestionResponse> questions = r.questions().stream()
+                .map(QuestionResponse::from).toList();
         return new SectionResponse(
                 r.id(), r.formId(), r.title(), r.description(),
-                r.position(), r.createdAt(), r.updatedAt());
+                r.position(), questions, r.createdAt(), r.updatedAt());
     }
 }

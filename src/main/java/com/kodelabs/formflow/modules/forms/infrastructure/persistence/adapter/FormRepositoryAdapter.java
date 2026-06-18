@@ -1,6 +1,9 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.adapter;
 
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
+import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
+import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
+import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.mapper.FormPersistenceMapper;
@@ -9,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,6 +23,7 @@ public class FormRepositoryAdapter implements FormRepositoryPort {
     private final FormJpaRepository formJpa;
     private final FormPersistenceMapper formMapper;
     private final FormSectionRepositoryPort sectionRepository;
+    private final FormQuestionRepositoryPort questionRepository;
 
     @Override
     public Form save(Form form) {
@@ -34,7 +39,15 @@ public class FormRepositoryAdapter implements FormRepositoryPort {
     public Optional<Form> findByIdAndTenantIdWithSections(UUID id, UUID tenantId) {
         return formJpa.findActiveByIdAndTenantId(id, tenantId).map(entity -> {
             Form form = formMapper.toDomain(entity);
-            form.setSections(sectionRepository.findActiveByFormIdAndTenantId(id, tenantId));
+            List<FormSection> sections = sectionRepository.findActiveByFormIdAndTenantId(id, tenantId);
+
+            List<UUID> sectionIds = sections.stream().map(FormSection::getId).toList();
+            Map<UUID, List<FormQuestion>> questionsBySection =
+                    questionRepository.findAllActiveBySectionIds(sectionIds);
+
+            sections.forEach(s -> s.setQuestions(
+                    questionsBySection.getOrDefault(s.getId(), List.of())));
+            form.setSections(sections);
             return form;
         });
     }
