@@ -27,6 +27,7 @@ public class UpdateSectionService implements UpdateSectionUseCase {
 
         section.setTitle(command.title());
         section.setDescription(command.description());
+        section.setTimeLimitSeconds(command.timeLimitSeconds());
 
         return SectionResult.from(sectionRepository.save(section));
     }

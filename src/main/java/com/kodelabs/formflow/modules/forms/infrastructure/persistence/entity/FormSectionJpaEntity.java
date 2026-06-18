@@ -45,6 +45,9 @@ public class FormSectionJpaEntity {
     @Column(nullable = false)
     private int position;
 
+    @Column(name = "time_limit_seconds")
+    private Integer timeLimitSeconds;
+
     @Column(name = "deleted_at")
     private Instant deletedAt;
 

@@ -8,10 +8,10 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddSectionComm
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteSectionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ReorderSectionsCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateSectionCommand;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.CreateSectionRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.ReorderSectionsRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.SectionResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.UpdateSectionRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.CreateSectionRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.ReorderSectionsRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.SectionResponse;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateSectionRequest;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -68,7 +68,7 @@ public class FormSectionController {
             @PathVariable UUID formId,
             @Valid @RequestBody CreateSectionRequest request, Authentication auth) {
         var result = addSection.execute(new AddSectionCommand(
-                formId, tenantId(), userId(auth), request.title(), request.description()));
+                formId, tenantId(), userId(auth), request.title(), request.description(), request.timeLimitSeconds()));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(SectionResponse.from(result)));
     }
@@ -92,7 +92,7 @@ public class FormSectionController {
             @PathVariable UUID sectionId,
             @Valid @RequestBody UpdateSectionRequest request) {
         var result = updateSection.execute(new UpdateSectionCommand(
-                sectionId, formId, tenantId(), request.title(), request.description()));
+                sectionId, formId, tenantId(), request.title(), request.description(), request.timeLimitSeconds()));
         return ResponseEntity.ok(ApiResponse.ok(SectionResponse.from(result)));
     }
 

@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.forms.infrastructure.web.dto;
+package com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

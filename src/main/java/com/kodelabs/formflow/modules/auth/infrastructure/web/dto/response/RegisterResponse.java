@@ -1,6 +1,8 @@
-package com.kodelabs.formflow.modules.auth.infrastructure.web.dto;
+package com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response;
 
 import com.kodelabs.formflow.modules.auth.domain.port.in.result.RegisterTenantResult;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.TenantSummary;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.UserSummary;
 
 /**
  * Response of POST /auth/register.

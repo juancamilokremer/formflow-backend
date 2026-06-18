@@ -15,6 +15,7 @@ public class FormSectionPersistenceMapper {
                 .title(e.getTitle())
                 .description(e.getDescription())
                 .position(e.getPosition())
+                .timeLimitSeconds(e.getTimeLimitSeconds())
                 .deletedAt(e.getDeletedAt())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
@@ -29,6 +30,7 @@ public class FormSectionPersistenceMapper {
                 .title(s.getTitle())
                 .description(s.getDescription())
                 .position(s.getPosition())
+                .timeLimitSeconds(s.getTimeLimitSeconds())
                 .deletedAt(s.getDeletedAt())
                 .build();
     }

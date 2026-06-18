@@ -7,5 +7,6 @@ public record UpdateSectionCommand(
         UUID formId,
         UUID tenantId,
         String title,
-        String description
+        String description,
+        Integer timeLimitSeconds
 ) {}

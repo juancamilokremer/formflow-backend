@@ -10,10 +10,10 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteFormComm
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListFormsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormCommand;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.CreateFormRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.FormDetailResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.FormSummaryResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.UpdateFormRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.CreateFormRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormDetailResponse;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormSummaryResponse;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormRequest;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

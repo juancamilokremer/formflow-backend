@@ -36,6 +36,7 @@ public class AddSectionService implements AddSectionUseCase {
                 .title(command.title())
                 .description(command.description())
                 .position(nextPosition)
+                .timeLimitSeconds(command.timeLimitSeconds())
                 .build();
 
         FormSection saved = sectionRepository.save(section);
