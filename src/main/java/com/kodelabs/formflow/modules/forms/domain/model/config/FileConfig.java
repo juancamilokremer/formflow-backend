@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FileConfig extends QuestionConfig {
+public class FileConfig extends QuestionConfig implements Validatable {
 
     @Builder.Default
     private int maxSizeMb = 5;

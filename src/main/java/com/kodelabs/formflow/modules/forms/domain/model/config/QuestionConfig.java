@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public abstract class QuestionConfig {
 
-    public abstract void validate();
 
     protected void require(Object value, String field) {
         if (value == null) {

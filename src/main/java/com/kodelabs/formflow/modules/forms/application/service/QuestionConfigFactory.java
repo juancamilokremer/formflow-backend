@@ -8,6 +8,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.config.MatrixConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.config.MultipleConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.config.NpsConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
+import com.kodelabs.formflow.modules.forms.domain.model.config.Validatable;
 import com.kodelabs.formflow.modules.forms.domain.model.config.ScaleConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.config.ScoringType;
 import com.kodelabs.formflow.modules.forms.domain.model.config.SingleConfig;
@@ -35,7 +36,9 @@ public class QuestionConfigFactory {
             case MATRIX -> objectMapper.convertValue(raw, MatrixConfig.class);
             case NPS -> objectMapper.convertValue(raw, NpsConfig.class);
         };
-        config.validate();
+        if (config instanceof Validatable v) {
+            v.validate();
+        }
         return config;
     }
 

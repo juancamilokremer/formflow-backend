@@ -18,8 +18,4 @@ public class NpsConfig extends QuestionConfig {
     @Builder.Default
     private String maxLabel = "Extremadamente probable";
 
-    @Override
-    public void validate() {
-        // labels are optional, NPS is always 0-10
-    }
 }

@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MultipleConfig extends QuestionConfig {
+public class MultipleConfig extends QuestionConfig implements Validatable {
 
     @Builder.Default
     private List<AnswerOption> options = new ArrayList<>();

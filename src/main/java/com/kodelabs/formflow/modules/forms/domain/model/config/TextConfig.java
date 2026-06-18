@@ -19,8 +19,4 @@ public class TextConfig extends QuestionConfig {
     @Builder.Default
     private Integer rows = 1;
 
-    @Override
-    public void validate() {
-        // all fields are optional — no required fields for TEXT
-    }
 }

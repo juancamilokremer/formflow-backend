@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MatrixConfig extends QuestionConfig {
+public class MatrixConfig extends QuestionConfig implements Validatable {
 
     @Builder.Default
     private List<MatrixRow> rows = new ArrayList<>();

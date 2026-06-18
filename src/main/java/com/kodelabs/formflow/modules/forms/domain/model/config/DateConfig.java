@@ -18,8 +18,4 @@ public class DateConfig extends QuestionConfig {
     private String minDate;
     private String maxDate;
 
-    @Override
-    public void validate() {
-        // all fields optional
-    }
 }

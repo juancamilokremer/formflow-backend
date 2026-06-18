@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ScaleConfig extends QuestionConfig {
+public class ScaleConfig extends QuestionConfig implements Validatable {
 
     @Builder.Default
     private int min = 1;
