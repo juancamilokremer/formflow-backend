@@ -1,17 +1,10 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kodelabs.formflow.modules.forms.application.service.QuestionTypeRegistry;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
-import com.kodelabs.formflow.modules.forms.domain.model.config.DateConfig;
-import com.kodelabs.formflow.modules.forms.domain.model.config.FileConfig;
-import com.kodelabs.formflow.modules.forms.domain.model.config.MatrixConfig;
-import com.kodelabs.formflow.modules.forms.domain.model.config.MultipleConfig;
-import com.kodelabs.formflow.modules.forms.domain.model.config.NpsConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
-import com.kodelabs.formflow.modules.forms.domain.model.config.ScaleConfig;
-import com.kodelabs.formflow.modules.forms.domain.model.config.SingleConfig;
-import com.kodelabs.formflow.modules.forms.domain.model.config.TextConfig;
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.entity.FormQuestionJpaEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -21,12 +14,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class FormQuestionPersistenceMapper {
 
+    private final QuestionTypeRegistry registry;
     private final ObjectMapper objectMapper;
 
     @SneakyThrows
     public FormQuestion toDomain(FormQuestionJpaEntity entity) {
-        QuestionType type = QuestionType.valueOf(entity.getType());
-        QuestionConfig config = deserializeConfig(type, entity.getConfig());
+        QuestionType type = new QuestionType(entity.getType());
+        QuestionConfig config = registry.get(type).deserialize(
+                entity.getConfig() == null || entity.getConfig().isBlank() ? "{}" : entity.getConfig());
         return FormQuestion.builder()
                 .id(entity.getId())
                 .sectionId(entity.getSectionId())
@@ -55,7 +50,7 @@ public class FormQuestionPersistenceMapper {
                 .tenantId(domain.getTenantId())
                 .title(domain.getTitle())
                 .description(domain.getDescription())
-                .type(domain.getType().name())
+                .type(domain.getType().code())
                 .position(domain.getPosition())
                 .required(domain.isRequired())
                 .categoryId(domain.getCategoryId())
@@ -63,20 +58,5 @@ public class FormQuestionPersistenceMapper {
                 .config(objectMapper.writeValueAsString(domain.getConfig()))
                 .deletedAt(domain.getDeletedAt())
                 .build();
-    }
-
-    @SneakyThrows
-    private QuestionConfig deserializeConfig(QuestionType type, String json) {
-        if (json == null || json.isBlank()) json = "{}";
-        return switch (type) {
-            case TEXT -> objectMapper.readValue(json, TextConfig.class);
-            case SINGLE -> objectMapper.readValue(json, SingleConfig.class);
-            case MULTIPLE -> objectMapper.readValue(json, MultipleConfig.class);
-            case SCALE -> objectMapper.readValue(json, ScaleConfig.class);
-            case DATE -> objectMapper.readValue(json, DateConfig.class);
-            case FILE -> objectMapper.readValue(json, FileConfig.class);
-            case MATRIX -> objectMapper.readValue(json, MatrixConfig.class);
-            case NPS -> objectMapper.readValue(json, NpsConfig.class);
-        };
     }
 }

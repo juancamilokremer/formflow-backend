@@ -57,9 +57,9 @@ class ReorderQuestionsServiceTest {
         q1Id = UUID.randomUUID();
         q2Id = UUID.randomUUID();
         q3Id = UUID.randomUUID();
-        q1 = FormQuestion.builder().id(q1Id).sectionId(sectionId).title("Q1").type(QuestionType.TEXT).position(0).build();
-        q2 = FormQuestion.builder().id(q2Id).sectionId(sectionId).title("Q2").type(QuestionType.SINGLE).position(1).build();
-        q3 = FormQuestion.builder().id(q3Id).sectionId(sectionId).title("Q3").type(QuestionType.SCALE).position(2).build();
+        q1 = FormQuestion.builder().id(q1Id).sectionId(sectionId).title("Q1").type(new QuestionType("TEXT")).position(0).build();
+        q2 = FormQuestion.builder().id(q2Id).sectionId(sectionId).title("Q2").type(new QuestionType("SINGLE")).position(1).build();
+        q3 = FormQuestion.builder().id(q3Id).sectionId(sectionId).title("Q3").type(new QuestionType("SCALE")).position(2).build();
     }
 
     @Test

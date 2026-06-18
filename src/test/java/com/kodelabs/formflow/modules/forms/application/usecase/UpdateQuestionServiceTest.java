@@ -37,7 +37,7 @@ class UpdateQuestionServiceTest {
         UUID sectionId = UUID.randomUUID();
         UUID tenantId = UUID.randomUUID();
         FormQuestion question = FormQuestion.builder().id(questionId).sectionId(sectionId)
-                .tenantId(tenantId).title("Vieja").type(QuestionType.TEXT).position(0).build();
+                .tenantId(tenantId).title("Vieja").type(new QuestionType("TEXT")).position(0).build();
         when(questionRepository.findByIdAndSectionIdAndTenantId(questionId, sectionId, tenantId))
                 .thenReturn(Optional.of(question));
         when(configFactory.build(any(), any())).thenReturn(new TextConfig());
@@ -45,7 +45,7 @@ class UpdateQuestionServiceTest {
 
         QuestionResult result = service.execute(new UpdateQuestionCommand(
                 questionId, sectionId, UUID.randomUUID(), tenantId, UUID.randomUUID(),
-                "Nueva", "Desc", QuestionType.TEXT, true, null, null, Map.of()));
+                "Nueva", "Desc", new QuestionType("TEXT"), true, null, null, Map.of()));
 
         assertThat(result.title()).isEqualTo("Nueva");
         assertThat(result.required()).isTrue();
@@ -61,7 +61,7 @@ class UpdateQuestionServiceTest {
 
         assertThatThrownBy(() -> service.execute(new UpdateQuestionCommand(
                 questionId, sectionId, UUID.randomUUID(), tenantId, UUID.randomUUID(),
-                "T", null, QuestionType.TEXT, false, null, null, Map.of())))
+                "T", null, new QuestionType("TEXT"), false, null, null, Map.of())))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.question.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
