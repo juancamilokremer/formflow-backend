@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.forms.application.usecase;
+package com.kodelabs.formflow.modules.forms.application.usecase.section;
 
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateSectionUseCase;

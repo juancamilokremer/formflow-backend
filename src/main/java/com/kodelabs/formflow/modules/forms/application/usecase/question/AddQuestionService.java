@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.forms.application.usecase;
+package com.kodelabs.formflow.modules.forms.application.usecase.question;
 
 import com.kodelabs.formflow.modules.forms.application.service.QuestionConfigFactory;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
