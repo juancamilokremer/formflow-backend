@@ -2,37 +2,26 @@ package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ScoringConfig;
-import com.kodelabs.formflow.modules.forms.domain.port.in.AddCandidateUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.CloseConvocatoriaUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.CreateConvocatoriaUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteConvocatoriaUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetConvocatoriaUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.GetRankingUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.ImportCandidatesUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.LaunchConvocatoriaUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ListConvocatoriasUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.RemoveCandidateUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateConvocatoriaUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddCandidateCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CloseConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetConvocatoriaQuery;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetRankingQuery;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.ImportCandidatesCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.LaunchConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListConvocatoriasQuery;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.RemoveCandidateCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateConvocatoriaCommand;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.AddCandidateRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.CategoryWeightRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.CreateConvocatoriaRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.ScoringConfigRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateConvocatoriaRequest;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.CandidateResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.ConvocatoriaResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.ConvocatoriaSummaryResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.ImportResponse;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -51,11 +40,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,7 +51,7 @@ import static com.kodelabs.formflow.shared.web.ControllerUtils.userId;
 @RestController
 @RequestMapping("/api/v1/convocatorias")
 @RequiredArgsConstructor
-@Tag(name = "Convocatorias", description = "Gestión de convocatorias y candidatos. Requiere autenticación.")
+@Tag(name = "Convocatorias", description = "CRUD y ciclo de vida de convocatorias. Requiere autenticación.")
 @SecurityRequirement(name = "Bearer Auth")
 public class ConvocatoriaController {
 
@@ -76,10 +62,6 @@ public class ConvocatoriaController {
     private final DeleteConvocatoriaUseCase deleteConvocatoria;
     private final LaunchConvocatoriaUseCase launchConvocatoria;
     private final CloseConvocatoriaUseCase closeConvocatoria;
-    private final AddCandidateUseCase addCandidate;
-    private final RemoveCandidateUseCase removeCandidate;
-    private final ImportCandidatesUseCase importCandidates;
-    private final GetRankingUseCase getRanking;
 
     @PostMapping
     @Operation(summary = "Crear convocatoria", description = "Crea una nueva convocatoria en estado DRAFT.")
@@ -163,63 +145,6 @@ public class ConvocatoriaController {
     public ResponseEntity<ApiResponse<ConvocatoriaResponse>> close(@PathVariable UUID id, Authentication auth) {
         var result = closeConvocatoria.execute(new CloseConvocatoriaCommand(id, tenantId(), userId(auth)));
         return ResponseEntity.ok(ApiResponse.ok(ConvocatoriaResponse.from(result)));
-    }
-
-    @PostMapping("/{id}/candidates")
-    @Operation(summary = "Agregar candidato", description = "Agrega un candidato a la convocatoria. No se permite duplicar email.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Candidato agregado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Email duplicado o convocatoria cerrada", content = @Content)
-    })
-    public ResponseEntity<ApiResponse<CandidateResponse>> addCandidate(
-            @PathVariable UUID id, @Valid @RequestBody AddCandidateRequest request, Authentication auth) {
-        var result = addCandidate.execute(new AddCandidateCommand(
-                id, tenantId(), userId(auth), request.name(), request.email()));
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(CandidateResponse.from(result)));
-    }
-
-    @DeleteMapping("/{id}/candidates/{candidateId}")
-    @Operation(summary = "Eliminar candidato", description = "Elimina un candidato de la convocatoria.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Candidato eliminado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No encontrado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Convocatoria cerrada", content = @Content)
-    })
-    public ResponseEntity<ApiResponse<Void>> removeCandidate(
-            @PathVariable UUID id, @PathVariable UUID candidateId, Authentication auth) {
-        removeCandidate.execute(new RemoveCandidateCommand(id, candidateId, tenantId(), userId(auth)));
-        return ResponseEntity.ok(ApiResponse.ok(null));
-    }
-
-    @PostMapping("/{id}/candidates/import")
-    @Operation(summary = "Importar candidatos CSV",
-            description = "Importa candidatos desde un CSV (columnas: nombre, email). " +
-                    "Emails duplicados en la convocatoria se omiten con aviso.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Importación completada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "CSV inválido", content = @Content)
-    })
-    public ResponseEntity<ApiResponse<ImportResponse>> importCandidates(
-            @PathVariable UUID id,
-            @RequestParam("file") MultipartFile file,
-            Authentication auth) throws IOException {
-        var result = importCandidates.execute(new ImportCandidatesCommand(
-                id, tenantId(), userId(auth), file.getBytes()));
-        return ResponseEntity.ok(ApiResponse.ok(ImportResponse.from(result)));
-    }
-
-    @GetMapping("/{id}/ranking")
-    @Operation(summary = "Ranking de candidatos",
-            description = "Retorna candidatos con score ordenados de mayor a menor. " +
-                    "Solo candidatos que han respondido aparecen en el ranking.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ranking"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Convocatoria no encontrada", content = @Content)
-    })
-    public ResponseEntity<ApiResponse<List<CandidateResponse>>> ranking(@PathVariable UUID id) {
-        var results = getRanking.execute(new GetRankingQuery(id, tenantId()));
-        return ResponseEntity.ok(ApiResponse.ok(
-                results.stream().map(CandidateResponse::from).toList()));
     }
 
     private List<CategoryWeight> toWeightsDomain(List<CategoryWeightRequest> requests) {
