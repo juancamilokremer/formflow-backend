@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.forms.application.usecase;
+package com.kodelabs.formflow.modules.forms.application.usecase.form;
 
 import com.kodelabs.formflow.modules.forms.domain.model.Category;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;

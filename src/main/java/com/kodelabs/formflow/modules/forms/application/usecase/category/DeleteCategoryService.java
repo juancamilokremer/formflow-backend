@@ -1,4 +1,4 @@
-package com.kodelabs.formflow.modules.forms.application.usecase;
+package com.kodelabs.formflow.modules.forms.application.usecase.category;
 
 import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteCategoryUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteCategoryCommand;
