@@ -24,4 +24,7 @@ public interface FormQuestionJpaRepository extends JpaRepository<FormQuestionJpa
 
     @Query("SELECT q FROM FormQuestionJpaEntity q WHERE q.sectionId IN :sectionIds AND q.deletedAt IS NULL ORDER BY q.position ASC")
     List<FormQuestionJpaEntity> findActiveBySectionIdIn(@Param("sectionIds") List<UUID> sectionIds);
+
+    @Query("SELECT COUNT(q) > 0 FROM FormQuestionJpaEntity q WHERE q.categoryId = :categoryId AND q.tenantId = :tenantId AND q.deletedAt IS NULL")
+    boolean existsActiveByCategoryIdAndTenantId(@Param("categoryId") UUID categoryId, @Param("tenantId") UUID tenantId);
 }

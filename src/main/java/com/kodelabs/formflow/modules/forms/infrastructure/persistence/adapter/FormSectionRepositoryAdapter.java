@@ -55,4 +55,9 @@ public class FormSectionRepositoryAdapter implements FormSectionRepositoryPort {
                         row -> (UUID) row[0],
                         row -> ((Long) row[1]).intValue()));
     }
+
+    @Override
+    public List<UUID> findActiveSectionIdsByFormId(UUID formId) {
+        return sectionJpa.findActiveIdsByFormId(formId);
+    }
 }

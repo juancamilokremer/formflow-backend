@@ -54,4 +54,9 @@ public class FormQuestionRepositoryAdapter implements FormQuestionRepositoryPort
                 .map(questionMapper::toDomain)
                 .collect(Collectors.groupingBy(FormQuestion::getSectionId));
     }
+
+    @Override
+    public boolean existsActiveByCategoryIdAndTenantId(UUID categoryId, UUID tenantId) {
+        return questionJpa.existsActiveByCategoryIdAndTenantId(categoryId, tenantId);
+    }
 }

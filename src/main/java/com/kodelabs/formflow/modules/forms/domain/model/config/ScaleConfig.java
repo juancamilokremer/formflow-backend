@@ -27,6 +27,11 @@ public class ScaleConfig extends QuestionConfig implements Validatable {
     @Builder.Default
     private List<ScaleOption> options = new ArrayList<>();
 
+    @Override
+    public int maxScore() {
+        return options.stream().mapToInt(ScaleOption::getScore).max().orElse(0);
+    }
+
     /** Distributes scores linearly: score = round(value * 10.0 / max). */
     public void calculateAutoScores() {
         options = new ArrayList<>();

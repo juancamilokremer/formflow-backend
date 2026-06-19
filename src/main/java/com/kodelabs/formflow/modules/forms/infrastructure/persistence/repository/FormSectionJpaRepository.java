@@ -24,4 +24,7 @@ public interface FormSectionJpaRepository extends JpaRepository<FormSectionJpaEn
 
     @Query("SELECT s.formId, COUNT(s) FROM FormSectionJpaEntity s WHERE s.formId IN :formIds AND s.deletedAt IS NULL GROUP BY s.formId")
     List<Object[]> countActiveGroupByFormId(@Param("formIds") List<UUID> formIds);
+
+    @Query("SELECT s.id FROM FormSectionJpaEntity s WHERE s.formId = :formId AND s.deletedAt IS NULL")
+    List<UUID> findActiveIdsByFormId(@Param("formId") UUID formId);
 }
