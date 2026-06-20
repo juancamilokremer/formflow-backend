@@ -30,6 +30,9 @@ public class QuestionTypeRegistry {
         this.handlers = Collections.unmodifiableMap(map);
     }
 
+    // Wildcard is intentional: registry holds handlers with heterogeneous config types (T varies per handler).
+    // Callers only interact with the QuestionConfig base type — T is never needed externally.
+    @SuppressWarnings("java:S1452")
     public QuestionTypeHandler<?> get(QuestionType type) {
         QuestionTypeHandler<?> handler = handlers.get(type);
         if (handler == null) {
@@ -38,6 +41,7 @@ public class QuestionTypeRegistry {
         return handler;
     }
 
+    @SuppressWarnings("java:S1452")
     public Collection<QuestionTypeHandler<?>> all() {
         return handlers.values();
     }
