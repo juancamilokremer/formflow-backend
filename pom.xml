@@ -24,10 +24,11 @@
         <poi.version>5.3.0</poi.version>
         <jacoco.version>0.8.12</jacoco.version>
 
-        <!-- SonarCloud -->
-        <sonar.projectKey>juancamilokremer_formflow-backend</sonar.projectKey>
-        <sonar.organization>juancamilokremer</sonar.organization>
-        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <!-- SonarQube local (docker-compose) — para análisis bajo demanda en desarrollo.
+             Para migrar a SonarCloud en el futuro: cambiar host.url a https://sonarcloud.io
+             y agregar <sonar.organization>juancamilokremer</sonar.organization> -->
+        <sonar.projectKey>formflow-backend</sonar.projectKey>
+        <sonar.host.url>http://localhost:9000</sonar.host.url>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.build.directory}/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
