@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
+import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionOperator;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -42,5 +44,11 @@ public class ScaleTypeHandler implements QuestionTypeHandler<ScaleConfig> {
     @Override
     public Map<String, Object> defaultSchema() {
         return Map.of("min", 1, "max", 5, "minLabel", "", "maxLabel", "", "scoringType", "NONE");
+    }
+
+    @Override
+    public Set<ConditionOperator> supportedOperators() {
+        return Set.of(ConditionOperator.EQUALS, ConditionOperator.GREATER_THAN,
+                ConditionOperator.LESS_THAN, ConditionOperator.BETWEEN);
     }
 }

@@ -1,10 +1,23 @@
 package com.kodelabs.formflow.modules.forms.application.service;
 
+import com.kodelabs.formflow.modules.forms.application.service.conditional.OperatorStrategyRegistry;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.AfterOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.BeforeOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.BetweenOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.ContainsOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.EqualsOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.GreaterThanOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.IsAnsweredOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.IsEmptyOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.LessThanOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.NotContainsOperatorStrategy;
+import com.kodelabs.formflow.modules.forms.application.service.conditional.operator.NotEqualsOperatorStrategy;
 import com.kodelabs.formflow.modules.forms.domain.model.conditional.Condition;
 import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionalLogic;
 import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionalLogicAction;
 import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionOperator;
 import com.kodelabs.formflow.modules.forms.domain.model.conditional.LogicOperator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,9 +28,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ConditionalLogicEvaluatorTest {
 
-    private final ConditionalLogicEvaluator evaluator = new ConditionalLogicEvaluator();
-
+    private ConditionalLogicEvaluator evaluator;
     private final UUID qId = UUID.randomUUID();
+
+    @BeforeEach
+    void setUp() {
+        var registry = new OperatorStrategyRegistry(List.of(
+                new EqualsOperatorStrategy(),
+                new NotEqualsOperatorStrategy(),
+                new ContainsOperatorStrategy(),
+                new NotContainsOperatorStrategy(),
+                new GreaterThanOperatorStrategy(),
+                new LessThanOperatorStrategy(),
+                new BetweenOperatorStrategy(),
+                new IsAnsweredOperatorStrategy(),
+                new IsEmptyOperatorStrategy(),
+                new BeforeOperatorStrategy(),
+                new AfterOperatorStrategy()
+        ));
+        evaluator = new ConditionalLogicEvaluator(registry);
+    }
 
     @Test
     void nullLogicIsAlwaysVisible() {
@@ -47,7 +77,7 @@ class ConditionalLogicEvaluatorTest {
         UUID q2 = UUID.randomUUID();
         var logic = new ConditionalLogic(ConditionalLogicAction.SHOW, LogicOperator.AND, List.of(
                 new Condition(qId, ConditionOperator.EQUALS, "X"),
-                new Condition(q2, ConditionOperator.EQUALS, "Y")
+                new Condition(q2,  ConditionOperator.EQUALS, "Y")
         ));
         assertThat(evaluator.isVisible(logic, Map.of(qId, "X", q2, "Z"))).isFalse();
         assertThat(evaluator.isVisible(logic, Map.of(qId, "X", q2, "Y"))).isTrue();
@@ -58,7 +88,7 @@ class ConditionalLogicEvaluatorTest {
         UUID q2 = UUID.randomUUID();
         var logic = new ConditionalLogic(ConditionalLogicAction.SHOW, LogicOperator.OR, List.of(
                 new Condition(qId, ConditionOperator.EQUALS, "X"),
-                new Condition(q2, ConditionOperator.EQUALS, "Y")
+                new Condition(q2,  ConditionOperator.EQUALS, "Y")
         ));
         assertThat(evaluator.isVisible(logic, Map.of(qId, "X", q2, "Z"))).isTrue();
         assertThat(evaluator.isVisible(logic, Map.of(qId, "A", q2, "B"))).isFalse();

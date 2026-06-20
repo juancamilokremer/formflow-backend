@@ -7,8 +7,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
+import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionOperator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -41,5 +43,10 @@ public class MatrixTypeHandler implements QuestionTypeHandler<MatrixConfig> {
         return Map.of(
                 "rows", List.of(Map.of("id", "uuid", "label", "Row")),
                 "columns", List.of(Map.of("id", "uuid", "label", "Column", "score", 0)));
+    }
+
+    @Override
+    public Set<ConditionOperator> supportedOperators() {
+        return Set.of();
     }
 }

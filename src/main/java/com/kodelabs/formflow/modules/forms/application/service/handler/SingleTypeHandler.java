@@ -7,8 +7,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
+import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionOperator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -41,5 +43,10 @@ public class SingleTypeHandler implements QuestionTypeHandler<SingleConfig> {
         return Map.of(
                 "options", List.of(Map.of("id", "uuid", "label", "Option", "score", 0)),
                 "randomize", false);
+    }
+
+    @Override
+    public Set<ConditionOperator> supportedOperators() {
+        return Set.of(ConditionOperator.EQUALS, ConditionOperator.NOT_EQUALS);
     }
 }
