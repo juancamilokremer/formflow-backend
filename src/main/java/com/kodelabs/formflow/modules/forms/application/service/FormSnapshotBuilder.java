@@ -90,7 +90,7 @@ public class FormSnapshotBuilder {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> serializeConfig(QuestionConfig config) {
-        if (config == null) return null;
+        if (config == null) return Map.of();
         return objectMapper.convertValue(config, Map.class);
     }
 }
