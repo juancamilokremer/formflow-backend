@@ -32,7 +32,7 @@ public class ForgotPasswordService implements ForgotPasswordUseCase {
 
         tenantRepository.findBySlug(command.tenantSlug()).ifPresentOrElse(
                 tenant -> userRepository.findByEmailAndTenantId(email, tenant.getId()).ifPresentOrElse(
-                        user -> authEmailSender.sendPasswordReset(user, tenant),
+                        user -> authEmailSender.sendPasswordReset(user),
                         () -> log.info("Password reset requested for unknown email '{}' on tenant '{}'",
                                 email, command.tenantSlug())),
                 () -> log.info("Password reset requested for unknown tenant '{}'", command.tenantSlug()));

@@ -99,9 +99,10 @@ class UpdateQuestionServiceTest {
         when(questionRepository.findByIdAndSectionIdAndTenantId(questionId, sectionId, tenantId))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new UpdateQuestionCommand(
+        var command = new UpdateQuestionCommand(
                 questionId, sectionId, formId, tenantId, userId,
-                "T", null, new QuestionType("TEXT"), false, null, null, Map.of())))
+                "T", null, new QuestionType("TEXT"), false, null, null, Map.of());
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }

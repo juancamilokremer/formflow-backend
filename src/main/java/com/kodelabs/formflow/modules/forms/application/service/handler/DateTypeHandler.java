@@ -13,13 +13,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DateTypeHandler implements QuestionTypeHandler<DateConfig> {
 
-    public static final QuestionType TYPE = new QuestionType("DATE");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("DATE");
 
     private final ObjectMapper objectMapper;
 
     @Override
     public QuestionType type() {
-        return TYPE;
+        return QUESTION_TYPE;
     }
 
     @Override

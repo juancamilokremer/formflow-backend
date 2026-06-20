@@ -16,7 +16,6 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.Categ
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -55,16 +54,14 @@ public class CategoryController {
             summary = "Crear una categoría",
             description = "Crea una nueva categoría para el tenant activo. " +
                     "Las categorías se usan para agrupar preguntas y configurar pesos en las convocatorias.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201", description = "Categoría creada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201", description = "Categoría creada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada inválidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409", description = "Ya existe una categoría con ese nombre", content = @Content)
-    })
     public ResponseEntity<ApiResponse<CategoryResponse>> create(
             @Valid @RequestBody CreateCategoryRequest request) {
         var result = createCategory.execute(new CreateCategoryCommand(
@@ -77,12 +74,10 @@ public class CategoryController {
     @Operation(
             summary = "Listar categorías del tenant",
             description = "Retorna todas las categorías del tenant ordenadas por nombre.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Lista de categorías"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Lista de categorías")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401", description = "No autenticado", content = @Content)
-    })
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> list() {
         var results = listCategories.execute(new ListCategoriesQuery(tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(
@@ -93,14 +88,12 @@ public class CategoryController {
     @Operation(
             summary = "Obtener una categoría",
             description = "Retorna los datos de una categoría específica del tenant.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Categoría encontrada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Categoría encontrada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Categoría no encontrada", content = @Content)
-    })
     public ResponseEntity<ApiResponse<CategoryResponse>> get(@PathVariable UUID id) {
         var result = getCategory.execute(new GetCategoryQuery(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(CategoryResponse.from(result)));
@@ -110,18 +103,16 @@ public class CategoryController {
     @Operation(
             summary = "Actualizar una categoría",
             description = "Actualiza nombre, color y descripción de la categoría.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Categoría actualizada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404", description = "Categoría no encontrada", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Categoría actualizada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada inválidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Categoría no encontrada", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409", description = "Ya existe una categoría con ese nombre", content = @Content)
-    })
     public ResponseEntity<ApiResponse<CategoryResponse>> update(
             @PathVariable UUID id, @Valid @RequestBody UpdateCategoryRequest request) {
         var result = updateCategory.execute(new UpdateCategoryCommand(
@@ -134,16 +125,14 @@ public class CategoryController {
             summary = "Eliminar una categoría",
             description = "Elimina permanentemente la categoría. " +
                     "Falla con 409 si alguna pregunta activa está asignada a ella.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Categoría eliminada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404", description = "Categoría no encontrada", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Categoría eliminada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Categoría no encontrada", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409", description = "La categoría tiene preguntas asignadas", content = @Content)
-    })
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         deleteCategory.execute(new DeleteCategoryCommand(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(null));

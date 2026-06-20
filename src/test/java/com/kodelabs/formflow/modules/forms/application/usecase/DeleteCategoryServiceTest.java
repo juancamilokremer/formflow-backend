@@ -51,7 +51,8 @@ class DeleteCategoryServiceTest {
     void throwsNotFoundWhenCategoryDoesNotExist() {
         when(categoryRepository.existsByIdAndTenantId(id, tenantId)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.execute(new DeleteCategoryCommand(id, tenantId)))
+        var command = new DeleteCategoryCommand(id, tenantId);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
 
@@ -63,7 +64,8 @@ class DeleteCategoryServiceTest {
         when(categoryRepository.existsByIdAndTenantId(id, tenantId)).thenReturn(true);
         when(questionRepository.existsActiveByCategoryIdAndTenantId(id, tenantId)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.execute(new DeleteCategoryCommand(id, tenantId)))
+        var command = new DeleteCategoryCommand(id, tenantId);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
 

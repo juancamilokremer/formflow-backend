@@ -25,7 +25,6 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.Convo
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -65,11 +64,9 @@ public class ConvocatoriaController {
 
     @PostMapping
     @Operation(summary = "Crear convocatoria", description = "Crea una nueva convocatoria en estado DRAFT.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Convocatoria creada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Formulario no encontrado", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Convocatoria creada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Formulario no encontrado", content = @Content)
     public ResponseEntity<ApiResponse<ConvocatoriaResponse>> create(
             @Valid @RequestBody CreateConvocatoriaRequest request, Authentication auth) {
         var result = createConvocatoria.execute(new CreateConvocatoriaCommand(
@@ -89,10 +86,8 @@ public class ConvocatoriaController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener convocatoria", description = "Retorna detalle completo incluyendo candidatos.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Convocatoria encontrada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No encontrada", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Convocatoria encontrada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No encontrada", content = @Content)
     public ResponseEntity<ApiResponse<ConvocatoriaResponse>> get(@PathVariable UUID id) {
         var result = getConvocatoria.execute(new GetConvocatoriaQuery(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(ConvocatoriaResponse.from(result)));
@@ -100,10 +95,8 @@ public class ConvocatoriaController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar convocatoria", description = "Solo convocatorias en estado DRAFT pueden modificarse.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Actualizada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado DRAFT", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Actualizada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado DRAFT", content = @Content)
     public ResponseEntity<ApiResponse<ConvocatoriaResponse>> update(
             @PathVariable UUID id, @Valid @RequestBody UpdateConvocatoriaRequest request, Authentication auth) {
         var result = updateConvocatoria.execute(new UpdateConvocatoriaCommand(
@@ -115,10 +108,8 @@ public class ConvocatoriaController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar convocatoria", description = "Soft delete. Solo convocatorias DRAFT pueden eliminarse.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Eliminada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado DRAFT", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Eliminada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado DRAFT", content = @Content)
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id, Authentication auth) {
         deleteConvocatoria.execute(new DeleteConvocatoriaCommand(id, tenantId(), userId(auth)));
         return ResponseEntity.ok(ApiResponse.ok(null));
@@ -126,11 +117,9 @@ public class ConvocatoriaController {
 
     @PostMapping("/{id}/launch")
     @Operation(summary = "Lanzar convocatoria", description = "Cambia estado de DRAFT a ACTIVE. Requiere al menos un candidato.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lanzada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Sin candidatos o pesos inválidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado DRAFT", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lanzada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Sin candidatos o pesos inválidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado DRAFT", content = @Content)
     public ResponseEntity<ApiResponse<ConvocatoriaResponse>> launch(@PathVariable UUID id, Authentication auth) {
         var result = launchConvocatoria.execute(new LaunchConvocatoriaCommand(id, tenantId(), userId(auth)));
         return ResponseEntity.ok(ApiResponse.ok(ConvocatoriaResponse.from(result)));
@@ -138,10 +127,8 @@ public class ConvocatoriaController {
 
     @PostMapping("/{id}/close")
     @Operation(summary = "Cerrar convocatoria", description = "Cambia estado de ACTIVE a CLOSED.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cerrada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado ACTIVE", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cerrada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado ACTIVE", content = @Content)
     public ResponseEntity<ApiResponse<ConvocatoriaResponse>> close(@PathVariable UUID id, Authentication auth) {
         var result = closeConvocatoria.execute(new CloseConvocatoriaCommand(id, tenantId(), userId(auth)));
         return ResponseEntity.ok(ApiResponse.ok(ConvocatoriaResponse.from(result)));

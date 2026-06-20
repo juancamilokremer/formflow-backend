@@ -67,7 +67,8 @@ class GetRankingServiceTest {
     void throwsNotFoundWhenConvocatoriaDoesNotExist() {
         when(convocatoriaRepository.existsByIdAndTenantId(convId, tenantId)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.execute(new GetRankingQuery(convId, tenantId)))
+        var query = new GetRankingQuery(convId, tenantId);
+        assertThatThrownBy(() -> service.execute(query))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }

@@ -26,7 +26,6 @@ import com.kodelabs.formflow.shared.tenant.TenantContext;
 import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -71,14 +70,12 @@ public class AuthController {
             description = "Crea el tenant con plan FREE y su usuario TENANT_ADMIN con la contraseña " +
                     "hasheada (BCrypt). Envía un correo de verificación — el usuario debe confirmar " +
                     "su correo antes de poder iniciar sesión, por lo que esta respuesta NO incluye tokens.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201", description = "Empresa registrada, correo de verificación enviado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Datos de entrada inválidos", content = @io.swagger.v3.oas.annotations.media.Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201", description = "Empresa registrada, correo de verificación enviado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada inválidos", content = @io.swagger.v3.oas.annotations.media.Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409", description = "Ya existe una empresa con ese slug", content = @io.swagger.v3.oas.annotations.media.Content)
-    })
     public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest request) {
         var result = registerTenantUseCase.execute(new RegisterTenantCommand(
                 request.companyName(), request.slug(), request.email(),
@@ -93,14 +90,12 @@ public class AuthController {
             description = "Devuelve un access token JWT (claims: userId, tenantId, email, role) y un " +
                     "refresh token opaco de un solo uso. Ante cualquier credencial incorrecta la " +
                     "respuesta es el mismo 401 genérico — no revela qué dato falló.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Autenticación exitosa"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "Credenciales inválidas", content = @io.swagger.v3.oas.annotations.media.Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Autenticación exitosa")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "Credenciales inválidas", content = @io.swagger.v3.oas.annotations.media.Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "403", description = "La empresa está suspendida o cancelada", content = @io.swagger.v3.oas.annotations.media.Content)
-    })
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         var result = loginUseCase.execute(new LoginCommand(
                 request.tenantSlug(), request.email(), request.password()));
@@ -112,12 +107,10 @@ public class AuthController {
             summary = "Rotar tokens: invalida el refresh token usado y emite un nuevo par",
             description = "Rotación de un solo uso. Si se reutiliza un refresh token ya rotado se asume " +
                     "robo y se revocan TODOS los tokens activos del usuario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Tokens rotados exitosamente"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Tokens rotados exitosamente")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401", description = "Refresh token inválido, expirado o reutilizado", content = @io.swagger.v3.oas.annotations.media.Content)
-    })
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         var result = refreshTokenUseCase.execute(new RefreshTokenCommand(request.refreshToken()));
         return ResponseEntity.ok(ApiResponse.ok(AuthResponse.from(result)));
@@ -138,12 +131,10 @@ public class AuthController {
             summary = "Restablecer la contraseña con el token del correo",
             description = "Token de un solo uso. Al cambiar la contraseña se revocan todos los " +
                     "refresh tokens activos del usuario (cierra cualquier sesión robada).")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Contraseña actualizada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Contraseña actualizada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400", description = "Token inválido, usado o expirado", content = @io.swagger.v3.oas.annotations.media.Content)
-    })
     public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         resetPasswordUseCase.execute(new ResetPasswordCommand(request.token(), request.newPassword()));
         return ResponseEntity.ok(ApiResponse.ok(messages.get("success.auth.password_reset"), null));
@@ -153,12 +144,10 @@ public class AuthController {
     @Operation(
             summary = "Confirmar el correo con el token de verificación",
             description = "Token de un solo uso que expira en 24 horas.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Correo verificado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Correo verificado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400", description = "Token inválido, usado o expirado", content = @io.swagger.v3.oas.annotations.media.Content)
-    })
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         verifyEmailUseCase.execute(new VerifyEmailCommand(request.token()));
         return ResponseEntity.ok(ApiResponse.ok(messages.get("success.auth.email_verified"), null));
@@ -168,14 +157,12 @@ public class AuthController {
     @Operation(
             summary = "Reenviar el correo de verificación al usuario autenticado",
             security = @SecurityRequirement(name = "Bearer Auth"))
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Correo de verificación reenviado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "El correo ya está verificado", content = @io.swagger.v3.oas.annotations.media.Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Correo de verificación reenviado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "El correo ya está verificado", content = @io.swagger.v3.oas.annotations.media.Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401", description = "No autenticado", content = @io.swagger.v3.oas.annotations.media.Content)
-    })
     public ResponseEntity<ApiResponse<Void>> resendVerification(Authentication authentication) {
         UUID userId = UUID.fromString((String) authentication.getPrincipal());
         UUID tenantId = UUID.fromString(TenantContext.getTenantId());

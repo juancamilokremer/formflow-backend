@@ -15,7 +15,6 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.Update
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -55,12 +54,10 @@ public class FormQuestionController {
             description = "La pregunta se agrega al final de la seccion. El campo 'config' varia segun el 'type'. " +
                     "Para SCALE con scoringType=AUTO los puntajes se calculan automaticamente. " +
                     "Incrementa la version del formulario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Pregunta creada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos o config invalidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Seccion o formulario no encontrado", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Pregunta creada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos o config invalidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Seccion o formulario no encontrado", content = @Content)
     public ResponseEntity<ApiResponse<QuestionResponse>> add(
             @PathVariable UUID formId, @PathVariable UUID sectionId,
             @Valid @RequestBody AddQuestionRequest request, Authentication auth) {
@@ -78,12 +75,10 @@ public class FormQuestionController {
             summary = "Actualizar una pregunta",
             description = "Actualiza todos los campos de la pregunta incluyendo el config. " +
                     "Para SCALE con scoringType=AUTO recalcula los puntajes automaticamente.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pregunta actualizada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos o config invalidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pregunta no encontrada", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pregunta actualizada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos o config invalidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pregunta no encontrada", content = @Content)
     public ResponseEntity<ApiResponse<QuestionResponse>> update(
             @PathVariable UUID formId, @PathVariable UUID sectionId,
             @PathVariable UUID questionId,
@@ -101,11 +96,9 @@ public class FormQuestionController {
             summary = "Eliminar una pregunta (soft delete)",
             description = "Marca la pregunta como eliminada sin afectar respuestas historicas. " +
                     "Incrementa la version del formulario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pregunta eliminada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pregunta no encontrada", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pregunta eliminada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pregunta no encontrada", content = @Content)
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID formId, @PathVariable UUID sectionId,
             @PathVariable UUID questionId, Authentication auth) {
@@ -119,12 +112,10 @@ public class FormQuestionController {
             description = "Recibe la lista completa de IDs de preguntas activas en el nuevo orden. " +
                     "Debe incluir exactamente los mismos IDs que las preguntas activas actuales. " +
                     "Incrementa la version del formulario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Preguntas reordenadas"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Los IDs no coinciden con las preguntas activas", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Formulario no encontrado", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Preguntas reordenadas")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Los IDs no coinciden con las preguntas activas", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Formulario no encontrado", content = @Content)
     public ResponseEntity<ApiResponse<List<QuestionResponse>>> reorder(
             @PathVariable UUID formId, @PathVariable UUID sectionId,
             @Valid @RequestBody ReorderQuestionsRequest request, Authentication auth) {

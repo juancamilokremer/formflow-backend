@@ -14,13 +14,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FileTypeHandler implements QuestionTypeHandler<FileConfig> {
 
-    public static final QuestionType TYPE = new QuestionType("FILE");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("FILE");
 
     private final ObjectMapper objectMapper;
 
     @Override
     public QuestionType type() {
-        return TYPE;
+        return QUESTION_TYPE;
     }
 
     @Override

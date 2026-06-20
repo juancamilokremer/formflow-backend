@@ -14,13 +14,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MatrixTypeHandler implements QuestionTypeHandler<MatrixConfig> {
 
-    public static final QuestionType TYPE = new QuestionType("MATRIX");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("MATRIX");
 
     private final ObjectMapper objectMapper;
 
     @Override
     public QuestionType type() {
-        return TYPE;
+        return QUESTION_TYPE;
     }
 
     @Override

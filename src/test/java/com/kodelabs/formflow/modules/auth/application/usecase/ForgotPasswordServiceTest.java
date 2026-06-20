@@ -42,7 +42,7 @@ class ForgotPasswordServiceTest {
 
         service.execute(new ForgotPasswordCommand("empresa-abc", "admin@abc.com"));
 
-        verify(authEmailSender).sendPasswordReset(user, tenant);
+        verify(authEmailSender).sendPasswordReset(user);
     }
 
     @Test
@@ -55,7 +55,7 @@ class ForgotPasswordServiceTest {
                 new ForgotPasswordCommand("empresa-abc", "noexiste@abc.com")))
                 .doesNotThrowAnyException();
 
-        verify(authEmailSender, never()).sendPasswordReset(any(), any());
+        verify(authEmailSender, never()).sendPasswordReset(any());
     }
 
     @Test
@@ -66,6 +66,6 @@ class ForgotPasswordServiceTest {
                 new ForgotPasswordCommand("fantasma", "alguien@x.com")))
                 .doesNotThrowAnyException();
 
-        verify(authEmailSender, never()).sendPasswordReset(any(), any());
+        verify(authEmailSender, never()).sendPasswordReset(any());
     }
 }

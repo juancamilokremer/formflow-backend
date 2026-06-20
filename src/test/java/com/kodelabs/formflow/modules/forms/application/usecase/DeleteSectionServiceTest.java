@@ -75,7 +75,8 @@ class DeleteSectionServiceTest {
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new DeleteSectionCommand(sectionId, formId, tenantId, userId)))
+        var command = new DeleteSectionCommand(sectionId, formId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.section.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));

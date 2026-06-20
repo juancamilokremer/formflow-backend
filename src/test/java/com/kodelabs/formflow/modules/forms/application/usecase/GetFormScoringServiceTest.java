@@ -102,7 +102,8 @@ class GetFormScoringServiceTest {
     void throwsNotFoundWhenFormDoesNotExist() {
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new GetFormScoringQuery(formId, tenantId)))
+        var query = new GetFormScoringQuery(formId, tenantId);
+        assertThatThrownBy(() -> service.execute(query))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }

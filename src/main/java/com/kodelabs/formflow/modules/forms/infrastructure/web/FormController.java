@@ -20,7 +20,6 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.Update
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -63,14 +62,12 @@ public class FormController {
             description = "Crea un formulario vacio (sin secciones) para el tenant activo. " +
                     "El tipo determina si el formulario soporta scoring (CANDIDATES, DIAGNOSTIC) " +
                     "o es solo recoleccion de datos (REGISTRATION).")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201", description = "Formulario creado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201", description = "Formulario creado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401", description = "No autenticado", content = @Content)
-    })
     public ResponseEntity<ApiResponse<FormSummaryResponse>> create(
             @Valid @RequestBody CreateFormRequest request, Authentication auth) {
         var result = createForm.execute(new CreateFormCommand(
@@ -85,12 +82,10 @@ public class FormController {
             summary = "Listar formularios del tenant",
             description = "Retorna todos los formularios activos (no eliminados) del tenant. " +
                     "Incluye el conteo de secciones de cada formulario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Lista de formularios"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Lista de formularios")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401", description = "No autenticado", content = @Content)
-    })
     public ResponseEntity<ApiResponse<List<FormSummaryResponse>>> list() {
         var results = listForms.execute(new ListFormsQuery(tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(
@@ -101,14 +96,12 @@ public class FormController {
     @Operation(
             summary = "Obtener un formulario con sus secciones",
             description = "Retorna el formulario con la lista completa de secciones activas ordenadas por posicion.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Formulario con secciones"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Formulario con secciones")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    })
     public ResponseEntity<ApiResponse<FormDetailResponse>> get(@PathVariable UUID id) {
         var result = getForm.execute(new GetFormQuery(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(FormDetailResponse.from(result)));
@@ -119,16 +112,14 @@ public class FormController {
             summary = "Actualizar metadatos del formulario",
             description = "Actualiza nombre, descripcion y tiempo limite. No incrementa la version " +
                     "del formulario — solo los cambios estructurales (secciones) lo hacen.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Formulario actualizado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Formulario actualizado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    })
     public ResponseEntity<ApiResponse<FormSummaryResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateFormRequest request, Authentication auth) {
@@ -143,14 +134,12 @@ public class FormController {
             summary = "Eliminar un formulario (soft delete)",
             description = "Marca el formulario como eliminado sin borrar datos historicos. " +
                     "Las respuestas existentes y sus snapshots se conservan.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Formulario eliminado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Formulario eliminado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    })
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         deleteForm.execute(new DeleteFormCommand(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(null));
@@ -161,14 +150,12 @@ public class FormController {
             summary = "Resumen de scoring del formulario",
             description = "Retorna el puntaje máximo alcanzable por categoría para el formulario. " +
                     "Útil para configurar pesos en una convocatoria antes de activarla.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Resumen de scoring"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Resumen de scoring")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    })
     public ResponseEntity<ApiResponse<FormScoringResponse>> scoringSummary(@PathVariable UUID id) {
         var result = getFormScoring.execute(new GetFormScoringQuery(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(FormScoringResponse.from(result)));
