@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build & Test
+    name: Build y Tests
     runs-on: ubuntu-latest
 
     steps:
