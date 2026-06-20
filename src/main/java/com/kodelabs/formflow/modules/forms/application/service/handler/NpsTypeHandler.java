@@ -13,13 +13,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NpsTypeHandler implements QuestionTypeHandler<NpsConfig> {
 
-    public static final QuestionType TYPE = new QuestionType("NPS");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("NPS");
 
     private final ObjectMapper objectMapper;
 
     @Override
     public QuestionType type() {
-        return TYPE;
+        return QUESTION_TYPE;
     }
 
     @Override

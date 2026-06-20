@@ -13,13 +13,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TextTypeHandler implements QuestionTypeHandler<TextConfig> {
 
-    public static final QuestionType TYPE = new QuestionType("TEXT");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("TEXT");
 
     private final ObjectMapper objectMapper;
 
     @Override
     public QuestionType type() {
-        return TYPE;
+        return QUESTION_TYPE;
     }
 
     @Override

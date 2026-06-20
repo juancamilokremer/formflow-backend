@@ -14,13 +14,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SingleTypeHandler implements QuestionTypeHandler<SingleConfig> {
 
-    public static final QuestionType TYPE = new QuestionType("SINGLE");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("SINGLE");
 
     private final ObjectMapper objectMapper;
 
     @Override
     public QuestionType type() {
-        return TYPE;
+        return QUESTION_TYPE;
     }
 
     @Override
