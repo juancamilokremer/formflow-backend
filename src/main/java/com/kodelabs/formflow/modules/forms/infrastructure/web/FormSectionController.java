@@ -15,7 +15,6 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.Update
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -54,16 +53,14 @@ public class FormSectionController {
             summary = "Agregar una seccion al formulario",
             description = "La seccion se agrega al final (posicion = numero de secciones activas actuales). " +
                     "Incrementa la version del formulario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201", description = "Seccion creada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201", description = "Seccion creada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    })
     public ResponseEntity<ApiResponse<SectionResponse>> add(
             @PathVariable UUID formId,
             @Valid @RequestBody CreateSectionRequest request, Authentication auth) {
@@ -77,16 +74,14 @@ public class FormSectionController {
     @Operation(
             summary = "Actualizar titulo y descripcion de una seccion",
             description = "Actualiza solo metadatos de la seccion. No afecta la version del formulario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Seccion actualizada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Seccion actualizada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Seccion no encontrada en el formulario del tenant", content = @Content)
-    })
     public ResponseEntity<ApiResponse<SectionResponse>> update(
             @PathVariable UUID formId,
             @PathVariable UUID sectionId,
@@ -101,14 +96,12 @@ public class FormSectionController {
             summary = "Eliminar una seccion (soft delete)",
             description = "Marca la seccion como eliminada sin borrar preguntas ni respuestas historicas. " +
                     "Incrementa la version del formulario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Seccion eliminada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Seccion eliminada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Seccion no encontrada en el formulario del tenant", content = @Content)
-    })
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID formId,
             @PathVariable UUID sectionId, Authentication auth) {
@@ -122,16 +115,14 @@ public class FormSectionController {
             description = "Recibe la lista completa de IDs de secciones activas en el nuevo orden. " +
                     "Debe incluir exactamente los mismos IDs que las secciones activas actuales — ni mas ni menos. " +
                     "Incrementa la version del formulario.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Secciones reordenadas, retorna la lista en el nuevo orden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Los IDs no coinciden exactamente con las secciones activas", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Secciones reordenadas, retorna la lista en el nuevo orden")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Los IDs no coinciden exactamente con las secciones activas", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    })
     public ResponseEntity<ApiResponse<List<SectionResponse>>> reorder(
             @PathVariable UUID formId,
             @Valid @RequestBody ReorderSectionsRequest request, Authentication auth) {

@@ -14,7 +14,6 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.Impor
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -53,10 +52,8 @@ public class CandidateController {
 
     @PostMapping("/{convocatoriaId}/candidates")
     @Operation(summary = "Agregar candidato", description = "Agrega un candidato a la convocatoria. No se permite duplicar email.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Candidato agregado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Email duplicado o convocatoria cerrada", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Candidato agregado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Email duplicado o convocatoria cerrada", content = @Content)
     public ResponseEntity<ApiResponse<CandidateResponse>> addCandidate(
             @PathVariable UUID convocatoriaId,
             @Valid @RequestBody AddCandidateRequest request,
@@ -68,11 +65,9 @@ public class CandidateController {
 
     @DeleteMapping("/{convocatoriaId}/candidates/{candidateId}")
     @Operation(summary = "Eliminar candidato", description = "Elimina un candidato de la convocatoria.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Candidato eliminado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No encontrado", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Convocatoria cerrada", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Candidato eliminado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No encontrado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Convocatoria cerrada", content = @Content)
     public ResponseEntity<ApiResponse<Void>> removeCandidate(
             @PathVariable UUID convocatoriaId,
             @PathVariable UUID candidateId,
@@ -85,10 +80,8 @@ public class CandidateController {
     @Operation(summary = "Importar candidatos CSV",
             description = "Importa candidatos desde un CSV (columnas: nombre, email). " +
                     "Emails duplicados en la convocatoria se omiten con aviso.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Importacion completada"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "CSV invalido", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Importacion completada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "CSV invalido", content = @Content)
     public ResponseEntity<ApiResponse<ImportResponse>> importCandidates(
             @PathVariable UUID convocatoriaId,
             @RequestParam("file") MultipartFile file,
@@ -102,10 +95,8 @@ public class CandidateController {
     @Operation(summary = "Ranking de candidatos",
             description = "Retorna candidatos con score ordenados de mayor a menor. " +
                     "Solo candidatos que han respondido aparecen en el ranking.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ranking"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Convocatoria no encontrada", content = @Content)
-    })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ranking")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Convocatoria no encontrada", content = @Content)
     public ResponseEntity<ApiResponse<List<CandidateResponse>>> ranking(@PathVariable UUID convocatoriaId) {
         var results = getRanking.execute(new GetRankingQuery(convocatoriaId, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(
