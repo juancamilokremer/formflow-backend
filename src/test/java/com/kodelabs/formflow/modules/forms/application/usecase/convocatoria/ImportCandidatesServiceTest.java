@@ -64,8 +64,8 @@ class ImportCandidatesServiceTest {
         closed.close();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(closed));
 
-        assertThatThrownBy(() -> service.execute(new ImportCandidatesCommand(
-                convId, tenantId, userId, new byte[0])))
+        var command = new ImportCandidatesCommand(convId, tenantId, userId, new byte[0]);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
     }

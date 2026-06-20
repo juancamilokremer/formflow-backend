@@ -87,9 +87,10 @@ class AddQuestionServiceTest {
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new AddQuestionCommand(
+        var command = new AddQuestionCommand(
                 formId, sectionId, tenantId, userId, "Q", null,
-                new QuestionType("TEXT"), false, null, null, Map.of())))
+                new QuestionType("TEXT"), false, null, null, Map.of());
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.section.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())

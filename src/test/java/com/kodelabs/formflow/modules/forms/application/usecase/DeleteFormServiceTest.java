@@ -51,7 +51,8 @@ class DeleteFormServiceTest {
         UUID tenantId = UUID.randomUUID();
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new DeleteFormCommand(formId, tenantId)))
+        var command = new DeleteFormCommand(formId, tenantId);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.form.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));

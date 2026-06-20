@@ -56,7 +56,8 @@ class LaunchConvocatoriaServiceTest {
         active.launch();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(active));
 
-        assertThatThrownBy(() -> service.execute(new LaunchConvocatoriaCommand(convId, tenantId, userId)))
+        var command = new LaunchConvocatoriaCommand(convId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
     }
@@ -66,7 +67,8 @@ class LaunchConvocatoriaServiceTest {
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draftConvocatoria()));
         when(candidateRepository.countByConvocatoriaId(convId)).thenReturn(0L);
 
-        assertThatThrownBy(() -> service.execute(new LaunchConvocatoriaCommand(convId, tenantId, userId)))
+        var command = new LaunchConvocatoriaCommand(convId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
     }
@@ -75,7 +77,8 @@ class LaunchConvocatoriaServiceTest {
     void throwsNotFoundWhenConvocatoriaDoesNotExist() {
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new LaunchConvocatoriaCommand(convId, tenantId, userId)))
+        var command = new LaunchConvocatoriaCommand(convId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }

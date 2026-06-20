@@ -97,7 +97,8 @@ class AddSectionServiceTest {
     void throwsNotFoundWhenFormDoesNotBelongToTenant() {
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new AddSectionCommand(formId, tenantId, userId, "S", null, null)))
+        var command = new AddSectionCommand(formId, tenantId, userId, "S", null, null);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.form.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
