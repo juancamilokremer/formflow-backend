@@ -76,7 +76,7 @@ class RegisterTenantServiceTest {
 
         // Registration sends only the verification email; welcome is sent after verification
         verify(authEmailSender, never()).sendWelcome(any(User.class), any(Tenant.class));
-        verify(authEmailSender).sendEmailVerification(any(User.class), any(Tenant.class));
+        verify(authEmailSender).sendEmailVerification(any(User.class));
     }
 
     @Test

@@ -38,7 +38,7 @@ public class AuthEmailSender {
         sendEmail.send(EmailType.WELCOME, user.getEmail(), model);
     }
 
-    public void sendEmailVerification(User user, Tenant tenant) {
+    public void sendEmailVerification(User user) {
         String rawToken = emailTokenIssuer.issue(user, EmailTokenType.EMAIL_VERIFICATION,
                 VERIFICATION_TOKEN_VALIDITY);
         Map<String, Object> model = new HashMap<>();
@@ -48,7 +48,7 @@ public class AuthEmailSender {
         sendEmail.send(EmailType.EMAIL_VERIFICATION, user.getEmail(), model);
     }
 
-    public void sendPasswordReset(User user, Tenant tenant) {
+    public void sendPasswordReset(User user) {
         String rawToken = emailTokenIssuer.issue(user, EmailTokenType.PASSWORD_RESET,
                 RESET_TOKEN_VALIDITY);
         Map<String, Object> model = new HashMap<>();
