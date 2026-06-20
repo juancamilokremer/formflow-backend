@@ -65,7 +65,7 @@ public class FormQuestionController {
                 formId, sectionId, tenantId(), userId(auth),
                 request.title(), request.description(), request.type(),
                 request.required(), request.categoryId(), request.timeLimitSeconds(),
-                request.config()));
+                request.conditionalLogic(), request.config()));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(QuestionResponse.from(result)));
     }
@@ -87,7 +87,7 @@ public class FormQuestionController {
                 questionId, sectionId, formId, tenantId(), userId(auth),
                 request.title(), request.description(), request.type(),
                 request.required(), request.categoryId(), request.timeLimitSeconds(),
-                request.config()));
+                request.conditionalLogic(), request.config()));
         return ResponseEntity.ok(ApiResponse.ok(QuestionResponse.from(result)));
     }
 

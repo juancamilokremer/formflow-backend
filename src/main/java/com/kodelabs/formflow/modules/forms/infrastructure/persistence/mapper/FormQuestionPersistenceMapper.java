@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kodelabs.formflow.modules.forms.application.service.QuestionTypeRegistry;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionalLogic;
 import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.entity.FormQuestionJpaEntity;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,9 @@ public class FormQuestionPersistenceMapper {
         QuestionType type = new QuestionType(entity.getType());
         QuestionConfig config = registry.get(type).deserialize(
                 entity.getConfig() == null || entity.getConfig().isBlank() ? "{}" : entity.getConfig());
+        ConditionalLogic conditionalLogic = entity.getConditionalLogic() == null
+                ? null
+                : objectMapper.readValue(entity.getConditionalLogic(), ConditionalLogic.class);
         return FormQuestion.builder()
                 .id(entity.getId())
                 .sectionId(entity.getSectionId())
@@ -35,6 +39,7 @@ public class FormQuestionPersistenceMapper {
                 .categoryId(entity.getCategoryId())
                 .timeLimitSeconds(entity.getTimeLimitSeconds())
                 .config(config)
+                .conditionalLogic(conditionalLogic)
                 .deletedAt(entity.getDeletedAt())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
@@ -56,6 +61,9 @@ public class FormQuestionPersistenceMapper {
                 .categoryId(domain.getCategoryId())
                 .timeLimitSeconds(domain.getTimeLimitSeconds())
                 .config(objectMapper.writeValueAsString(domain.getConfig()))
+                .conditionalLogic(domain.getConditionalLogic() == null
+                        ? null
+                        : objectMapper.writeValueAsString(domain.getConditionalLogic()))
                 .deletedAt(domain.getDeletedAt())
                 .build();
     }

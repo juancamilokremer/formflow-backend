@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConditionalLogicValidator;
 import com.kodelabs.formflow.modules.forms.application.service.QuestionConfigFactory;
 import com.kodelabs.formflow.modules.forms.application.usecase.question.UpdateQuestionService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
@@ -37,6 +38,7 @@ class UpdateQuestionServiceTest {
     @Mock private FormQuestionRepositoryPort questionRepository;
     @Mock private FormRepositoryPort formRepository;
     @Mock private QuestionConfigFactory configFactory;
+    @Mock private ConditionalLogicValidator conditionalLogicValidator;
     @InjectMocks private UpdateQuestionService service;
 
     private UUID questionId;
@@ -70,7 +72,7 @@ class UpdateQuestionServiceTest {
 
         QuestionResult result = service.execute(new UpdateQuestionCommand(
                 questionId, sectionId, formId, tenantId, userId,
-                "Nueva", "Desc", new QuestionType("TEXT"), true, null, null, Map.of()));
+                "Nueva", "Desc", new QuestionType("TEXT"), true, null, null, null, Map.of()));
 
         assertThat(result.title()).isEqualTo("Nueva");
         assertThat(result.required()).isTrue();
@@ -87,7 +89,7 @@ class UpdateQuestionServiceTest {
 
         service.execute(new UpdateQuestionCommand(
                 questionId, sectionId, formId, tenantId, userId,
-                "T", null, new QuestionType("TEXT"), false, null, null, Map.of()));
+                "T", null, new QuestionType("TEXT"), false, null, null, null, Map.of()));
 
         ArgumentCaptor<Form> captor = ArgumentCaptor.forClass(Form.class);
         verify(formRepository).save(captor.capture());
@@ -101,7 +103,7 @@ class UpdateQuestionServiceTest {
 
         var command = new UpdateQuestionCommand(
                 questionId, sectionId, formId, tenantId, userId,
-                "T", null, new QuestionType("TEXT"), false, null, null, Map.of());
+                "T", null, new QuestionType("TEXT"), false, null, null, null, Map.of());
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));

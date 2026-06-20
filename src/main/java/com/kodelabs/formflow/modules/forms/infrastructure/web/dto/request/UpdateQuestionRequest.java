@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request;
 
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionalLogic;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,5 +16,6 @@ public record UpdateQuestionRequest(
         boolean required,
         UUID categoryId,
         Integer timeLimitSeconds,
+        ConditionalLogic conditionalLogic,
         Map<String, Object> config
 ) {}
