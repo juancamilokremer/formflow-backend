@@ -34,6 +34,7 @@ mvn test
 | OpenAPI JSON | http://localhost:8080/api-docs |
 | MailHog (bandeja de correos de dev) | http://localhost:8025 |
 | PostgreSQL | localhost:5434 (`formflow` / `formflow123` / db `formflow_dev`) |
+| SonarQube (calidad de código) | http://localhost:9000 (ver sección abajo) |
 
 ### Probar la API desde Swagger
 
@@ -41,6 +42,80 @@ mvn test
 2. Copia el `accessToken` de la respuesta
 3. Botón **Authorize** (candado) → pega el token
 4. Los endpoints protegidos quedan autenticados; los correos enviados se ven en MailHog
+
+## Análisis de calidad (SonarQube)
+
+SonarQube corre localmente vía Docker. Detecta código duplicado, code smells, bugs,
+vulnerabilidades y mide la cobertura de tests. **No corre en CI** — se ejecuta bajo demanda
+durante el desarrollo.
+
+### Primera vez
+
+```bash
+# 1. Levantar SonarQube (puede tardar ~60s en arrancar)
+docker-compose up -d sonarqube
+
+# 2. Abrir http://localhost:9000
+#    Usuario: admin | Contraseña: admin
+#    (pedirá cambiar la contraseña al primer login)
+
+# 3. Crear el proyecto en la UI:
+#    "Create project" → "Manually" → Project key: formflow-backend
+```
+
+### Ejecutar análisis
+
+```bash
+# Asegúrate de que SonarQube esté corriendo
+docker-compose up -d sonarqube
+
+# Análisis completo: tests + cobertura JaCoCo + reporte Sonar
+mvn verify sonar:sonar
+
+# Ver resultados en:
+# http://localhost:9000/dashboard?id=formflow-backend
+```
+
+### Solo tests y cobertura (sin Sonar)
+
+```bash
+# Lo mismo que corre el CI — más rápido
+mvn verify
+
+# Reporte HTML de cobertura generado en:
+# target/site/jacoco/index.html
+```
+
+### Qué detecta SonarQube
+
+| Categoría | Ejemplos |
+|-----------|---------|
+| Code smells | Métodos muy largos, complejidad cognitiva alta |
+| Duplicaciones | Bloques de código repetidos entre clases |
+| Bugs | Null pointer potenciales, recursos no cerrados |
+| Vulnerabilidades | Secrets hardcodeados, inyecciones |
+| Cobertura | % de líneas/ramas cubiertas por tests |
+
+Las clases sin lógica de negocio (POJOs de dominio, entidades JPA, DTOs) están excluidas
+del análisis para no sesgar las métricas.
+
+### Migrar a SonarCloud (cuando estés listo para producción)
+
+En `pom.xml`, cambiar solo dos líneas:
+
+```xml
+<!-- Reemplazar: -->
+<sonar.host.url>http://localhost:9000</sonar.host.url>
+
+<!-- Por: -->
+<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+<sonar.organization>juancamilokremer</sonar.organization>
+```
+
+Luego agregar el secret `SONAR_TOKEN` en GitHub Actions y añadir `sonar:sonar`
+al paso de CI. Con eso el Quality Gate queda visible en cada PR.
+
+---
 
 ## Funcionalidad actual (M2)
 
@@ -274,7 +349,10 @@ Todos los endpoints de formularios requieren JWT. Documentación interactiva en 
 
 ## CI/CD
 
-- **CI** (GitHub Actions): build + tests con PostgreSQL en contenedor en cada PR y push a `main`.
-  El check "Build y Tests" es requerido para mergear.
+- **CI** (GitHub Actions): `mvn verify` en cada PR y push a `main` — compila, corre los 114+
+  tests y genera el reporte de cobertura JaCoCo. El reporte queda disponible como artifact
+  descargable en cada run. El check es requerido para mergear.
 - **CD**: deploy automático a Railway en cada merge a `main` (se activa al configurar el
   secret `RAILWAY_TOKEN`; ver issue #14).
+- **Análisis estático**: SonarQube corre localmente bajo demanda (ver sección de arriba),
+  no en CI. Para activarlo en CI en el futuro, ver instrucciones de migración a SonarCloud.
