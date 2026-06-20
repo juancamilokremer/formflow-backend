@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -31,6 +33,7 @@ class CreateConvocatoriaServiceTest {
 
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private FormRepositoryPort formRepository;
+    @Spy  private ConvocatoriaWeightValidator weightValidator = new ConvocatoriaWeightValidator();
 
     @InjectMocks private CreateConvocatoriaService service;
 

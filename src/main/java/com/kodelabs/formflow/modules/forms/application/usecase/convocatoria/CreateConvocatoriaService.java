@@ -1,6 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
-import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ScoringConfig;
 import com.kodelabs.formflow.modules.forms.domain.port.in.CreateConvocatoriaUseCase;
@@ -22,12 +22,13 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final FormRepositoryPort formRepository;
+    private final ConvocatoriaWeightValidator weightValidator;
 
     @Override
     @Transactional
     public ConvocatoriaResult execute(CreateConvocatoriaCommand command) {
         validateFormExists(command);
-        validateWeightsSum(command.categoryWeights());
+        weightValidator.validate(command.categoryWeights());
         Convocatoria saved = convocatoriaRepository.save(buildConvocatoria(command));
         return ConvocatoriaResult.from(saved, List.of());
     }
@@ -35,14 +36,6 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
     private void validateFormExists(CreateConvocatoriaCommand command) {
         if (!formRepository.existsByIdAndTenantId(command.formId(), command.tenantId())) {
             throw new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, command.formId());
-        }
-    }
-
-    private void validateWeightsSum(List<CategoryWeight> weights) {
-        if (weights == null || weights.isEmpty()) return;
-        int total = weights.stream().mapToInt(CategoryWeight::weight).sum();
-        if (total != 100) {
-            throw new BusinessException("error.convocatoria.weights_must_sum_100", HttpStatus.BAD_REQUEST, total);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
-import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.port.in.LaunchConvocatoriaUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.LaunchConvocatoriaCommand;
@@ -13,20 +13,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final CandidateRepositoryPort candidateRepository;
+    private final ConvocatoriaWeightValidator weightValidator;
 
     @Override
     @Transactional
     public ConvocatoriaResult execute(LaunchConvocatoriaCommand command) {
         Convocatoria convocatoria = loadDraftConvocatoria(command);
-        validateWeightsSumIfPresent(convocatoria.getCategoryWeights());
+        weightValidator.validate(convocatoria.getCategoryWeights());
         validateHasCandidates(convocatoria);
         convocatoria.launch();
         Convocatoria saved = convocatoriaRepository.save(convocatoria);
@@ -43,14 +42,6 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
             throw new BusinessException("error.convocatoria.not_draft", HttpStatus.CONFLICT);
         }
         return convocatoria;
-    }
-
-    private void validateWeightsSumIfPresent(List<CategoryWeight> weights) {
-        if (weights == null || weights.isEmpty()) return;
-        int total = weights.stream().mapToInt(CategoryWeight::weight).sum();
-        if (total != 100) {
-            throw new BusinessException("error.convocatoria.weights_must_sum_100", HttpStatus.BAD_REQUEST, total);
-        }
     }
 
     private void validateHasCandidates(Convocatoria convocatoria) {
