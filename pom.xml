@@ -22,6 +22,30 @@
         <jjwt.version>0.12.5</jjwt.version>
         <springdoc.version>2.5.0</springdoc.version>
         <poi.version>5.3.0</poi.version>
+        <jacoco.version>0.8.12</jacoco.version>
+
+        <!-- SonarCloud -->
+        <sonar.projectKey>juancamilokremer_formflow-backend</sonar.projectKey>
+        <sonar.organization>juancamilokremer</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.build.directory}/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+        <!-- Exclude pure data classes: no logic to test or measure -->
+        <sonar.exclusions>
+            **/domain/model/**,
+            **/infrastructure/persistence/entity/**,
+            **/infrastructure/web/dto/**,
+            **/*Application.java,
+            **/config/**
+        </sonar.exclusions>
+        <sonar.coverage.exclusions>
+            **/domain/model/**,
+            **/infrastructure/persistence/entity/**,
+            **/infrastructure/web/dto/**,
+            **/*Application.java,
+            **/config/**
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
@@ -149,6 +173,26 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
