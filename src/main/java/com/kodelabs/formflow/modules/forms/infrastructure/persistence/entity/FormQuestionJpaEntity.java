@@ -63,6 +63,9 @@ public class FormQuestionJpaEntity {
     @Column(columnDefinition = "jsonb", nullable = false)
     private String config;
 
+    @Column(name = "conditional_logic", columnDefinition = "jsonb")
+    private String conditionalLogic;
+
     @Column(name = "deleted_at")
     private Instant deletedAt;
 

@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.question;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConditionalLogicValidator;
 import com.kodelabs.formflow.modules.forms.application.service.QuestionConfigFactory;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
@@ -24,6 +25,7 @@ public class AddQuestionService implements AddQuestionUseCase {
     private final FormSectionRepositoryPort sectionRepository;
     private final FormQuestionRepositoryPort questionRepository;
     private final QuestionConfigFactory configFactory;
+    private final ConditionalLogicValidator conditionalLogicValidator;
 
     @Override
     @Transactional
@@ -32,6 +34,8 @@ public class AddQuestionService implements AddQuestionUseCase {
                 .findByIdAndFormIdAndTenantId(command.sectionId(), command.formId(), command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.section.not_found",
                         HttpStatus.NOT_FOUND, command.sectionId().toString()));
+
+        conditionalLogicValidator.validate(command.conditionalLogic(), command.formId(), command.tenantId());
 
         int nextPosition = questionRepository.countActiveBySectionId(section.getId());
 
@@ -46,6 +50,7 @@ public class AddQuestionService implements AddQuestionUseCase {
                 .required(command.required())
                 .categoryId(command.categoryId())
                 .timeLimitSeconds(command.timeLimitSeconds())
+                .conditionalLogic(command.conditionalLogic())
                 .config(configFactory.build(command.type(), command.rawConfig()))
                 .build();
 

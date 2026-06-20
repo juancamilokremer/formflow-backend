@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConditionalLogicValidator;
 import com.kodelabs.formflow.modules.forms.application.service.QuestionConfigFactory;
 import com.kodelabs.formflow.modules.forms.application.usecase.question.AddQuestionService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
@@ -40,6 +41,7 @@ class AddQuestionServiceTest {
     @Mock private FormSectionRepositoryPort sectionRepository;
     @Mock private FormQuestionRepositoryPort questionRepository;
     @Mock private QuestionConfigFactory configFactory;
+    @Mock private ConditionalLogicValidator conditionalLogicValidator;
     @InjectMocks private AddQuestionService service;
 
     private UUID formId;
@@ -73,7 +75,7 @@ class AddQuestionServiceTest {
 
         QuestionResult result = service.execute(new AddQuestionCommand(
                 formId, sectionId, tenantId, userId, "Q", null, new QuestionType("TEXT"),
-                false, null, null, Map.of()));
+                false, null, null, null, Map.of()));
 
         assertThat(result.position()).isEqualTo(3);
 
@@ -89,7 +91,7 @@ class AddQuestionServiceTest {
 
         var command = new AddQuestionCommand(
                 formId, sectionId, tenantId, userId, "Q", null,
-                new QuestionType("TEXT"), false, null, null, Map.of());
+                new QuestionType("TEXT"), false, null, null, null, Map.of());
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.section.not_found")

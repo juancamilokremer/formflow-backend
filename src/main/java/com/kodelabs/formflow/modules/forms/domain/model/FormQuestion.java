@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.domain.model;
 
+import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionalLogic;
 import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +34,7 @@ public class FormQuestion {
     private UUID categoryId;
     private Integer timeLimitSeconds;
     private QuestionConfig config;
+    private ConditionalLogic conditionalLogic;
     private Instant deletedAt;
     private Instant createdAt;
     private Instant updatedAt;

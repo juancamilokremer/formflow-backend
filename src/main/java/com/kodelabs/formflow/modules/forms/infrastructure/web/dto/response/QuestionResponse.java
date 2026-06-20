@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response;
 
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionalLogic;
 import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.QuestionResult;
 
@@ -18,6 +19,7 @@ public record QuestionResponse(
         boolean required,
         UUID categoryId,
         Integer timeLimitSeconds,
+        ConditionalLogic conditionalLogic,
         QuestionConfig config,
         Instant createdAt,
         Instant updatedAt
@@ -26,6 +28,7 @@ public record QuestionResponse(
         return new QuestionResponse(
                 r.id(), r.sectionId(), r.formId(), r.title(), r.description(),
                 r.type(), r.position(), r.required(), r.categoryId(),
-                r.timeLimitSeconds(), r.config(), r.createdAt(), r.updatedAt());
+                r.timeLimitSeconds(), r.conditionalLogic(), r.config(),
+                r.createdAt(), r.updatedAt());
     }
 }

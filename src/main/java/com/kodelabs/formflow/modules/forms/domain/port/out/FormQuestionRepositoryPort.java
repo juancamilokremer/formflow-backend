@@ -22,5 +22,7 @@ public interface FormQuestionRepositoryPort {
     /** Returns active questions grouped by sectionId — single query, avoids N+1 on form detail. */
     Map<UUID, List<FormQuestion>> findAllActiveBySectionIds(List<UUID> sectionIds);
 
+    List<FormQuestion> findActiveByFormIdAndTenantId(UUID formId, UUID tenantId);
+
     boolean existsActiveByCategoryIdAndTenantId(UUID categoryId, UUID tenantId);
 }

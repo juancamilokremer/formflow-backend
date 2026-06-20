@@ -56,6 +56,12 @@ public class FormQuestionRepositoryAdapter implements FormQuestionRepositoryPort
     }
 
     @Override
+    public List<FormQuestion> findActiveByFormIdAndTenantId(UUID formId, UUID tenantId) {
+        return questionJpa.findActiveByFormIdAndTenantId(formId, tenantId)
+                .stream().map(questionMapper::toDomain).toList();
+    }
+
+    @Override
     public boolean existsActiveByCategoryIdAndTenantId(UUID categoryId, UUID tenantId) {
         return questionJpa.existsActiveByCategoryIdAndTenantId(categoryId, tenantId);
     }
