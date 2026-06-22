@@ -5,6 +5,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormScoringUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ListFormsUseCase;
+import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormStatusUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteFormCommand;
@@ -12,11 +13,13 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormScoringQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListFormsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormStatusCommand;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.CreateFormRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormStatusRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormDetailResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormScoringResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormSummaryResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormRequest;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,6 +32,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -53,6 +57,7 @@ public class FormController {
     private final ListFormsUseCase listForms;
     private final GetFormUseCase getForm;
     private final UpdateFormUseCase updateForm;
+    private final UpdateFormStatusUseCase updateFormStatus;
     private final DeleteFormUseCase deleteForm;
     private final GetFormScoringUseCase getFormScoring;
 
@@ -126,6 +131,25 @@ public class FormController {
         var result = updateForm.execute(new UpdateFormCommand(
                 id, tenantId(), userId(auth), request.name(),
                 request.description(), request.timeLimitSeconds()));
+        return ResponseEntity.ok(ApiResponse.ok(FormSummaryResponse.from(result)));
+    }
+
+    @PatchMapping("/{id}/status")
+    @Operation(
+            summary = "Cambiar estado del formulario",
+            description = "Cambia el estado del formulario entre DRAFT, ACTIVE y ARCHIVED. " +
+                    "Solo un formulario ACTIVE acepta respuestas públicas.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Estado actualizado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Estado inválido", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Formulario no encontrado", content = @Content)
+    public ResponseEntity<ApiResponse<FormSummaryResponse>> updateStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateFormStatusRequest request, Authentication auth) {
+        var result = updateFormStatus.execute(
+                new UpdateFormStatusCommand(id, tenantId(), userId(auth), request.status()));
         return ResponseEntity.ok(ApiResponse.ok(FormSummaryResponse.from(result)));
     }
 

@@ -2,6 +2,9 @@ package com.kodelabs.formflow.modules.forms.domain.port.out;
 
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,4 +17,8 @@ public interface FormResponseRepositoryPort {
     Optional<FormResponse> findByRespondentToken(UUID respondentToken);
 
     boolean existsByRespondentToken(UUID respondentToken);
+
+    Map<UUID, Integer> countByFormIds(List<UUID> formIds);
+
+    Map<UUID, Instant> lastResponseAtByFormIds(List<UUID> formIds);
 }

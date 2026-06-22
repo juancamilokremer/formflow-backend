@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.mapper;
 
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
+import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.entity.FormJpaEntity;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ public class FormPersistenceMapper {
                 .name(e.getName())
                 .description(e.getDescription())
                 .type(FormType.valueOf(e.getType()))
+                .status(FormStatus.valueOf(e.getStatus()))
                 .version(e.getVersion())
                 .timeLimitSeconds(e.getTimeLimitSeconds())
                 .deletedAt(e.getDeletedAt())
@@ -32,6 +34,7 @@ public class FormPersistenceMapper {
                 .name(f.getName())
                 .description(f.getDescription())
                 .type(f.getType().name())
+                .status(f.getStatus().name())
                 .version(f.getVersion())
                 .timeLimitSeconds(f.getTimeLimitSeconds())
                 .deletedAt(f.getDeletedAt())

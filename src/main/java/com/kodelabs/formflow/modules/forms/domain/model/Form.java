@@ -29,6 +29,9 @@ public class Form {
     private FormType type;
 
     @Builder.Default
+    private FormStatus status = FormStatus.DRAFT;
+
+    @Builder.Default
     private int version = 1;
 
     private Integer timeLimitSeconds;

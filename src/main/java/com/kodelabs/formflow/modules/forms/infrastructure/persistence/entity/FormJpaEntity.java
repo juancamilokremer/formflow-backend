@@ -42,6 +42,9 @@ public class FormJpaEntity {
     @Column(nullable = false, length = 30)
     private String type;
 
+    @Column(nullable = false, length = 20)
+    private String status;
+
     @Column(nullable = false)
     private int version;
 
