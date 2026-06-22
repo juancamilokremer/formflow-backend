@@ -7,6 +7,10 @@ import com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,5 +39,23 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
     @Override
     public boolean existsByRespondentToken(UUID respondentToken) {
         return responseJpa.existsByRespondentToken(respondentToken);
+    }
+
+    @Override
+    public Map<UUID, Integer> countByFormIds(List<UUID> formIds) {
+        Map<UUID, Integer> result = new HashMap<>();
+        for (Object[] row : responseJpa.countGroupedByFormIds(formIds)) {
+            result.put((UUID) row[0], ((Number) row[1]).intValue());
+        }
+        return result;
+    }
+
+    @Override
+    public Map<UUID, Instant> lastResponseAtByFormIds(List<UUID> formIds) {
+        Map<UUID, Instant> result = new HashMap<>();
+        for (Object[] row : responseJpa.lastCreatedAtGroupedByFormIds(formIds)) {
+            result.put((UUID) row[0], (Instant) row[1]);
+        }
+        return result;
     }
 }

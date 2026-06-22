@@ -29,6 +29,6 @@ public class CreateFormService implements CreateFormUseCase {
                 .build();
 
         Form saved = formRepository.save(form);
-        return FormSummaryResult.of(saved, 0);
+        return FormSummaryResult.of(saved, 0, 0, null);
     }
 }

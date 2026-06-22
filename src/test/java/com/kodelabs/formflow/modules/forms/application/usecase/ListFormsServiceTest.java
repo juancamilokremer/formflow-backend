@@ -6,6 +6,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListFormsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormSummaryResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,7 @@ class ListFormsServiceTest {
 
     @Mock private FormRepositoryPort formRepository;
     @Mock private FormSectionRepositoryPort sectionRepository;
+    @Mock private FormResponseRepositoryPort responseRepository;
     @InjectMocks private ListFormsService service;
 
     @Test
@@ -39,6 +41,7 @@ class ListFormsServiceTest {
 
         assertThat(results).isEmpty();
         verify(sectionRepository, never()).countAllActiveByFormIds(any());
+        verify(responseRepository, never()).countByFormIds(any());
     }
 
     @Test
@@ -51,12 +54,16 @@ class ListFormsServiceTest {
         when(formRepository.findAllByTenantId(tenantId)).thenReturn(List.of(form1, form2));
         when(sectionRepository.countAllActiveByFormIds(List.of(formId1, formId2)))
                 .thenReturn(Map.of(formId1, 3, formId2, 0));
+        when(responseRepository.countByFormIds(any())).thenReturn(Map.of(formId1, 5));
+        when(responseRepository.lastResponseAtByFormIds(any())).thenReturn(Map.of());
 
         List<FormSummaryResult> results = service.execute(new ListFormsQuery(tenantId));
 
         assertThat(results).hasSize(2);
         assertThat(results.stream().filter(r -> r.id().equals(formId1)).findFirst())
                 .get().extracting(FormSummaryResult::sectionCount).isEqualTo(3);
+        assertThat(results.stream().filter(r -> r.id().equals(formId1)).findFirst())
+                .get().extracting(FormSummaryResult::responseCount).isEqualTo(5);
         assertThat(results.stream().filter(r -> r.id().equals(formId2)).findFirst())
                 .get().extracting(FormSummaryResult::sectionCount).isEqualTo(0);
     }
@@ -68,9 +75,13 @@ class ListFormsServiceTest {
         Form form = Form.builder().id(formId).tenantId(tenantId).name("F").type(FormType.DIAGNOSTIC).build();
         when(formRepository.findAllByTenantId(tenantId)).thenReturn(List.of(form));
         when(sectionRepository.countAllActiveByFormIds(any())).thenReturn(Map.of());
+        when(responseRepository.countByFormIds(any())).thenReturn(Map.of());
+        when(responseRepository.lastResponseAtByFormIds(any())).thenReturn(Map.of());
 
         List<FormSummaryResult> results = service.execute(new ListFormsQuery(tenantId));
 
         assertThat(results.get(0).sectionCount()).isZero();
+        assertThat(results.get(0).responseCount()).isZero();
+        assertThat(results.get(0).lastResponseAt()).isNull();
     }
 }
