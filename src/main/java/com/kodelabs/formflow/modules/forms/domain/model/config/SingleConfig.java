@@ -20,6 +20,8 @@ public class SingleConfig extends QuestionConfig implements Validatable {
     private List<AnswerOption> options = new ArrayList<>();
     @Builder.Default
     private boolean randomize = false;
+    @Builder.Default
+    private ScoringType scoringType = ScoringType.NONE;
 
     @Override
     public int maxScore() {

@@ -21,6 +21,8 @@ public class MultipleConfig extends QuestionConfig implements Validatable {
     private Integer maxSelections;
     @Builder.Default
     private boolean randomize = false;
+    @Builder.Default
+    private ScoringType scoringType = ScoringType.NONE;
 
     /** For multiple-choice, all scorable options can be selected simultaneously. */
     @Override
