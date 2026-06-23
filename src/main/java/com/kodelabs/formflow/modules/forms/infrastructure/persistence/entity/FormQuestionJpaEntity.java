@@ -12,7 +12,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -60,9 +62,11 @@ public class FormQuestionJpaEntity {
     @Column(name = "time_limit_seconds")
     private Integer timeLimitSeconds;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     private String config;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "conditional_logic", columnDefinition = "jsonb")
     private String conditionalLogic;
 

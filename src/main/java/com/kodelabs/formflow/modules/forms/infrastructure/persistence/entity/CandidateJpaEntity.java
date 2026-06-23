@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -50,6 +52,7 @@ public class CandidateJpaEntity {
     @Column(name = "response_id")
     private UUID responseId;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "scores", columnDefinition = "jsonb")
     private String scores;
 

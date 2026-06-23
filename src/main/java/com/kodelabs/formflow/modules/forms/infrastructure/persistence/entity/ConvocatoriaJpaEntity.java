@@ -12,7 +12,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -42,9 +44,11 @@ public class ConvocatoriaJpaEntity {
     @Column(name = "status", nullable = false)
     private String status;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "category_weights", columnDefinition = "jsonb", nullable = false)
     private String categoryWeights;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "scoring_config", columnDefinition = "jsonb", nullable = false)
     private String scoringConfig;
 
