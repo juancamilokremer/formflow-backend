@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response;
 
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
+import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormDetailResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SectionResult;
@@ -14,6 +15,7 @@ public record FormDetailResponse(
         String name,
         String description,
         FormType type,
+        FormStatus status,
         int version,
         Integer timeLimitSeconds,
         List<SectionResponse> sections,
@@ -27,7 +29,7 @@ public record FormDetailResponse(
                 .toList();
         return new FormDetailResponse(
                 f.getId(), f.getName(), f.getDescription(), f.getType(),
-                f.getVersion(), f.getTimeLimitSeconds(), sections,
+                f.getStatus(), f.getVersion(), f.getTimeLimitSeconds(), sections,
                 f.getCreatedAt(), f.getUpdatedAt());
     }
 }
