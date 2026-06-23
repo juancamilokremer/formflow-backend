@@ -15,7 +15,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class TextTypeHandler implements QuestionTypeHandler<TextConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("TEXT");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("text");
 
     private final ObjectMapper objectMapper;
 

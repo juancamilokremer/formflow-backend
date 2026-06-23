@@ -16,7 +16,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class MultipleTypeHandler implements QuestionTypeHandler<MultipleConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("MULTIPLE");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("multiple");
 
     private final ObjectMapper objectMapper;
 

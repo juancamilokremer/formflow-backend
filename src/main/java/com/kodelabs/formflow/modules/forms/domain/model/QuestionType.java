@@ -7,7 +7,7 @@ public record QuestionType(String code) {
 
     @JsonCreator
     public static QuestionType of(String code) {
-        return new QuestionType(code.toUpperCase());
+        return new QuestionType(code.toLowerCase());
     }
 
     @JsonValue

@@ -15,7 +15,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class DateTypeHandler implements QuestionTypeHandler<DateConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("DATE");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("date");
 
     private final ObjectMapper objectMapper;
 

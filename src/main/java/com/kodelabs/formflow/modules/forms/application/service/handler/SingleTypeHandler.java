@@ -16,7 +16,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class SingleTypeHandler implements QuestionTypeHandler<SingleConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("SINGLE");
+    public static final QuestionType QUESTION_TYPE = new QuestionType("single");
 
     private final ObjectMapper objectMapper;
 
