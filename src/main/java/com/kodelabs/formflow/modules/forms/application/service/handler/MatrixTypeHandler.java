@@ -42,7 +42,8 @@ public class MatrixTypeHandler implements QuestionTypeHandler<MatrixConfig> {
     public Map<String, Object> defaultSchema() {
         return Map.of(
                 "rows", List.of(Map.of("id", "uuid", "label", "Row")),
-                "columns", List.of(Map.of("id", "uuid", "label", "Column", "score", 0)));
+                "columns", List.of(Map.of("id", "uuid", "label", "Column", "score", 0)),
+                "scoringType", "NONE");
     }
 
     @Override

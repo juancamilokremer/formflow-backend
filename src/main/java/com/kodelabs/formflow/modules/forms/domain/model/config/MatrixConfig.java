@@ -17,6 +17,8 @@ import java.util.List;
 public class MatrixConfig extends QuestionConfig implements Validatable {
 
     @Builder.Default
+    private ScoringType scoringType = ScoringType.NONE;
+    @Builder.Default
     private List<MatrixRow> rows = new ArrayList<>();
     @Builder.Default
     private List<MatrixColumn> columns = new ArrayList<>();
