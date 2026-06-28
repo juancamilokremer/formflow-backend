@@ -68,8 +68,8 @@ class UpdateSectionServiceTest {
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(
-                new UpdateSectionCommand(sectionId, formId, tenantId, "T", null, null)))
+        var command = new UpdateSectionCommand(sectionId, formId, tenantId, "T", null, null);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.section.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));

@@ -79,8 +79,9 @@ class DeleteQuestionServiceTest {
         when(questionRepository.findByIdAndSectionIdAndTenantId(questionId, sectionId, tenantId))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(
-                new DeleteQuestionCommand(questionId, sectionId, formId, tenantId, userId)))
+        var command = new DeleteQuestionCommand(questionId, sectionId, formId, tenantId, userId);
+
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.question.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())

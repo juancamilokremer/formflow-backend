@@ -115,8 +115,7 @@ class FormSnapshotBuilderTest {
         FormSnapshot snapshot = builder.build(formId, tenantId);
 
         Map<String, Object> config = snapshot.sections().get(0).questions().get(0).config();
-        assertThat(config).isNotNull();
-        assertThat(config).containsKey("options");
+        assertThat(config).isNotNull().containsKey("options");
     }
 
     @Test

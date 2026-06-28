@@ -70,8 +70,9 @@ class CreateCategoryServiceTest {
     void throwsConflictWhenNameAlreadyExistsForTenant() {
         when(categoryRepository.existsByNameAndTenantId("Técnicas", tenantId)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.execute(
-                new CreateCategoryCommand(tenantId, "Técnicas", "#FF5733", null)))
+        var command = new CreateCategoryCommand(tenantId, "Técnicas", "#FF5733", null);
+
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
 

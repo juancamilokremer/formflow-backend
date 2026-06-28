@@ -57,7 +57,7 @@ class EmailTemplateServiceTest {
 
         assertThat(html)
                 .contains("https://app.formflow.app/reset?token=abc")
-                .contains("1"); // expiration hours interpolated into #{email.reset.body(...)}
+                .contains("1");
     }
 
     @Test

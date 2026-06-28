@@ -34,7 +34,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    public static final String[] PUBLIC_PATHS = {
+    private static final String[] PUBLIC_PATHS = {
             "/api/v1/auth/**",
             "/swagger-ui.html",
             "/swagger-ui/**",

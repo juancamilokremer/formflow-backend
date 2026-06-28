@@ -87,8 +87,8 @@ class ReorderSectionsServiceTest {
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
         when(sectionRepository.findActiveByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(s1, s2, s3));
 
-        assertThatThrownBy(() -> service.execute(
-                new ReorderSectionsCommand(formId, tenantId, userId, List.of(s1Id, s2Id))))
+        var command = new ReorderSectionsCommand(formId, tenantId, userId, List.of(s1Id, s2Id));
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.section.reorder_invalid")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
@@ -100,8 +100,8 @@ class ReorderSectionsServiceTest {
         when(sectionRepository.findActiveByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(s1, s2, s3));
 
         UUID unknownId = UUID.randomUUID();
-        assertThatThrownBy(() -> service.execute(
-                new ReorderSectionsCommand(formId, tenantId, userId, List.of(s1Id, s2Id, unknownId))))
+        var command = new ReorderSectionsCommand(formId, tenantId, userId, List.of(s1Id, s2Id, unknownId));
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.section.reorder_invalid");
     }
@@ -110,8 +110,8 @@ class ReorderSectionsServiceTest {
     void throwsNotFoundWhenFormDoesNotBelongToTenant() {
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(
-                new ReorderSectionsCommand(formId, tenantId, userId, List.of(s1Id))))
+        var command = new ReorderSectionsCommand(formId, tenantId, userId, List.of(s1Id));
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.form.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));

@@ -4,7 +4,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddCandidateCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.RemoveCandidateCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
@@ -20,47 +20,44 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AddCandidateServiceTest {
+class RemoveCandidateServiceTest {
 
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
+    @InjectMocks private RemoveCandidateService service;
 
-    @InjectMocks private AddCandidateService service;
-
-    private final UUID tenantId = UUID.randomUUID();
-    private final UUID userId   = UUID.randomUUID();
-    private final UUID convId   = UUID.randomUUID();
+    private final UUID tenantId     = UUID.randomUUID();
+    private final UUID userId       = UUID.randomUUID();
+    private final UUID convId       = UUID.randomUUID();
+    private final UUID candidateId  = UUID.randomUUID();
 
     @Test
-    void addsCandidateWithInvitedStatus() {
+    void deletesCandidateWhenConvocatoriaIsEditable() {
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId))
                 .thenReturn(Optional.of(activeConvocatoria()));
-        when(candidateRepository.existsByConvocatoriaIdAndEmail(convId, "maria@test.com")).thenReturn(false);
-        Candidate saved = Candidate.builder().id(UUID.randomUUID()).convocatoriaId(convId)
+        Candidate candidate = Candidate.builder().id(candidateId).convocatoriaId(convId)
                 .tenantId(tenantId).name("María G.").email("maria@test.com")
                 .status(CandidateStatus.INVITED).token(UUID.randomUUID()).build();
-        when(candidateRepository.save(any())).thenReturn(saved);
+        when(candidateRepository.findByIdAndConvocatoriaId(candidateId, convId))
+                .thenReturn(Optional.of(candidate));
 
-        var result = service.execute(new AddCandidateCommand(convId, tenantId, userId, "María G.", "maria@test.com"));
+        service.execute(new RemoveCandidateCommand(convId, candidateId, tenantId, userId));
 
-        assertThat(result.name()).isEqualTo("María G.");
-        assertThat(result.status()).isEqualTo(CandidateStatus.INVITED.name());
+        verify(candidateRepository).deleteById(candidateId);
     }
 
     @Test
-    void throwsConflictOnDuplicateEmail() {
-        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId))
-                .thenReturn(Optional.of(activeConvocatoria()));
-        when(candidateRepository.existsByConvocatoriaIdAndEmail(convId, "dup@test.com")).thenReturn(true);
+    void throwsNotFoundWhenConvocatoriaDoesNotExist() {
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.empty());
 
-        var command = new AddCandidateCommand(convId, tenantId, userId, "Dup", "dup@test.com");
+        var command = new RemoveCandidateCommand(convId, candidateId, tenantId, userId);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 
     @Test
@@ -69,10 +66,22 @@ class AddCandidateServiceTest {
         closed.close();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(closed));
 
-        var command = new AddCandidateCommand(convId, tenantId, userId, "Test", "test@test.com");
+        var command = new RemoveCandidateCommand(convId, candidateId, tenantId, userId);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    @Test
+    void throwsNotFoundWhenCandidateDoesNotExist() {
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId))
+                .thenReturn(Optional.of(activeConvocatoria()));
+        when(candidateRepository.findByIdAndConvocatoriaId(candidateId, convId)).thenReturn(Optional.empty());
+
+        var command = new RemoveCandidateCommand(convId, candidateId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 
     private Convocatoria activeConvocatoria() {

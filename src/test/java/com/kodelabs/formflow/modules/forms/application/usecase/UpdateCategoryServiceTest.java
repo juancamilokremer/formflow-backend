@@ -72,8 +72,8 @@ class UpdateCategoryServiceTest {
         when(categoryRepository.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.of(existing));
         when(categoryRepository.existsByNameAndTenantId("Tomado", tenantId)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.execute(
-                new UpdateCategoryCommand(id, tenantId, "Tomado", "#000000", null)))
+        var command = new UpdateCategoryCommand(id, tenantId, "Tomado", "#000000", null);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
 
@@ -84,8 +84,8 @@ class UpdateCategoryServiceTest {
     void throwsNotFoundWhenCategoryDoesNotExist() {
         when(categoryRepository.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(
-                new UpdateCategoryCommand(id, tenantId, "X", "#000000", null)))
+        var command = new UpdateCategoryCommand(id, tenantId, "X", "#000000", null);
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }

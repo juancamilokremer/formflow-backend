@@ -92,8 +92,8 @@ class ReorderQuestionsServiceTest {
         when(questionRepository.findActiveBySectionIdAndTenantId(sectionId, tenantId))
                 .thenReturn(List.of(q1, q2, q3));
 
-        assertThatThrownBy(() -> service.execute(
-                new ReorderQuestionsCommand(sectionId, formId, tenantId, userId, List.of(q1Id, q2Id))))
+        var command = new ReorderQuestionsCommand(sectionId, formId, tenantId, userId, List.of(q1Id, q2Id));
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.question.reorder_invalid")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
@@ -104,8 +104,8 @@ class ReorderQuestionsServiceTest {
     void throwsNotFoundWhenFormDoesNotExist() {
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(
-                new ReorderQuestionsCommand(sectionId, formId, tenantId, userId, List.of(q1Id))))
+        var command = new ReorderQuestionsCommand(sectionId, formId, tenantId, userId, List.of(q1Id));
+        assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.form.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())

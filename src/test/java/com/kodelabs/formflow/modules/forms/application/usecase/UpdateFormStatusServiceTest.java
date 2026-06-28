@@ -1,11 +1,13 @@
 package com.kodelabs.formflow.modules.forms.application.usecase;
 
-import com.kodelabs.formflow.modules.forms.application.usecase.form.UpdateFormService;
+import com.kodelabs.formflow.modules.forms.application.usecase.form.UpdateFormStatusService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
+import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormStatusCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormSummaryResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,58 +29,50 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class UpdateFormServiceTest {
+class UpdateFormStatusServiceTest {
 
     @Mock private FormRepositoryPort formRepository;
     @Mock private FormSectionRepositoryPort sectionRepository;
-    @InjectMocks private UpdateFormService service;
+    @Mock private FormResponseRepositoryPort responseRepository;
+    @InjectMocks private UpdateFormStatusService service;
 
     private UUID formId;
     private UUID tenantId;
     private UUID userId;
-    private Form existing;
+    private Form form;
 
     @BeforeEach
     void setUp() {
         formId = UUID.randomUUID();
         tenantId = UUID.randomUUID();
         userId = UUID.randomUUID();
-        existing = Form.builder().id(formId).tenantId(tenantId).name("Viejo").type(FormType.CANDIDATES).version(1).build();
+        form = Form.builder().id(formId).tenantId(tenantId).name("Evaluación")
+                .type(FormType.CANDIDATES).status(FormStatus.DRAFT).version(1).build();
     }
 
     @Test
-    void updatesMetadataWithoutIncrementingVersion() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(existing));
+    void updatesStatusAndReturnsResult() {
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(sectionRepository.countActiveByFormId(formId)).thenReturn(2);
+        when(sectionRepository.countActiveByFormId(formId)).thenReturn(3);
+        when(responseRepository.countByFormIds(List.of(formId))).thenReturn(Map.of(formId, 5));
+        when(responseRepository.lastResponseAtByFormIds(List.of(formId))).thenReturn(Map.of());
 
         FormSummaryResult result = service.execute(
-                new UpdateFormCommand(formId, tenantId, userId, "Nuevo nombre", "Desc", 300));
+                new UpdateFormStatusCommand(formId, tenantId, userId, FormStatus.ACTIVE));
 
-        assertThat(result.name()).isEqualTo("Nuevo nombre");
-        assertThat(result.version()).isEqualTo(1);
-        assertThat(result.sectionCount()).isEqualTo(2);
-    }
-
-    @Test
-    void setsUpdatedByFromCommand() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(existing));
-        when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(sectionRepository.countActiveByFormId(any())).thenReturn(0);
-
-        service.execute(new UpdateFormCommand(formId, tenantId, userId, "N", null, null));
-
-        assertThat(existing.getUpdatedBy()).isEqualTo(userId);
+        assertThat(result.status()).isEqualTo(FormStatus.ACTIVE);
+        assertThat(result.sectionCount()).isEqualTo(3);
+        assertThat(result.responseCount()).isEqualTo(5);
     }
 
     @Test
     void throwsNotFoundWhenFormDoesNotBelongToTenant() {
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
 
-        var command = new UpdateFormCommand(formId, tenantId, userId, "N", null, null);
+        var command = new UpdateFormStatusCommand(formId, tenantId, userId, FormStatus.ACTIVE);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("error.form.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 }
