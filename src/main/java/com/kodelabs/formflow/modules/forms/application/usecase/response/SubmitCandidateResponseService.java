@@ -1,10 +1,8 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.response;
 
-import com.kodelabs.formflow.modules.forms.application.service.AnswerScoreExtractor;
+import com.kodelabs.formflow.modules.forms.application.service.CandidateScoringService;
 import com.kodelabs.formflow.modules.forms.application.service.ConditionalLogicEvaluator;
 import com.kodelabs.formflow.modules.forms.application.service.FormSnapshotBuilder;
-import com.kodelabs.formflow.modules.forms.application.service.ScoringEngine;
-import com.kodelabs.formflow.modules.forms.application.service.ScoringInput;
 import com.kodelabs.formflow.modules.forms.application.service.ScoringResult;
 import com.kodelabs.formflow.modules.forms.domain.model.AnswerValue;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
@@ -14,7 +12,6 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateScores;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
-import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.port.in.SubmitCandidateResponseUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
@@ -37,6 +34,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+
+
 @Service
 @RequiredArgsConstructor
 public class SubmitCandidateResponseService implements SubmitCandidateResponseUseCase {
@@ -47,8 +46,7 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
     private final FormResponseRepositoryPort responseRepository;
     private final FormSnapshotBuilder snapshotBuilder;
     private final ConditionalLogicEvaluator conditionalLogicEvaluator;
-    private final AnswerScoreExtractor scoreExtractor;
-    private final ScoringEngine scoringEngine;
+    private final CandidateScoringService candidateScoringService;
 
     @Override
     @Transactional
@@ -90,14 +88,7 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
     }
 
     private ScoringResult computeScoring(Form form, Convocatoria convocatoria, Map<UUID, Object> answerMap) {
-        List<FormQuestion> questions = form.getSections().stream()
-                .flatMap(s -> s.getQuestions().stream())
-                .toList();
-        Map<UUID, Integer> obtainedScores = new HashMap<>();
-        questions.forEach(q -> obtainedScores.put(q.getId(), scoreExtractor.extractScore(q, answerMap.get(q.getId()))));
-        Map<UUID, Double> categoryWeights = convocatoria.getCategoryWeights().stream()
-                .collect(Collectors.toMap(CategoryWeight::categoryId, cw -> (double) cw.weight()));
-        return scoringEngine.calculate(new ScoringInput(questions, obtainedScores, categoryWeights));
+        return candidateScoringService.compute(form, convocatoria, answerMap);
     }
 
     private FormResponse persistResponse(Form form, Convocatoria convocatoria, Candidate candidate,

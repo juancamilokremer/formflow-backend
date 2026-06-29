@@ -1,10 +1,8 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.response;
 
-import com.kodelabs.formflow.modules.forms.application.service.AnswerScoreExtractor;
+import com.kodelabs.formflow.modules.forms.application.service.CandidateScoringService;
 import com.kodelabs.formflow.modules.forms.application.service.ConditionalLogicEvaluator;
 import com.kodelabs.formflow.modules.forms.application.service.FormSnapshotBuilder;
-import com.kodelabs.formflow.modules.forms.application.service.ScoringEngine;
-import com.kodelabs.formflow.modules.forms.application.service.ScoringInput;
 import com.kodelabs.formflow.modules.forms.application.service.ScoringResult;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
@@ -56,8 +54,7 @@ class SubmitCandidateResponseServiceTest {
     @Mock private FormResponseRepositoryPort responseRepository;
     @Mock private FormSnapshotBuilder snapshotBuilder;
     @Mock private ConditionalLogicEvaluator conditionalLogicEvaluator;
-    @Mock private AnswerScoreExtractor scoreExtractor;
-    @Mock private ScoringEngine scoringEngine;
+    @Mock private CandidateScoringService candidateScoringService;
     @InjectMocks private SubmitCandidateResponseService service;
 
     private UUID candidateToken;
@@ -132,8 +129,7 @@ class SubmitCandidateResponseServiceTest {
                 .thenReturn(Optional.of(activeConvocatoria));
         when(formRepository.findByIdPublicWithSections(formId)).thenReturn(Optional.of(activeForm));
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
-        when(scoreExtractor.extractScore(any(), any())).thenReturn(8);
-        when(scoringEngine.calculate(any(ScoringInput.class)))
+        when(candidateScoringService.compute(any(), any(), any()))
                 .thenReturn(new ScoringResult(85.0, Map.of()));
         when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
         when(responseRepository.save(any())).thenReturn(savedResponse);
