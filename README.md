@@ -331,6 +331,107 @@ Cada módulo sigue **arquitectura hexagonal** con separación estricta dominio/p
 
 Todos los endpoints de formularios requieren JWT. Documentación interactiva en `/swagger-ui.html`.
 
+## Endpoints públicos (sin autenticación)
+
+| Método | Path | Rate limit | Descripción |
+|--------|------|------------|-------------|
+| GET | `/api/v1/public/forms/{formId}` | Sin límite | Obtener formulario activo con branding del tenant |
+| POST | `/api/v1/public/forms/{formId}/responses` | 10 req/IP/min | Enviar respuesta anónima; retorna token de respondente |
+
+Documentación interactiva en `/swagger-ui.html` (sección *Formularios Públicos*).
+
+---
+
+## Rate Limiting
+
+### Qué está protegido
+
+Solo `POST /api/v1/public/forms/{formId}/responses` tiene límite de velocidad (10 envíos por IP por minuto). Los endpoints autenticados y el `GET` público no tienen restricción.
+
+### Cómo funciona
+
+La implementación usa **Bucket4j** + **Caffeine** en tres capas:
+
+```
+Browser / App
+     │
+     ▼
+  Tomcat
+     │
+     ▼
+Bucket4jFilter  ← evalúa URL + method → aplica o pasa
+     │              (antes de Spring MVC — la lógica de negocio nunca se ejecuta si hay 429)
+     ▼
+PublicFormController
+```
+
+**Algoritmo — cubo de tokens con ventana de intervalo:**
+
+```
+Cubo por IP: 190.24.1.55
+Capacidad: 10 tokens | Recarga: 10 tokens de golpe cada 60s (refill-speed: interval)
+
+t= 0s  [██████████] 10 → request ✅ → [█████████·] 9
+t=30s  [████······]  4 → request ✅ → [███·······] 3
+t=59s  [█·········]  1 → request ✅ → [··········] 0
+t=60s  ← recarga completa
+t=60s  [██████████] 10 → request ✅ → [█████████·] 9
+```
+
+`refill-speed: interval` recarga los 10 tokens **todos juntos** al final del minuto, no de a poco. Más predecible para el usuario y más simple de entender.
+
+**Resolución de IP:** El filtro usa la expresión SpEL sobre `HttpServletRequest`:
+```
+(getHeader('X-Forwarded-For') ?: remoteAddr).split(',')[0].trim()
+```
+Toma `X-Forwarded-For` cuando hay reverse proxy (Railway en prod), cae a la IP directa del socket si no. Cada IP tiene su propio cubo independiente en Caffeine.
+
+**Respuesta al superar el límite:**
+```
+HTTP 429 Too Many Requests
+Content-Type: application/json;charset=UTF-8
+
+{"success":false,"message":"Has enviado demasiadas respuestas. Espera un momento e inténtalo de nuevo"}
+```
+El header `X-Rate-Limit-Retry-After-Seconds` indica los segundos hasta la próxima recarga.
+
+### Configuración (application.yml)
+
+```yaml
+bucket4j:
+  enabled: ${RATE_LIMIT_ENABLED:true}   # false en tests
+  filters:
+    - cache-name: rate-limit-buckets
+      url: /api/v1/public/forms/[^/]+/responses
+      rate-limits:
+        - execute-condition: "method.equals('POST')"
+          cache-key: "(getHeader('X-Forwarded-For') ?: remoteAddr).split(',')[0].trim()"
+          bandwidths:
+            - capacity: 10
+              time: 1
+              unit: minutes
+              refill-speed: interval
+```
+
+### Almacenamiento
+
+Los cubos viven en **Caffeine** (heap de la JVM). `expireAfterAccess=3600s` descarta IPs inactivas por más de 1 hora, evitando crecimiento ilimitado del mapa. Limitaciones:
+
+- Los contadores se pierden al reiniciar el proceso.
+- En despliegues multi-instancia cada réplica tiene su propio estado: una misma IP puede hacer 10 req/min × N réplicas. Para escenarios multi-instancia reemplazar Caffeine por Redis es un cambio de configuración (no de código).
+
+### Principios SOLID aplicados
+
+| Principio | Cómo se aplica |
+|-----------|----------------|
+| **S** — Single Responsibility | El filtro maneja la preocupación transversal; el controlador solo orquesta la lógica de negocio |
+| **O** — Open/Closed | Nuevos endpoints se protegen añadiendo un bloque en `application.yml`, sin tocar código Java |
+| **L** — Liskov | Caffeine y Redis implementan la misma interfaz de caché — intercambiables vía config |
+| **I** — Interface Segregation | El controlador tiene cero conocimiento del rate limiting |
+| **D** — Dependency Inversion | La capa de aplicación no depende de ninguna clase del módulo de rate limiting |
+
+---
+
 ## Variables de entorno (producción)
 
 | Variable | Descripción |
@@ -346,11 +447,12 @@ Todos los endpoints de formularios requieren JWT. Documentación interactiva en 
 | `MAIL_FROM` / `MAIL_FROM_NAME` | Remitente de los correos |
 | `FRONTEND_BASE_URL` | Base de los links en correos (reset/verificación) |
 | `EMAIL_POOL_CORE` / `EMAIL_POOL_MAX` / `EMAIL_QUEUE_CAPACITY` | Executor de envío asíncrono (defaults: 2 / 4 / 100) |
+| `RATE_LIMIT_ENABLED` | Activar rate limiting en endpoints públicos (default: `true`; poner `false` en tests) |
 
 ## CI/CD
 
-- **CI** (GitHub Actions): `mvn verify` en cada PR y push a `main` — compila, corre los 114+
-  tests y genera el reporte de cobertura JaCoCo. El reporte queda disponible como artifact
+- **CI** (GitHub Actions): `mvn verify` en cada PR y push a `main` — compila, corre los tests
+  y genera el reporte de cobertura JaCoCo. El reporte queda disponible como artifact
   descargable en cada run. El check es requerido para mergear.
 - **CD**: deploy automático a Railway en cada merge a `main` (se activa al configurar el
   secret `RAILWAY_TOKEN`; ver issue #14).
