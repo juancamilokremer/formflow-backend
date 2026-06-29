@@ -8,7 +8,6 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
-import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.SubmitPublicResponseUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitPublicResponseCommand;
@@ -50,13 +49,10 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
         Map<UUID, Object> answerMap = buildAnswerMap(command.answers());
         validateRequiredQuestions(form, answerMap);
 
-        FormSnapshot snapshot = snapshotBuilder.build(command.formId(), form.getTenantId());
+        var snapshot = snapshotBuilder.buildFromForm(form);
 
         List<AnswerValue> answers = command.answers().stream()
-                .map(item -> AnswerValue.builder()
-                        .questionId(item.questionId())
-                        .value(item.value())
-                        .build())
+                .map(this::toAnswerValue)
                 .toList();
 
         UUID respondentToken = UUID.randomUUID();
@@ -73,11 +69,16 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
         return new SubmitPublicResponseResult(respondentToken);
     }
 
+    private AnswerValue toAnswerValue(AnswerItem item) {
+        return AnswerValue.builder()
+                .questionId(item.questionId())
+                .value(item.value())
+                .build();
+    }
+
     private Map<UUID, Object> buildAnswerMap(List<AnswerItem> items) {
         Map<UUID, Object> map = new HashMap<>();
-        if (items != null) {
-            items.forEach(item -> map.put(item.questionId(), item.value()));
-        }
+        items.forEach(item -> map.put(item.questionId(), item.value()));
         return map;
     }
 

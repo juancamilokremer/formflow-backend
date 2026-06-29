@@ -87,7 +87,7 @@ class SubmitPublicResponseServiceTest {
     @Test
     void happyPath_savesResponseAndReturnsToken() {
         when(formRepository.findByIdPublicWithSections(formId)).thenReturn(Optional.of(activeForm));
-        when(snapshotBuilder.build(formId, tenantId)).thenReturn(snapshot);
+        when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
         when(responseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -123,7 +123,7 @@ class SubmitPublicResponseServiceTest {
     @Test
     void hiddenRequiredQuestion_isNotValidated() {
         when(formRepository.findByIdPublicWithSections(formId)).thenReturn(Optional.of(activeForm));
-        when(snapshotBuilder.build(formId, tenantId)).thenReturn(snapshot);
+        when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
         // Question is hidden by conditional logic → no answer required
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(false);
         when(responseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

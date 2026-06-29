@@ -37,6 +37,16 @@ public class FormSnapshotBuilder {
         return assemble(form, sections, questionsBySection);
     }
 
+    /** Builds a snapshot from an already-loaded form with sections and questions populated. */
+    public FormSnapshot buildFromForm(Form form) {
+        List<FormSection> sections = form.getSections();
+        Map<UUID, List<FormQuestion>> questionsBySection = sections.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        FormSection::getId,
+                        s -> s.getQuestions() != null ? s.getQuestions() : List.of()));
+        return assemble(form, sections, questionsBySection);
+    }
+
     private Form loadForm(UUID formId, UUID tenantId) {
         return formRepository.findByIdAndTenantId(formId, tenantId)
                 .orElseThrow(() -> new BusinessException("error.form.not_found",

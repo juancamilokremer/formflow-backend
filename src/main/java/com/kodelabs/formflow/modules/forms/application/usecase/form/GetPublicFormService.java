@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class GetPublicFormService implements GetPublicFormUseCase {
                     "error.form.not_found", HttpStatus.NOT_FOUND, query.formId().toString());
         }
 
-        Tenant tenant = tenantRepository.findById(form.getTenantId()).orElse(null);
+        Optional<Tenant> tenant = tenantRepository.findById(form.getTenantId());
 
         List<PublicSectionResult> sections = form.getSections().stream()
                 .sorted(Comparator.comparingInt(FormSection::getPosition))
@@ -50,9 +51,9 @@ public class GetPublicFormService implements GetPublicFormUseCase {
                 form.getName(),
                 form.getType(),
                 form.getTimeLimitSeconds(),
-                tenant != null ? tenant.getName() : null,
-                tenant != null ? tenant.getLogoUrl() : null,
-                tenant != null ? tenant.getPrimaryColor() : null,
+                tenant.map(Tenant::getName).orElse(null),
+                tenant.map(Tenant::getLogoUrl).orElse(null),
+                tenant.map(Tenant::getPrimaryColor).orElse(null),
                 sections
         );
     }

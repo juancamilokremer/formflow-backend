@@ -13,6 +13,7 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.Submi
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import com.kodelabs.formflow.shared.ratelimit.RateLimitService;
 import com.kodelabs.formflow.shared.web.ApiResponse;
+import com.kodelabs.formflow.shared.web.ControllerUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -67,16 +68,13 @@ public class PublicFormController {
             @Valid @RequestBody SubmitResponseRequest request,
             HttpServletRequest httpRequest) {
 
-        String clientIp = resolveClientIp(httpRequest);
-        if (!rateLimitService.isAllowed(clientIp)) {
+        if (!rateLimitService.isAllowed(ControllerUtils.clientIp(httpRequest))) {
             throw new BusinessException("error.response.rate_limit", HttpStatus.TOO_MANY_REQUESTS);
         }
 
-        List<AnswerItem> answers = request.answers() == null
-                ? List.of()
-                : request.answers().stream()
-                        .map(a -> new AnswerItem(a.questionId(), a.value()))
-                        .toList();
+        List<AnswerItem> answers = request.answers().stream()
+                .map(a -> new AnswerItem(a.questionId(), a.value()))
+                .toList();
 
         SubmitPublicResponseCommand command = new SubmitPublicResponseCommand(
                 formId, request.startedAt(), answers);
@@ -86,11 +84,4 @@ public class PublicFormController {
                 .body(ApiResponse.ok(new SubmitPublicResponseDto(result.respondentToken())));
     }
 
-    private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
 }
