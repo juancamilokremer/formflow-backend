@@ -40,12 +40,18 @@ public class FormResponseJpaEntity {
     @Column(name = "convocatoria_id")
     private UUID convocatoriaId;
 
+    @Column(name = "candidate_id")
+    private UUID candidateId;
+
     @Column(name = "respondent_token", nullable = false, unique = true)
     private UUID respondentToken;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "form_snapshot", columnDefinition = "jsonb", nullable = false)
     private String formSnapshot;
+
+    @Column(name = "started_at")
+    private Instant startedAt;
 
     @Column(name = "submitted_at", nullable = false)
     private Instant submittedAt;
