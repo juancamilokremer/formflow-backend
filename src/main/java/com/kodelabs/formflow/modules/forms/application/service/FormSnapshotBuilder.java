@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -34,6 +35,16 @@ public class FormSnapshotBuilder {
         Form form = loadForm(formId, tenantId);
         List<FormSection> sections = loadSections(formId, tenantId);
         Map<UUID, List<FormQuestion>> questionsBySection = loadQuestions(sections);
+        return assemble(form, sections, questionsBySection);
+    }
+
+    /** Builds a snapshot from an already-loaded form with sections and questions populated. */
+    public FormSnapshot buildFromForm(Form form) {
+        List<FormSection> sections = form.getSections();
+        Map<UUID, List<FormQuestion>> questionsBySection = sections.stream()
+                .collect(Collectors.toMap(
+                        FormSection::getId,
+                        s -> s.getQuestions() != null ? s.getQuestions() : List.of()));
         return assemble(form, sections, questionsBySection);
     }
 
