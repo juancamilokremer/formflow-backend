@@ -37,36 +37,39 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
     @Override
     @Transactional
     public SubmitPublicResponseResult execute(SubmitPublicResponseCommand command) {
-        Form form = formRepository.findByIdPublicWithSections(command.formId())
-                .orElseThrow(() -> new BusinessException(
-                        "error.form.not_found", HttpStatus.NOT_FOUND, command.formId().toString()));
-
-        if (form.getStatus() != FormStatus.ACTIVE) {
-            throw new BusinessException(
-                    "error.form.not_found", HttpStatus.NOT_FOUND, command.formId().toString());
-        }
-
+        Form form = loadActiveForm(command.formId());
         Map<UUID, Object> answerMap = buildAnswerMap(command.answers());
         validateRequiredQuestions(form, answerMap);
+        UUID respondentToken = persistResponse(form, command);
+        return new SubmitPublicResponseResult(respondentToken);
+    }
 
+    private Form loadActiveForm(UUID formId) {
+        Form form = formRepository.findByIdPublicWithSections(formId)
+                .orElseThrow(() -> new BusinessException(
+                        "error.form.not_found", HttpStatus.NOT_FOUND, formId.toString()));
+        if (form.getStatus() != FormStatus.ACTIVE) {
+            throw new BusinessException(
+                    "error.form.not_found", HttpStatus.NOT_FOUND, formId.toString());
+        }
+        return form;
+    }
+
+    private UUID persistResponse(Form form, SubmitPublicResponseCommand command) {
         var snapshot = snapshotBuilder.buildFromForm(form);
-
         List<AnswerValue> answers = command.answers().stream()
                 .map(this::toAnswerValue)
                 .toList();
-
         UUID respondentToken = UUID.randomUUID();
-        FormResponse response = FormResponse.builder()
+        responseRepository.save(FormResponse.builder()
                 .formId(form.getId())
                 .tenantId(form.getTenantId())
                 .respondentToken(respondentToken)
                 .formSnapshot(snapshot)
                 .answers(answers)
                 .startedAt(command.startedAt())
-                .build();
-
-        responseRepository.save(response);
-        return new SubmitPublicResponseResult(respondentToken);
+                .build());
+        return respondentToken;
     }
 
     private AnswerValue toAnswerValue(AnswerItem item) {

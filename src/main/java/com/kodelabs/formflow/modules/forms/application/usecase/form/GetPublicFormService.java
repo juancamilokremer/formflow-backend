@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,32 +31,33 @@ public class GetPublicFormService implements GetPublicFormUseCase {
 
     @Override
     public PublicFormResult execute(GetPublicFormQuery query) {
-        Form form = formRepository.findByIdPublicWithSections(query.formId())
-                .orElseThrow(() -> new BusinessException(
-                        "error.form.not_found", HttpStatus.NOT_FOUND, query.formId().toString()));
-
-        if (form.getStatus() != FormStatus.ACTIVE) {
-            throw new BusinessException(
-                    "error.form.not_found", HttpStatus.NOT_FOUND, query.formId().toString());
-        }
-
+        Form form = loadActiveForm(query.formId());
         Optional<Tenant> tenant = tenantRepository.findById(form.getTenantId());
-
-        List<PublicSectionResult> sections = form.getSections().stream()
-                .sorted(Comparator.comparingInt(FormSection::getPosition))
-                .map(this::toSectionResult)
-                .toList();
-
+        List<PublicSectionResult> sections = mapSections(form.getSections());
         return new PublicFormResult(
-                form.getId(),
-                form.getName(),
-                form.getType(),
-                form.getTimeLimitSeconds(),
+                form.getId(), form.getName(), form.getType(), form.getTimeLimitSeconds(),
                 tenant.map(Tenant::getName).orElse(null),
                 tenant.map(Tenant::getLogoUrl).orElse(null),
                 tenant.map(Tenant::getPrimaryColor).orElse(null),
-                sections
-        );
+                sections);
+    }
+
+    private Form loadActiveForm(UUID formId) {
+        Form form = formRepository.findByIdPublicWithSections(formId)
+                .orElseThrow(() -> new BusinessException(
+                        "error.form.not_found", HttpStatus.NOT_FOUND, formId.toString()));
+        if (form.getStatus() != FormStatus.ACTIVE) {
+            throw new BusinessException(
+                    "error.form.not_found", HttpStatus.NOT_FOUND, formId.toString());
+        }
+        return form;
+    }
+
+    private List<PublicSectionResult> mapSections(List<FormSection> sections) {
+        return sections.stream()
+                .sorted(Comparator.comparingInt(FormSection::getPosition))
+                .map(this::toSectionResult)
+                .toList();
     }
 
     private PublicSectionResult toSectionResult(FormSection section) {
