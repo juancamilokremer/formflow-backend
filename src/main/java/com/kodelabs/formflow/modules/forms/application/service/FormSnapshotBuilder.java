@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class FormSnapshotBuilder {
     public FormSnapshot buildFromForm(Form form) {
         List<FormSection> sections = form.getSections();
         Map<UUID, List<FormQuestion>> questionsBySection = sections.stream()
-                .collect(java.util.stream.Collectors.toMap(
+                .collect(Collectors.toMap(
                         FormSection::getId,
                         s -> s.getQuestions() != null ? s.getQuestions() : List.of()));
         return assemble(form, sections, questionsBySection);

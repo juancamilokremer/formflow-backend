@@ -7,6 +7,15 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
+  # Caffeine in-memory cache — backing store for Bucket4j rate limiter.
+  # Swap to redis for multi-instance deployments without touching Java code.
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100000,expireAfterAccess=3600s
+    cache-names:
+      - rate-limit-buckets
+
   # SMTP: MailHog en dev (sin auth), SendGrid en prod via variables de entorno
   mail:
     host: ${SMTP_HOST:localhost}
@@ -53,6 +62,26 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
+
+# Rate limiting — Bucket4j servlet filter intercepta antes de Spring MVC.
+# Ajustar capacity/time por perfil si es necesario.
+# Deshabilitar en entornos de prueba con RATE_LIMIT_ENABLED=false.
+bucket4j:
+  enabled: ${RATE_LIMIT_ENABLED:true}
+  filters:
+    - cache-name: rate-limit-buckets
+      url: /api/v1/public/forms/[^/]+/responses
+      strategy: first
+      http-content-type: "application/json;charset=UTF-8"
+      http-response-body: '{"success":false,"message":"Has enviado demasiadas respuestas. Espera un momento e inténtalo de nuevo"}'
+      rate-limits:
+        - execute-condition: "method.equals('POST')"
+          cache-key: "(getHeader('X-Forwarded-For') ?: remoteAddr).split(',')[0].trim()"
+          bandwidths:
+            - capacity: 10
+              time: 1
+              unit: minutes
+              refill-speed: interval
 
 # Configuración de la aplicación
 app:

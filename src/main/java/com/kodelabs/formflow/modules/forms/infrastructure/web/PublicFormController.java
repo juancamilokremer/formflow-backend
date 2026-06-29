@@ -10,14 +10,10 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitPublicRes
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.SubmitResponseRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.PublicFormResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.SubmitPublicResponseDto;
-import com.kodelabs.formflow.shared.exception.BusinessException;
-import com.kodelabs.formflow.shared.ratelimit.RateLimitService;
 import com.kodelabs.formflow.shared.web.ApiResponse;
-import com.kodelabs.formflow.shared.web.ControllerUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,7 +36,6 @@ public class PublicFormController {
 
     private final GetPublicFormUseCase getPublicForm;
     private final SubmitPublicResponseUseCase submitPublicResponse;
-    private final RateLimitService rateLimitService;
 
     @GetMapping("/forms/{formId}")
     @Operation(
@@ -65,23 +60,16 @@ public class PublicFormController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "429", description = "Límite de envíos por minuto superado", content = @Content)
     public ResponseEntity<ApiResponse<SubmitPublicResponseDto>> submitResponse(
             @PathVariable UUID formId,
-            @Valid @RequestBody SubmitResponseRequest request,
-            HttpServletRequest httpRequest) {
-
-        if (!rateLimitService.isAllowed(ControllerUtils.clientIp(httpRequest))) {
-            throw new BusinessException("error.response.rate_limit", HttpStatus.TOO_MANY_REQUESTS);
-        }
+            @Valid @RequestBody SubmitResponseRequest request) {
 
         List<AnswerItem> answers = request.answers().stream()
                 .map(a -> new AnswerItem(a.questionId(), a.value()))
                 .toList();
 
-        SubmitPublicResponseCommand command = new SubmitPublicResponseCommand(
-                formId, request.startedAt(), answers);
+        SubmitPublicResponseResult result = submitPublicResponse.execute(
+                new SubmitPublicResponseCommand(formId, request.startedAt(), answers));
 
-        SubmitPublicResponseResult result = submitPublicResponse.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(new SubmitPublicResponseDto(result.respondentToken())));
     }
-
 }
