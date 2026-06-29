@@ -17,6 +17,8 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponseJpa
 
     boolean existsByRespondentToken(UUID respondentToken);
 
+    List<FormResponseJpaEntity> findAllByFormIdAndTenantId(UUID formId, UUID tenantId);
+
     @Query("SELECT r.formId, COUNT(r.id) FROM FormResponseJpaEntity r WHERE r.formId IN :formIds GROUP BY r.formId")
     List<Object[]> countGroupedByFormIds(@Param("formIds") List<UUID> formIds);
 

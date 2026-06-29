@@ -18,6 +18,8 @@ public interface FormResponseRepositoryPort {
 
     boolean existsByRespondentToken(UUID respondentToken);
 
+    List<FormResponse> findAllByFormIdAndTenantId(UUID formId, UUID tenantId);
+
     Map<UUID, Integer> countByFormIds(List<UUID> formIds);
 
     Map<UUID, Instant> lastResponseAtByFormIds(List<UUID> formIds);
