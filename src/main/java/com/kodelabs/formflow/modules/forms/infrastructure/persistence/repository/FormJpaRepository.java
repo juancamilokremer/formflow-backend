@@ -19,4 +19,7 @@ public interface FormJpaRepository extends JpaRepository<FormJpaEntity, UUID> {
 
     @Query("SELECT COUNT(f) > 0 FROM FormJpaEntity f WHERE f.id = :id AND f.tenantId = :tenantId AND f.deletedAt IS NULL")
     boolean existsActiveByIdAndTenantId(@Param("id") UUID id, @Param("tenantId") UUID tenantId);
+
+    @Query("SELECT f FROM FormJpaEntity f WHERE f.id = :id AND f.deletedAt IS NULL")
+    Optional<FormJpaEntity> findActiveById(@Param("id") UUID id);
 }

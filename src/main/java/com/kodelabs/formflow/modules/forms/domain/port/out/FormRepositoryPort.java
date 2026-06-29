@@ -20,4 +20,7 @@ public interface FormRepositoryPort {
     List<Form> findAllByTenantId(UUID tenantId);
 
     boolean existsByIdAndTenantId(UUID id, UUID tenantId);
+
+    /** Returns a non-deleted form with sections and questions loaded, without tenant constraint. */
+    Optional<Form> findByIdPublicWithSections(UUID formId);
 }

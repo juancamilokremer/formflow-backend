@@ -62,4 +62,18 @@ public class FormRepositoryAdapter implements FormRepositoryPort {
     public boolean existsByIdAndTenantId(UUID id, UUID tenantId) {
         return formJpa.existsActiveByIdAndTenantId(id, tenantId);
     }
+
+    @Override
+    public java.util.Optional<Form> findByIdPublicWithSections(UUID formId) {
+        return formJpa.findActiveById(formId).map(entity -> {
+            Form form = formMapper.toDomain(entity);
+            List<FormSection> sections = sectionRepository.findActiveByFormIdAndTenantId(formId, form.getTenantId());
+            List<UUID> sectionIds = sections.stream().map(FormSection::getId).toList();
+            Map<UUID, List<FormQuestion>> questionsBySection =
+                    questionRepository.findAllActiveBySectionIds(sectionIds);
+            sections.forEach(s -> s.setQuestions(questionsBySection.getOrDefault(s.getId(), List.of())));
+            form.setSections(sections);
+            return form;
+        });
+    }
 }
