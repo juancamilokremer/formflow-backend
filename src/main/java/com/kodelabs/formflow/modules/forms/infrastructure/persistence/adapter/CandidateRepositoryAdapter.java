@@ -46,6 +46,11 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
     }
 
     @Override
+    public List<Candidate> findAllByIds(List<UUID> ids) {
+        return jpaRepository.findAllByIdIn(ids).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public boolean existsByConvocatoriaIdAndEmail(UUID convocatoriaId, String email) {
         return jpaRepository.existsByConvocatoriaIdAndEmail(convocatoriaId, email);
     }

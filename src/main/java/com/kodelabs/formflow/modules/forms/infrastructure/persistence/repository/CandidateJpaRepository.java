@@ -15,6 +15,8 @@ public interface CandidateJpaRepository extends JpaRepository<CandidateJpaEntity
 
     List<CandidateJpaEntity> findAllByConvocatoriaId(UUID convocatoriaId);
 
+    List<CandidateJpaEntity> findAllByIdIn(List<UUID> ids);
+
     boolean existsByConvocatoriaIdAndEmail(UUID convocatoriaId, String email);
 
     long countByConvocatoriaId(UUID convocatoriaId);

@@ -18,6 +18,8 @@ public interface CandidateRepositoryPort {
 
     List<Candidate> findAllByConvocatoriaId(UUID convocatoriaId);
 
+    List<Candidate> findAllByIds(List<UUID> ids);
+
     boolean existsByConvocatoriaIdAndEmail(UUID convocatoriaId, String email);
 
     long countByConvocatoriaId(UUID convocatoriaId);

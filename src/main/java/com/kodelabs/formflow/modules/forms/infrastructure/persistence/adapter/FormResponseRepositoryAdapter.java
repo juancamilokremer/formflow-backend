@@ -10,6 +10,7 @@ import com.kodelabs.formflow.modules.forms.infrastructure.persistence.mapper.For
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository.AnswerValueJpaRepository;
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository.FormResponseJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,6 +69,19 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
         return responseJpa.findAllByFormIdAndTenantId(formId, tenantId).stream()
                 .map(entity -> responseMapper.toDomain(entity, answerJpa.findAllByResponseId(entity.getId())))
                 .toList();
+    }
+
+    @Override
+    public List<FormResponse> findPageByFormIdAndTenantId(UUID formId, UUID tenantId, int page, int size) {
+        return responseJpa.findPageByFormAndTenant(formId, tenantId, PageRequest.of(page, size))
+                .stream()
+                .map(entity -> responseMapper.toDomain(entity, List.of()))
+                .toList();
+    }
+
+    @Override
+    public long countByFormIdAndTenantId(UUID formId, UUID tenantId) {
+        return responseJpa.countByFormIdAndTenantId(formId, tenantId);
     }
 
     @Override

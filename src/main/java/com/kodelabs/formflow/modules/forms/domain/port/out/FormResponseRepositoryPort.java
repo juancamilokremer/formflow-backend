@@ -20,6 +20,10 @@ public interface FormResponseRepositoryPort {
 
     List<FormResponse> findAllByFormIdAndTenantId(UUID formId, UUID tenantId);
 
+    List<FormResponse> findPageByFormIdAndTenantId(UUID formId, UUID tenantId, int page, int size);
+
+    long countByFormIdAndTenantId(UUID formId, UUID tenantId);
+
     Map<UUID, Integer> countByFormIds(List<UUID> formIds);
 
     Map<UUID, Instant> lastResponseAtByFormIds(List<UUID> formIds);
