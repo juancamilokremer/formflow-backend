@@ -6,12 +6,10 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.GetResponsesUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetResponsesQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ResponsePageResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ResponseSummaryResult;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
-import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,14 +22,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetResponsesService implements GetResponsesUseCase {
 
-    private final FormRepositoryPort formRepository;
+    private final FormLoader formLoader;
     private final FormResponseRepositoryPort responseRepository;
     private final CandidateRepositoryPort candidateRepository;
 
     @Override
     @Transactional(readOnly = true)
     public ResponsePageResult execute(GetResponsesQuery query) {
-        validateFormBelongsToTenant(query.formId(), query.tenantId());
+        formLoader.loadOrThrow(query.formId(), query.tenantId());
         long total = responseRepository.countByFormIdAndTenantId(query.formId(), query.tenantId());
         List<FormResponse> responses = responseRepository.findPageByFormIdAndTenantId(
                 query.formId(), query.tenantId(), query.page(), query.size());
@@ -41,11 +39,6 @@ public class GetResponsesService implements GetResponsesUseCase {
                 .toList();
         int totalPages = query.size() > 0 ? (int) Math.ceil((double) total / query.size()) : 0;
         return new ResponsePageResult(items, total, totalPages, query.page(), query.size());
-    }
-
-    private void validateFormBelongsToTenant(UUID formId, UUID tenantId) {
-        formRepository.findByIdAndTenantId(formId, tenantId)
-                .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
     }
 
     private Map<UUID, Double> loadScoresByCandidate(List<FormResponse> responses) {

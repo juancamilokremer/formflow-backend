@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.question;
 
 import com.kodelabs.formflow.modules.forms.application.service.ConditionalLogicValidator;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.application.service.QuestionConfigFactory;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AddQuestionService implements AddQuestionUseCase {
 
+    private final FormLoader formLoader;
     private final FormRepositoryPort formRepository;
     private final FormSectionRepositoryPort sectionRepository;
     private final FormQuestionRepositoryPort questionRepository;
@@ -56,9 +58,7 @@ public class AddQuestionService implements AddQuestionUseCase {
 
         FormQuestion saved = questionRepository.save(question);
 
-        Form form = formRepository.findByIdAndTenantId(command.formId(), command.tenantId())
-                .orElseThrow(() -> new BusinessException("error.form.not_found",
-                        HttpStatus.NOT_FOUND, command.formId().toString()));
+        Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
         form.incrementVersion();
         form.setUpdatedBy(command.userId());
         formRepository.save(form);

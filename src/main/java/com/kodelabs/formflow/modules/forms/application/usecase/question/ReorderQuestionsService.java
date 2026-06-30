@@ -5,6 +5,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ReorderQuestionsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ReorderQuestionsCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.QuestionResult;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
@@ -22,15 +23,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReorderQuestionsService implements ReorderQuestionsUseCase {
 
+    private final FormLoader formLoader;
     private final FormQuestionRepositoryPort questionRepository;
     private final FormRepositoryPort formRepository;
 
     @Override
     @Transactional
     public List<QuestionResult> execute(ReorderQuestionsCommand command) {
-        Form form = formRepository.findByIdAndTenantId(command.formId(), command.tenantId())
-                .orElseThrow(() -> new BusinessException("error.form.not_found",
-                        HttpStatus.NOT_FOUND, command.formId().toString()));
+        Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
 
         List<FormQuestion> active = questionRepository
                 .findActiveBySectionIdAndTenantId(command.sectionId(), command.tenantId());

@@ -7,8 +7,8 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.GetResponseDetailUseCa
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetResponseDetailQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.AnswerValueResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ResponseDetailResult;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +23,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetResponseDetailService implements GetResponseDetailUseCase {
 
-    private final FormRepositoryPort formRepository;
+    private final FormLoader formLoader;
     private final FormResponseRepositoryPort responseRepository;
     private final CandidateRepositoryPort candidateRepository;
 
     @Override
     @Transactional(readOnly = true)
     public ResponseDetailResult execute(GetResponseDetailQuery query) {
-        validateFormBelongsToTenant(query.formId(), query.tenantId());
+        formLoader.loadOrThrow(query.formId(), query.tenantId());
         FormResponse response = loadResponseInForm(query.responseId(), query.formId(), query.tenantId());
         Double totalScore = resolveScore(response.getCandidateId());
         List<AnswerValueResult> answers = response.getAnswers().stream()
@@ -40,11 +40,6 @@ public class GetResponseDetailService implements GetResponseDetailUseCase {
                 response.getId(), response.getFormId(), response.getRespondentToken(),
                 response.getConvocatoriaId(), response.getCandidateId(), totalScore,
                 response.getFormSnapshot(), answers, response.getSubmittedAt(), response.getStartedAt());
-    }
-
-    private void validateFormBelongsToTenant(UUID formId, UUID tenantId) {
-        formRepository.findByIdAndTenantId(formId, tenantId)
-                .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
     }
 
     private FormResponse loadResponseInForm(UUID responseId, UUID formId, UUID tenantId) {

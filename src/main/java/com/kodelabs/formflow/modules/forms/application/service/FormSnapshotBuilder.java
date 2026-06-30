@@ -9,11 +9,8 @@ import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.model.snapshot.QuestionSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.model.snapshot.SectionSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositoryPort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
-import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -26,7 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FormSnapshotBuilder {
 
-    private final FormRepositoryPort formRepository;
+    private final FormLoader formLoader;
     private final FormSectionRepositoryPort sectionRepository;
     private final FormQuestionRepositoryPort questionRepository;
     private final ObjectMapper objectMapper;
@@ -49,9 +46,7 @@ public class FormSnapshotBuilder {
     }
 
     private Form loadForm(UUID formId, UUID tenantId) {
-        return formRepository.findByIdAndTenantId(formId, tenantId)
-                .orElseThrow(() -> new BusinessException("error.form.not_found",
-                        HttpStatus.NOT_FOUND, formId.toString()));
+        return formLoader.loadOrThrow(formId, tenantId);
     }
 
     private List<FormSection> loadSections(UUID formId, UUID tenantId) {

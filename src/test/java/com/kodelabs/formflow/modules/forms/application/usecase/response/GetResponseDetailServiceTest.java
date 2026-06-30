@@ -8,8 +8,8 @@ import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateSc
 import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetResponseDetailQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ResponseDetailResult;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class GetResponseDetailServiceTest {
 
-    @Mock private FormRepositoryPort formRepository;
+    @Mock private FormLoader formLoader;
     @Mock private FormResponseRepositoryPort responseRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
     @InjectMocks private GetResponseDetailService service;
@@ -64,7 +64,7 @@ class GetResponseDetailServiceTest {
                 .submittedAt(Instant.now())
                 .build();
 
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(responseRepository.findByIdAndTenantId(responseId, tenantId)).thenReturn(Optional.of(response));
 
         ResponseDetailResult result = service.execute(new GetResponseDetailQuery(formId, responseId, tenantId));
@@ -92,7 +92,7 @@ class GetResponseDetailServiceTest {
                 .scores(new CandidateScores(88.5, Map.of()))
                 .build();
 
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(responseRepository.findByIdAndTenantId(responseId, tenantId)).thenReturn(Optional.of(response));
         when(candidateRepository.findAllByIds(List.of(candidateId))).thenReturn(List.of(candidate));
 
@@ -103,7 +103,7 @@ class GetResponseDetailServiceTest {
 
     @Test
     void formBelongsToOtherTenant_throwsNotFound() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
+        when(formLoader.loadOrThrow(formId, tenantId)).thenThrow(new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
 
         assertThatThrownBy(() -> service.execute(new GetResponseDetailQuery(formId, responseId, tenantId)))
                 .isInstanceOf(BusinessException.class)
@@ -121,7 +121,7 @@ class GetResponseDetailServiceTest {
                 .answers(List.of()).submittedAt(Instant.now())
                 .build();
 
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(responseRepository.findByIdAndTenantId(responseId, tenantId)).thenReturn(Optional.of(response));
 
         assertThatThrownBy(() -> service.execute(new GetResponseDetailQuery(formId, responseId, tenantId)))
@@ -132,7 +132,7 @@ class GetResponseDetailServiceTest {
     @Test
     void responseNotFound_throwsNotFound() {
         Form form = Form.builder().id(formId).tenantId(tenantId).build();
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(responseRepository.findByIdAndTenantId(responseId, tenantId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.execute(new GetResponseDetailQuery(formId, responseId, tenantId)))

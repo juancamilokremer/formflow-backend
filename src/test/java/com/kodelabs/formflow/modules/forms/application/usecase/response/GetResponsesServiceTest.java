@@ -6,8 +6,8 @@ import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateScores;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetResponsesQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ResponsePageResult;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,6 @@ import org.springframework.http.HttpStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +32,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class GetResponsesServiceTest {
 
-    @Mock private FormRepositoryPort formRepository;
+    @Mock private FormLoader formLoader;
     @Mock private FormResponseRepositoryPort responseRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
     @InjectMocks private GetResponsesService service;
@@ -53,7 +52,7 @@ class GetResponsesServiceTest {
         FormResponse r1 = responseWithoutCandidate();
         FormResponse r2 = responseWithoutCandidate();
 
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(responseRepository.countByFormIdAndTenantId(formId, tenantId)).thenReturn(25L);
         when(responseRepository.findPageByFormIdAndTenantId(formId, tenantId, 0, 20))
                 .thenReturn(List.of(r1, r2));
@@ -80,7 +79,7 @@ class GetResponsesServiceTest {
                 .scores(new CandidateScores(75.0, Map.of()))
                 .build();
 
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(responseRepository.countByFormIdAndTenantId(formId, tenantId)).thenReturn(1L);
         when(responseRepository.findPageByFormIdAndTenantId(formId, tenantId, 0, 20))
                 .thenReturn(List.of(response));
@@ -96,7 +95,7 @@ class GetResponsesServiceTest {
         Form form = Form.builder().id(formId).tenantId(tenantId).build();
         FormResponse response = responseWithoutCandidate();
 
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(responseRepository.countByFormIdAndTenantId(formId, tenantId)).thenReturn(1L);
         when(responseRepository.findPageByFormIdAndTenantId(any(), any(), anyInt(), anyInt()))
                 .thenReturn(List.of(response));
@@ -108,7 +107,7 @@ class GetResponsesServiceTest {
 
     @Test
     void formNotFound_throwsNotFound() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
+        when(formLoader.loadOrThrow(formId, tenantId)).thenThrow(new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
 
         assertThatThrownBy(() -> service.execute(new GetResponsesQuery(formId, tenantId, 0, 20)))
                 .isInstanceOf(BusinessException.class)

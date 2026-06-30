@@ -13,7 +13,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitPublicResponseCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitPublicResponseResult;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +28,6 @@ import org.springframework.http.HttpStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +38,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SubmitPublicResponseServiceTest {
 
-    @Mock private FormRepositoryPort formRepository;
+    @Mock private FormLoader formLoader;
     @Mock private FormResponseRepositoryPort responseRepository;
     @Mock private FormSnapshotBuilder snapshotBuilder;
     @Mock private ConditionalLogicEvaluator conditionalLogicEvaluator;
@@ -86,7 +85,7 @@ class SubmitPublicResponseServiceTest {
 
     @Test
     void happyPath_savesResponseAndReturnsToken() {
-        when(formRepository.findByIdPublicWithSections(formId)).thenReturn(Optional.of(activeForm));
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
         when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
         when(responseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -106,7 +105,7 @@ class SubmitPublicResponseServiceTest {
 
     @Test
     void visibleRequiredQuestionWithoutAnswer_throwsBadRequest() {
-        when(formRepository.findByIdPublicWithSections(formId)).thenReturn(Optional.of(activeForm));
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
 
         var command = new SubmitPublicResponseCommand(formId, null, List.of());
@@ -122,7 +121,7 @@ class SubmitPublicResponseServiceTest {
 
     @Test
     void hiddenRequiredQuestion_isNotValidated() {
-        when(formRepository.findByIdPublicWithSections(formId)).thenReturn(Optional.of(activeForm));
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
         when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
         // Question is hidden by conditional logic → no answer required
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(false);

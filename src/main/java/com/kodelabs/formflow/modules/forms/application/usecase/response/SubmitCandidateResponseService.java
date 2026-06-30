@@ -18,8 +18,8 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitCandidateResponseCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitCandidateResponseResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
 
     private final CandidateRepositoryPort candidateRepository;
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
-    private final FormRepositoryPort formRepository;
+    private final FormLoader formLoader;
     private final FormResponseRepositoryPort responseRepository;
     private final FormSnapshotBuilder snapshotBuilder;
     private final ConditionalLogicEvaluator conditionalLogicEvaluator;
@@ -82,9 +82,7 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
     }
 
     private Form loadFormWithQuestions(UUID formId) {
-        return formRepository.findByIdPublicWithSections(formId)
-                .orElseThrow(() -> new BusinessException(
-                        "error.form.not_found", HttpStatus.NOT_FOUND, formId));
+        return formLoader.loadPublicOrThrow(formId);
     }
 
     private ScoringResult computeScoring(Form form, Convocatoria convocatoria, Map<UUID, Object> answerMap) {
