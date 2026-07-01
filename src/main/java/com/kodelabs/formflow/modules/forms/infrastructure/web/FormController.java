@@ -2,8 +2,6 @@ package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
 import com.kodelabs.formflow.modules.forms.domain.port.in.CreateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteFormUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormScoringUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormStatsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ListFormsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormStatusUseCase;
@@ -11,8 +9,6 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormQuery;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormScoringQuery;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormStatsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListFormsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormStatusCommand;
@@ -20,8 +16,6 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.Create
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormStatusRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormDetailResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormScoringResponse;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormStatsResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormSummaryResponse;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,8 +56,6 @@ public class FormController {
     private final UpdateFormUseCase updateForm;
     private final UpdateFormStatusUseCase updateFormStatus;
     private final DeleteFormUseCase deleteForm;
-    private final GetFormScoringUseCase getFormScoring;
-    private final GetFormStatsUseCase getFormStats;
 
     @PostMapping
     @Operation(
@@ -171,38 +163,5 @@ public class FormController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         deleteForm.execute(new DeleteFormCommand(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(null));
-    }
-
-    @GetMapping("/{id}/scoring-summary")
-    @Operation(
-            summary = "Resumen de scoring del formulario",
-            description = "Retorna el puntaje máximo alcanzable por categoría para el formulario. " +
-                    "Útil para configurar pesos en una convocatoria antes de activarla.")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Resumen de scoring")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content)
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    public ResponseEntity<ApiResponse<FormScoringResponse>> scoringSummary(@PathVariable UUID id) {
-        var result = getFormScoring.execute(new GetFormScoringQuery(id, tenantId()));
-        return ResponseEntity.ok(ApiResponse.ok(FormScoringResponse.from(result)));
-    }
-
-    @GetMapping("/{id}/stats")
-    @Operation(
-            summary = "Estadísticas de respuestas del formulario",
-            description = "Retorna la distribución de respuestas por pregunta. " +
-                    "Incluye conteos y porcentajes para opciones (single/multiple/nps), " +
-                    "promedio y mediana para escalas, y distribución por fila para matrices.")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", description = "Estadísticas calculadas")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content)
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    public ResponseEntity<ApiResponse<FormStatsResponse>> stats(@PathVariable UUID id) {
-        var result = getFormStats.execute(new GetFormStatsQuery(id, tenantId()));
-        return ResponseEntity.ok(ApiResponse.ok(FormStatsResponse.from(result)));
     }
 }
