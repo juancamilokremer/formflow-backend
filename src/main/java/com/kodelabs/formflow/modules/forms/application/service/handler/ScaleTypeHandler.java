@@ -16,7 +16,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ScaleTypeHandler implements QuestionTypeHandler<ScaleConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("scale");
+    public static final QuestionType QUESTION_TYPE = QuestionType.SCALE;
 
     private final ObjectMapper objectMapper;
 

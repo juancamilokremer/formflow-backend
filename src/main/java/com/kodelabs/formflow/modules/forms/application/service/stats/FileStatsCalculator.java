@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 public class FileStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("file");
+    public static final QuestionType QUESTION_TYPE = QuestionType.FILE;
 
     @Override
     public QuestionType type() {

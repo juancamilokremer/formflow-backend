@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @Component
 public class SingleStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("single");
+    public static final QuestionType QUESTION_TYPE = QuestionType.SINGLE;
 
     @Override
     public QuestionType type() {

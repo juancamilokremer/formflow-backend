@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @Component
 public class NpsStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("nps");
+    public static final QuestionType QUESTION_TYPE = QuestionType.NPS;
 
     @Override
     public QuestionType type() {

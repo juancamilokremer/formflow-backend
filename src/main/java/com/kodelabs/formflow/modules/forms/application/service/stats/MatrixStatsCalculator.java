@@ -17,7 +17,7 @@ import java.util.Map;
 @Component
 public class MatrixStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("matrix");
+    public static final QuestionType QUESTION_TYPE = QuestionType.MATRIX;
 
     @Override
     public QuestionType type() {

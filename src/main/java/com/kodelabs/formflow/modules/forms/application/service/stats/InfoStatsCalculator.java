@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 public class InfoStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("info");
+    public static final QuestionType QUESTION_TYPE = QuestionType.INFO;
 
     @Override
     public QuestionType type() {

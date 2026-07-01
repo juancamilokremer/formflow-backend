@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 public class TextStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("text");
+    public static final QuestionType QUESTION_TYPE = QuestionType.TEXT;
 
     @Override
     public QuestionType type() {

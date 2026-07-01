@@ -51,7 +51,7 @@ class DeleteQuestionServiceTest {
         tenantId = UUID.randomUUID();
         userId = UUID.randomUUID();
         question = FormQuestion.builder().id(questionId).sectionId(sectionId).formId(formId)
-                .tenantId(tenantId).title("Q").type(new QuestionType("TEXT")).position(0).build();
+                .tenantId(tenantId).title("Q").type(QuestionType.TEXT).position(0).build();
         form = Form.builder().id(formId).tenantId(tenantId).name("F").type(FormType.CANDIDATES).version(1).build();
     }
 

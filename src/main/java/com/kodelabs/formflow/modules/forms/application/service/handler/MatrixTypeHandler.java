@@ -16,7 +16,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class MatrixTypeHandler implements QuestionTypeHandler<MatrixConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("matrix");
+    public static final QuestionType QUESTION_TYPE = QuestionType.MATRIX;
 
     private final ObjectMapper objectMapper;
 

@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 public class DateStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("date");
+    public static final QuestionType QUESTION_TYPE = QuestionType.DATE;
 
     @Override
     public QuestionType type() {

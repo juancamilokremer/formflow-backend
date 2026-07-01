@@ -60,7 +60,7 @@ class GetFormScoringServiceTest {
     void returnsScoringResultGroupedByCategory() {
         FormQuestion q1 = FormQuestion.builder()
                 .id(UUID.randomUUID()).sectionId(sectionId).formId(formId).tenantId(tenantId)
-                .type(QuestionType.of("SINGLE")).categoryId(categoryId)
+                .type(QuestionType.SINGLE).categoryId(categoryId)
                 .config(SingleConfig.builder()
                         .options(List.of(
                                 AnswerOption.builder().score(5).build(),

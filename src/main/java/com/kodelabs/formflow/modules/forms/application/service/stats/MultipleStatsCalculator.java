@@ -15,7 +15,7 @@ import java.util.Map;
 @Component
 public class MultipleStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("multiple");
+    public static final QuestionType QUESTION_TYPE = QuestionType.MULTIPLE;
 
     @Override
     public QuestionType type() {

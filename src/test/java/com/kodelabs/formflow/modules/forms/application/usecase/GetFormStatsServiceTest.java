@@ -41,7 +41,7 @@ class GetFormStatsServiceTest {
     @Mock private QuestionStatsRegistry statsRegistry;
     @InjectMocks private GetFormStatsService service;
 
-    private static final QuestionType SINGLE = new QuestionType("single");
+    private static final QuestionType SINGLE = QuestionType.SINGLE;
 
     private UUID formId;
     private UUID tenantId;

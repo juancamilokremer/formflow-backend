@@ -15,7 +15,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class InfoTypeHandler implements QuestionTypeHandler<InfoConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("info");
+    public static final QuestionType QUESTION_TYPE = QuestionType.INFO;
 
     private final ObjectMapper objectMapper;
 

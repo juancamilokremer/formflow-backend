@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Component
 public class ScaleStatsCalculator implements QuestionStatsCalculator {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("scale");
+    public static final QuestionType QUESTION_TYPE = QuestionType.SCALE;
 
     @Override
     public QuestionType type() {
