@@ -74,13 +74,13 @@ class FormSnapshotBuilderTest {
         UUID q1Id = UUID.randomUUID();
         UUID q2Id = UUID.randomUUID();
         FormQuestion q1 = FormQuestion.builder().id(q1Id).sectionId(sectionId).title("P1")
-                .type(QuestionType.of("SINGLE")).position(0).required(true)
+                .type(QuestionType.SINGLE).position(0).required(true)
                 .config(SingleConfig.builder()
                         .options(List.of(AnswerOption.builder().label("Sí").score(10).build()))
                         .build())
                 .build();
         FormQuestion q2 = FormQuestion.builder().id(q2Id).sectionId(sectionId).title("P2")
-                .type(QuestionType.of("TEXT")).position(1).build();
+                .type(QuestionType.TEXT).position(1).build();
 
         when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findActiveByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(section));
@@ -99,7 +99,7 @@ class FormSnapshotBuilderTest {
     @Test
     void snapshotSerializesQuestionConfigAsMap() {
         FormQuestion question = FormQuestion.builder().id(UUID.randomUUID()).sectionId(sectionId).title("Q")
-                .type(QuestionType.of("SINGLE")).position(0)
+                .type(QuestionType.SINGLE).position(0)
                 .config(SingleConfig.builder()
                         .options(List.of(AnswerOption.builder().label("Opción A").score(5).build()))
                         .build())

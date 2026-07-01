@@ -15,7 +15,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class NpsTypeHandler implements QuestionTypeHandler<NpsConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("nps");
+    public static final QuestionType QUESTION_TYPE = QuestionType.NPS;
 
     private final ObjectMapper objectMapper;
 

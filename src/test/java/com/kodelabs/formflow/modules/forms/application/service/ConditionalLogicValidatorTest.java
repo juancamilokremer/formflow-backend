@@ -47,7 +47,7 @@ class ConditionalLogicValidatorTest {
         sourceId = UUID.randomUUID();
         sourceQuestion = FormQuestion.builder()
                 .id(sourceId).formId(formId).tenantId(tenantId)
-                .type(new QuestionType("SINGLE")).build();
+                .type(QuestionType.SINGLE).build();
     }
 
     @Test
@@ -67,7 +67,7 @@ class ConditionalLogicValidatorTest {
     void passesWithValidCondition() {
         when(questionRepository.findActiveByFormIdAndTenantId(formId, tenantId))
                 .thenReturn(List.of(sourceQuestion));
-        when(typeRegistry.get(new QuestionType("SINGLE"))).thenReturn(singleHandler);
+        when(typeRegistry.get(QuestionType.SINGLE)).thenReturn(singleHandler);
         when(singleHandler.supportedOperators()).thenReturn(Set.of(ConditionOperator.EQUALS, ConditionOperator.NOT_EQUALS));
         var logic = new ConditionalLogic(ConditionalLogicAction.SHOW, LogicOperator.AND,
                 List.of(new Condition(sourceId, ConditionOperator.EQUALS, "opt-uuid")));
@@ -93,7 +93,7 @@ class ConditionalLogicValidatorTest {
     void throwsWhenOperatorNotSupportedBySourceType() {
         when(questionRepository.findActiveByFormIdAndTenantId(formId, tenantId))
                 .thenReturn(List.of(sourceQuestion));
-        when(typeRegistry.get(new QuestionType("SINGLE"))).thenReturn(singleHandler);
+        when(typeRegistry.get(QuestionType.SINGLE)).thenReturn(singleHandler);
         when(singleHandler.supportedOperators()).thenReturn(Set.of(ConditionOperator.EQUALS, ConditionOperator.NOT_EQUALS));
         var logic = new ConditionalLogic(ConditionalLogicAction.SHOW, LogicOperator.AND,
                 List.of(new Condition(sourceId, ConditionOperator.GREATER_THAN, 5)));

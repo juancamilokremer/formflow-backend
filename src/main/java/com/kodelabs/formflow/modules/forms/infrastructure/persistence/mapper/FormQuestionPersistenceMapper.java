@@ -20,7 +20,7 @@ public class FormQuestionPersistenceMapper {
 
     @SneakyThrows
     public FormQuestion toDomain(FormQuestionJpaEntity entity) {
-        QuestionType type = new QuestionType(entity.getType());
+        QuestionType type = QuestionType.of(entity.getType());
         QuestionConfig config = registry.get(type).deserialize(
                 entity.getConfig() == null || entity.getConfig().isBlank() ? "{}" : entity.getConfig());
         ConditionalLogic conditionalLogic = entity.getConditionalLogic() == null

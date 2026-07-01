@@ -70,13 +70,13 @@ class AddQuestionServiceTest {
         when(questionRepository.countActiveBySectionId(sectionId)).thenReturn(3);
         when(configFactory.build(any(), any())).thenReturn(new TextConfig());
         FormQuestion saved = FormQuestion.builder().id(UUID.randomUUID()).sectionId(sectionId)
-                .formId(formId).title("Q").type(new QuestionType("TEXT")).position(3).build();
+                .formId(formId).title("Q").type(QuestionType.TEXT).position(3).build();
         when(questionRepository.save(any())).thenReturn(saved);
         when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         QuestionResult result = service.execute(new AddQuestionCommand(
-                formId, sectionId, tenantId, userId, "Q", null, new QuestionType("TEXT"),
+                formId, sectionId, tenantId, userId, "Q", null, QuestionType.TEXT,
                 false, null, null, null, Map.of()));
 
         assertThat(result.position()).isEqualTo(3);
@@ -93,7 +93,7 @@ class AddQuestionServiceTest {
 
         var command = new AddQuestionCommand(
                 formId, sectionId, tenantId, userId, "Q", null,
-                new QuestionType("TEXT"), false, null, null, null, Map.of());
+                QuestionType.TEXT, false, null, null, null, Map.of());
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.section.not_found")

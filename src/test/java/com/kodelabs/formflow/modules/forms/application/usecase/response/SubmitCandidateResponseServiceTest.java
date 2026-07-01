@@ -95,7 +95,7 @@ class SubmitCandidateResponseServiceTest {
         FormQuestion question = FormQuestion.builder()
                 .id(questionId)
                 .title("¿Años de experiencia?")
-                .type(QuestionType.of("single"))
+                .type(QuestionType.SINGLE)
                 .required(true)
                 .position(1)
                 .build();

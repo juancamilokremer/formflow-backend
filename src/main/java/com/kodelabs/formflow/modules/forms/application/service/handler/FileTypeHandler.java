@@ -16,7 +16,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class FileTypeHandler implements QuestionTypeHandler<FileConfig> {
 
-    public static final QuestionType QUESTION_TYPE = new QuestionType("file");
+    public static final QuestionType QUESTION_TYPE = QuestionType.FILE;
 
     private final ObjectMapper objectMapper;
 
