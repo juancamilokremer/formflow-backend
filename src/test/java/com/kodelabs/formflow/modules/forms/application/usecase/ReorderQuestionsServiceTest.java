@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase;
 
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.application.usecase.question.ReorderQuestionsService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
@@ -20,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ReorderQuestionsServiceTest {
 
+    @Mock private FormLoader formLoader;
     @Mock private FormQuestionRepositoryPort questionRepository;
     @Mock private FormRepositoryPort formRepository;
     @InjectMocks private ReorderQuestionsService service;
@@ -65,7 +66,7 @@ class ReorderQuestionsServiceTest {
 
     @Test
     void assignsNewPositionsInRequestedOrderAndIncrementsVersion() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(questionRepository.findActiveBySectionIdAndTenantId(sectionId, tenantId))
                 .thenReturn(List.of(q1, q2, q3));
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -88,7 +89,7 @@ class ReorderQuestionsServiceTest {
 
     @Test
     void throwsBadRequestWhenOrderedIdsMissAQuestion() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(questionRepository.findActiveBySectionIdAndTenantId(sectionId, tenantId))
                 .thenReturn(List.of(q1, q2, q3));
 
@@ -102,7 +103,7 @@ class ReorderQuestionsServiceTest {
 
     @Test
     void throwsNotFoundWhenFormDoesNotExist() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
+        when(formLoader.loadOrThrow(formId, tenantId)).thenThrow(new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
 
         var command = new ReorderQuestionsCommand(sectionId, formId, tenantId, userId, List.of(q1Id));
         assertThatThrownBy(() -> service.execute(command))

@@ -12,7 +12,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.SubmitPublicResponseUs
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitPublicResponseCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitPublicResponseResult;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SubmitPublicResponseService implements SubmitPublicResponseUseCase {
 
-    private final FormRepositoryPort formRepository;
+    private final FormLoader formLoader;
     private final FormResponseRepositoryPort responseRepository;
     private final FormSnapshotBuilder snapshotBuilder;
     private final ConditionalLogicEvaluator conditionalLogicEvaluator;
@@ -45,12 +45,9 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
     }
 
     private Form loadActiveForm(UUID formId) {
-        Form form = formRepository.findByIdPublicWithSections(formId)
-                .orElseThrow(() -> new BusinessException(
-                        "error.form.not_found", HttpStatus.NOT_FOUND, formId.toString()));
+        Form form = formLoader.loadPublicOrThrow(formId);
         if (form.getStatus() != FormStatus.ACTIVE) {
-            throw new BusinessException(
-                    "error.form.not_found", HttpStatus.NOT_FOUND, formId.toString());
+            throw new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId);
         }
         return form;
     }

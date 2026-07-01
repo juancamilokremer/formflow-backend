@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase.question;
 
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteQuestionUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteQuestionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositoryPort;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DeleteQuestionService implements DeleteQuestionUseCase {
 
+    private final FormLoader formLoader;
     private final FormQuestionRepositoryPort questionRepository;
     private final FormRepositoryPort formRepository;
 
@@ -30,9 +32,7 @@ public class DeleteQuestionService implements DeleteQuestionUseCase {
         question.softDelete();
         questionRepository.save(question);
 
-        Form form = formRepository.findByIdAndTenantId(command.formId(), command.tenantId())
-                .orElseThrow(() -> new BusinessException("error.form.not_found",
-                        HttpStatus.NOT_FOUND, command.formId().toString()));
+        Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
         form.incrementVersion();
         form.setUpdatedBy(command.userId());
         formRepository.save(form);

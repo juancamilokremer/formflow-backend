@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase;
 
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.application.usecase.question.DeleteQuestionService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class DeleteQuestionServiceTest {
 
+    @Mock private FormLoader formLoader;
     @Mock private FormQuestionRepositoryPort questionRepository;
     @Mock private FormRepositoryPort formRepository;
     @InjectMocks private DeleteQuestionService service;
@@ -60,7 +62,7 @@ class DeleteQuestionServiceTest {
         when(questionRepository.findByIdAndSectionIdAndTenantId(questionId, sectionId, tenantId))
                 .thenReturn(Optional.of(question));
         when(questionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.execute(new DeleteQuestionCommand(questionId, sectionId, formId, tenantId, userId));
@@ -87,6 +89,6 @@ class DeleteQuestionServiceTest {
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
                         .isEqualTo(HttpStatus.NOT_FOUND));
 
-        verify(formRepository, never()).findByIdAndTenantId(any(), any());
+        verify(formLoader, never()).loadOrThrow(any(), any());
     }
 }

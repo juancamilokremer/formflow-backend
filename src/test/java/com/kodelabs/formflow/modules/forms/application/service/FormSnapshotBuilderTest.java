@@ -11,7 +11,6 @@ import com.kodelabs.formflow.modules.forms.domain.model.config.AnswerOption;
 import com.kodelabs.formflow.modules.forms.domain.model.config.SingleConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositoryPort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +24,6 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +33,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class FormSnapshotBuilderTest {
 
-    @Mock private FormRepositoryPort formRepository;
+    @Mock private FormLoader formLoader;
     @Mock private FormSectionRepositoryPort sectionRepository;
     @Mock private FormQuestionRepositoryPort questionRepository;
     @Spy  private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
@@ -59,7 +57,7 @@ class FormSnapshotBuilderTest {
 
     @Test
     void snapshotCapturesFormMetadataAndVersion() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findActiveByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of());
 
         FormSnapshot snapshot = builder.build(formId, tenantId);
@@ -84,7 +82,7 @@ class FormSnapshotBuilderTest {
         FormQuestion q2 = FormQuestion.builder().id(q2Id).sectionId(sectionId).title("P2")
                 .type(QuestionType.of("TEXT")).position(1).build();
 
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findActiveByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(section));
         when(questionRepository.findAllActiveBySectionIds(List.of(sectionId)))
                 .thenReturn(Map.of(sectionId, List.of(q1, q2)));
@@ -107,7 +105,7 @@ class FormSnapshotBuilderTest {
                         .build())
                 .build();
 
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findActiveByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(section));
         when(questionRepository.findAllActiveBySectionIds(List.of(sectionId)))
                 .thenReturn(Map.of(sectionId, List.of(question)));
@@ -120,7 +118,7 @@ class FormSnapshotBuilderTest {
 
     @Test
     void snapshotIsEmptyWhenFormHasNoSections() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findActiveByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of());
 
         FormSnapshot snapshot = builder.build(formId, tenantId);
@@ -130,7 +128,7 @@ class FormSnapshotBuilderTest {
 
     @Test
     void throwsNotFoundWhenFormDoesNotBelongToTenant() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
+        when(formLoader.loadOrThrow(formId, tenantId)).thenThrow(new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
 
         assertThatThrownBy(() -> builder.build(formId, tenantId))
                 .isInstanceOf(BusinessException.class)

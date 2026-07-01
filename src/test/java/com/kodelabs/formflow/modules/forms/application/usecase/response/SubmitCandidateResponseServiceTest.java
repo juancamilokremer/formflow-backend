@@ -20,8 +20,8 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitCandidateResponseCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitCandidateResponseResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@ class SubmitCandidateResponseServiceTest {
 
     @Mock private CandidateRepositoryPort candidateRepository;
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
-    @Mock private FormRepositoryPort formRepository;
+    @Mock private FormLoader formLoader;
     @Mock private FormResponseRepositoryPort responseRepository;
     @Mock private FormSnapshotBuilder snapshotBuilder;
     @Mock private ConditionalLogicEvaluator conditionalLogicEvaluator;
@@ -127,7 +127,7 @@ class SubmitCandidateResponseServiceTest {
         when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
         when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
                 .thenReturn(Optional.of(activeConvocatoria));
-        when(formRepository.findByIdPublicWithSections(formId)).thenReturn(Optional.of(activeForm));
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
         when(candidateScoringService.compute(any(), any(), any()))
                 .thenReturn(new ScoringResult(85.0, Map.of()));
@@ -205,7 +205,7 @@ class SubmitCandidateResponseServiceTest {
         when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
         when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
                 .thenReturn(Optional.of(activeConvocatoria));
-        when(formRepository.findByIdPublicWithSections(formId)).thenReturn(Optional.of(activeForm));
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
 
         var command = new SubmitCandidateResponseCommand(candidateToken, null, List.of());

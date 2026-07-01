@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase;
 
 import com.kodelabs.formflow.modules.forms.application.service.ConditionalLogicValidator;
+import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.application.service.QuestionConfigFactory;
 import com.kodelabs.formflow.modules.forms.application.usecase.question.AddQuestionService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AddQuestionServiceTest {
 
+    @Mock private FormLoader formLoader;
     @Mock private FormRepositoryPort formRepository;
     @Mock private FormSectionRepositoryPort sectionRepository;
     @Mock private FormQuestionRepositoryPort questionRepository;
@@ -70,7 +72,7 @@ class AddQuestionServiceTest {
         FormQuestion saved = FormQuestion.builder().id(UUID.randomUUID()).sectionId(sectionId)
                 .formId(formId).title("Q").type(new QuestionType("TEXT")).position(3).build();
         when(questionRepository.save(any())).thenReturn(saved);
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         QuestionResult result = service.execute(new AddQuestionCommand(
