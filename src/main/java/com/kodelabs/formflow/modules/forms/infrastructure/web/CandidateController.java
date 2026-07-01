@@ -1,11 +1,9 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
 import com.kodelabs.formflow.modules.forms.domain.port.in.AddCandidateUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.GetRankingUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ImportCandidatesUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.RemoveCandidateUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddCandidateCommand;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetRankingQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ImportCandidatesCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.RemoveCandidateCommand;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.AddCandidateRequest;
@@ -22,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 
 import static com.kodelabs.formflow.shared.web.ControllerUtils.tenantId;
@@ -48,7 +44,6 @@ public class CandidateController {
     private final AddCandidateUseCase addCandidate;
     private final RemoveCandidateUseCase removeCandidate;
     private final ImportCandidatesUseCase importCandidates;
-    private final GetRankingUseCase getRanking;
 
     @PostMapping("/{convocatoriaId}/candidates")
     @Operation(summary = "Agregar candidato", description = "Agrega un candidato a la convocatoria. No se permite duplicar email.")
@@ -89,17 +84,5 @@ public class CandidateController {
         var result = importCandidates.execute(new ImportCandidatesCommand(
                 convocatoriaId, tenantId(), userId(auth), file.getBytes()));
         return ResponseEntity.ok(ApiResponse.ok(ImportResponse.from(result)));
-    }
-
-    @GetMapping("/{convocatoriaId}/ranking")
-    @Operation(summary = "Ranking de candidatos",
-            description = "Retorna candidatos con score ordenados de mayor a menor. " +
-                    "Solo candidatos que han respondido aparecen en el ranking.")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ranking")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Convocatoria no encontrada", content = @Content)
-    public ResponseEntity<ApiResponse<List<CandidateResponse>>> ranking(@PathVariable UUID convocatoriaId) {
-        var results = getRanking.execute(new GetRankingQuery(convocatoriaId, tenantId()));
-        return ResponseEntity.ok(ApiResponse.ok(
-                results.stream().map(CandidateResponse::from).toList()));
     }
 }
