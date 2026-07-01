@@ -10,6 +10,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateResponseSubmittedEvent;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateScores;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
@@ -23,6 +24,8 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositor
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +41,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class SubmitCandidateResponseService implements SubmitCandidateResponseUseCase {
+public class SubmitCandidateResponseService implements SubmitCandidateResponseUseCase, ApplicationEventPublisherAware {
 
     private final CandidateRepositoryPort candidateRepository;
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
@@ -47,6 +50,13 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
     private final FormSnapshotBuilder snapshotBuilder;
     private final ConditionalLogicEvaluator conditionalLogicEvaluator;
     private final CandidateScoringService candidateScoringService;
+
+    private ApplicationEventPublisher eventPublisher;
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
 
     @Override
     @Transactional
@@ -59,6 +69,8 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
         ScoringResult scoring = computeScoring(form, convocatoria, answerMap);
         FormResponse response = persistResponse(form, convocatoria, candidate, command);
         recordCandidateResponse(candidate, response, scoring);
+        eventPublisher.publishEvent(new CandidateResponseSubmittedEvent(
+                candidate.getId(), convocatoria.getId(), candidate.getTenantId()));
         return new SubmitCandidateResponseResult(response.getRespondentToken());
     }
 

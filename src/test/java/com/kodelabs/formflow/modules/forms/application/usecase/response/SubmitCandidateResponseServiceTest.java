@@ -31,6 +31,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
@@ -55,6 +56,7 @@ class SubmitCandidateResponseServiceTest {
     @Mock private FormSnapshotBuilder snapshotBuilder;
     @Mock private ConditionalLogicEvaluator conditionalLogicEvaluator;
     @Mock private CandidateScoringService candidateScoringService;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @InjectMocks private SubmitCandidateResponseService service;
 
     private UUID candidateToken;
@@ -70,6 +72,7 @@ class SubmitCandidateResponseServiceTest {
 
     @BeforeEach
     void setUp() {
+        service.setApplicationEventPublisher(eventPublisher);
         candidateToken = UUID.randomUUID();
         convocatoriaId = UUID.randomUUID();
         formId = UUID.randomUUID();
