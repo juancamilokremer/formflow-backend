@@ -31,12 +31,17 @@ public class OpenApiConfig {
                         .contact(new Contact()
                                 .name("Kode Labs")
                                 .email("dev@kodelabs.co")))
-                .addSecurityItem(new SecurityRequirement().addList("Bearer Auth"))
+                .addSecurityItem(new SecurityRequirement().addList("Bearer Auth").addList("X-Tenant-ID"))
                 .components(new Components()
                         .addSecuritySchemes("Bearer Auth", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("Ingresa el token JWT obtenido en /api/v1/auth/login")));
+                                .description("Ingresa el token JWT obtenido en /api/v1/auth/login"))
+                        .addSecuritySchemes("X-Tenant-ID", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.HEADER)
+                                .name("X-Tenant-ID")
+                                .description("Slug del tenant registrado (ej: mi-empresa)")));
     }
 }

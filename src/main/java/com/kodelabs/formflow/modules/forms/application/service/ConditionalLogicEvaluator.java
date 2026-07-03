@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.application.service;
 import com.kodelabs.formflow.modules.forms.application.service.conditional.OperatorStrategyRegistry;
 import com.kodelabs.formflow.modules.forms.domain.model.conditional.Condition;
 import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionalLogic;
+import com.kodelabs.formflow.modules.forms.domain.model.conditional.ConditionalLogicAction;
 import com.kodelabs.formflow.modules.forms.domain.model.conditional.LogicOperator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,8 @@ public class ConditionalLogicEvaluator {
     public boolean isVisible(ConditionalLogic logic, Map<UUID, Object> answers) {
         if (logic == null) return true;
         boolean met = evaluateAll(logic.conditions(), logic.logicOperator(), answers);
-        return switch (logic.action()) {
+        ConditionalLogicAction action = logic.action() != null ? logic.action() : ConditionalLogicAction.SHOW;
+        return switch (action) {
             case SHOW -> met;
             case HIDE -> !met;
         };
