@@ -1,10 +1,14 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
+import com.kodelabs.formflow.modules.forms.domain.port.in.GetPublicCandidateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.SubmitCandidateResponseUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetPublicCandidateFormQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitCandidateResponseCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.result.PublicCandidateFormResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitCandidateResponseResult;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.SubmitResponseRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.PublicCandidateFormResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.SubmitPublicResponseDto;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +34,24 @@ import java.util.UUID;
 @Tag(name = "Candidatos Públicos", description = "Endpoint público para que candidatos envíen su respuesta a una convocatoria. Sin autenticación requerida.")
 public class PublicCandidateController {
 
+    private final GetPublicCandidateFormUseCase getPublicCandidateForm;
     private final SubmitCandidateResponseUseCase submitCandidateResponse;
+
+    @GetMapping("/{candidateToken}")
+    @Operation(
+            summary = "Obtener formulario del candidato",
+            description = "Retorna la estructura del formulario asociado al token del candidato, " +
+                    "junto con datos de la convocatoria y el estado de respuesta. " +
+                    "No requiere autenticación.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Formulario listo para responder")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Token de candidato no encontrado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "La convocatoria ya está cerrada", content = @Content)
+    public ResponseEntity<ApiResponse<PublicCandidateFormResponse>> getCandidateForm(
+            @PathVariable UUID candidateToken) {
+        PublicCandidateFormResult result = getPublicCandidateForm.execute(
+                new GetPublicCandidateFormQuery(candidateToken));
+        return ResponseEntity.ok(ApiResponse.ok(PublicCandidateFormResponse.from(result)));
+    }
 
     @PostMapping("/{candidateToken}/responses")
     @Operation(
