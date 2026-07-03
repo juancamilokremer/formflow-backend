@@ -1,6 +1,8 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaEmailSender;
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.port.in.LaunchConvocatoriaUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.LaunchConvocatoriaCommand;
@@ -13,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
@@ -20,6 +24,7 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final CandidateRepositoryPort candidateRepository;
     private final ConvocatoriaWeightValidator weightValidator;
+    private final ConvocatoriaEmailSender emailSender;
 
     @Override
     @Transactional
@@ -29,7 +34,8 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
         validateHasCandidates(convocatoria);
         convocatoria.launch();
         Convocatoria saved = convocatoriaRepository.save(convocatoria);
-        var candidates = candidateRepository.findAllByConvocatoriaId(saved.getId());
+        List<Candidate> candidates = candidateRepository.findAllByConvocatoriaId(saved.getId());
+        candidates.forEach(c -> emailSender.sendInvitation(c, saved));
         return ConvocatoriaResult.from(saved, candidates);
     }
 

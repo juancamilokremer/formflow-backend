@@ -8,5 +8,9 @@ package com.kodelabs.formflow.modules.notifications.domain.model;
 public enum EmailType {
     WELCOME,
     PASSWORD_RESET,
-    EMAIL_VERIFICATION
+    EMAIL_VERIFICATION,
+    CANDIDATE_INVITATION,
+    CANDIDATE_REMINDER,
+    CANDIDATE_RESPONSE_CONFIRMATION,
+    ADMIN_CANDIDATE_RESPONDED
 }
