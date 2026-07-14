@@ -10,14 +10,16 @@ public record ConvocatoriaSummaryResult(
         String name,
         String status,
         long candidateCount,
+        long respondedCount,
         Instant startDate,
         Instant endDate,
         Instant createdAt
 ) {
-    public static ConvocatoriaSummaryResult from(Convocatoria c, long candidateCount) {
+    public static ConvocatoriaSummaryResult from(Convocatoria c, long candidateCount, long respondedCount) {
         return new ConvocatoriaSummaryResult(
                 c.getId(), c.getName(), c.getStatus().name(),
-                candidateCount, c.getStartDate(), c.getEndDate(), c.getCreatedAt()
+                candidateCount, respondedCount,
+                c.getStartDate(), c.getEndDate(), c.getCreatedAt()
         );
     }
 }

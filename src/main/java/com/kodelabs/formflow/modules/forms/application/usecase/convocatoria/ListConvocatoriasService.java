@@ -24,7 +24,8 @@ public class ListConvocatoriasService implements ListConvocatoriasUseCase {
         return convocatoriaRepository.findActiveByTenantId(query.tenantId())
                 .stream()
                 .map(c -> ConvocatoriaSummaryResult.from(c,
-                        candidateRepository.countByConvocatoriaId(c.getId())))
+                        candidateRepository.countByConvocatoriaId(c.getId()),
+                        candidateRepository.countRespondedByConvocatoriaId(c.getId())))
                 .toList();
     }
 }

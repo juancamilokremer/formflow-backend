@@ -61,6 +61,11 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
     }
 
     @Override
+    public long countRespondedByConvocatoriaId(UUID convocatoriaId) {
+        return jpaRepository.countByConvocatoriaIdAndStatus(convocatoriaId, "RESPONDED");
+    }
+
+    @Override
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
     }

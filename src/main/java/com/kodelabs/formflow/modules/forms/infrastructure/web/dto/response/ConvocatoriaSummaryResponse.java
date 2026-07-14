@@ -10,13 +10,14 @@ public record ConvocatoriaSummaryResponse(
         String name,
         String status,
         long candidateCount,
+        long respondedCount,
         Instant startDate,
         Instant endDate,
         Instant createdAt
 ) {
     public static ConvocatoriaSummaryResponse from(ConvocatoriaSummaryResult r) {
         return new ConvocatoriaSummaryResponse(
-                r.id(), r.name(), r.status(), r.candidateCount(),
+                r.id(), r.name(), r.status(), r.candidateCount(), r.respondedCount(),
                 r.startDate(), r.endDate(), r.createdAt()
         );
     }
