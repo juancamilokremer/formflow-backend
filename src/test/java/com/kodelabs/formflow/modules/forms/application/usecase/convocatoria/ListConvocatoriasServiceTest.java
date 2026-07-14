@@ -38,13 +38,17 @@ class ListConvocatoriasServiceTest {
         when(convocatoriaRepository.findActiveByTenantId(tenantId)).thenReturn(List.of(c1, c2));
         when(candidateRepository.countByConvocatoriaId(conv1Id)).thenReturn(5L);
         when(candidateRepository.countByConvocatoriaId(conv2Id)).thenReturn(0L);
+        when(candidateRepository.countRespondedByConvocatoriaId(conv1Id)).thenReturn(3L);
+        when(candidateRepository.countRespondedByConvocatoriaId(conv2Id)).thenReturn(0L);
 
         List<ConvocatoriaSummaryResult> results = service.execute(new ListConvocatoriasQuery(tenantId));
 
         assertThat(results).hasSize(2);
         assertThat(results.get(0).name()).isEqualTo("Proceso A");
         assertThat(results.get(0).candidateCount()).isEqualTo(5L);
+        assertThat(results.get(0).respondedCount()).isEqualTo(3L);
         assertThat(results.get(1).candidateCount()).isZero();
+        assertThat(results.get(1).respondedCount()).isZero();
     }
 
     @Test

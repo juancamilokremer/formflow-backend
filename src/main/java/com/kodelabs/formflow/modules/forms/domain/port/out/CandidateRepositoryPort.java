@@ -24,5 +24,7 @@ public interface CandidateRepositoryPort {
 
     long countByConvocatoriaId(UUID convocatoriaId);
 
+    long countRespondedByConvocatoriaId(UUID convocatoriaId);
+
     void deleteById(UUID id);
 }

@@ -20,4 +20,6 @@ public interface CandidateJpaRepository extends JpaRepository<CandidateJpaEntity
     boolean existsByConvocatoriaIdAndEmail(UUID convocatoriaId, String email);
 
     long countByConvocatoriaId(UUID convocatoriaId);
+
+    long countByConvocatoriaIdAndStatus(UUID convocatoriaId, String status);
 }
