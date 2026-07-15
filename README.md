@@ -6,6 +6,8 @@ API REST de la plataforma SaaS de formularios dinámicos FormFlow.
 
 **Kode Labs** | Java 17 · Spring Boot 3 · PostgreSQL · Arquitectura Hexagonal
 
+📄 **[Del formulario al análisis](https://claude.ai/code/artifact/c10b5065-1331-4d5b-b2fd-c9dc58a7b1e3)** — recorrido completo del producto (creación del formulario, categorías y puntaje, convocatorias, respuesta del candidato, scoring y estado real de cada pieza, frontend + backend).
+
 ---
 
 ## Requisitos
