@@ -44,6 +44,11 @@ public class UpdateQuestionService implements UpdateQuestionUseCase {
     }
 
     private void applyUpdates(FormQuestion question, UpdateQuestionCommand command) {
+        if (command.categoryId() != null && !command.type().supportsScoring()) {
+            throw new BusinessException("error.question.category_not_scoreable",
+                    HttpStatus.BAD_REQUEST, command.type().code());
+        }
+
         question.setTitle(command.title());
         question.setDescription(command.description());
         question.setType(command.type());

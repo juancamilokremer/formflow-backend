@@ -29,6 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,6 +95,41 @@ class UpdateQuestionServiceTest {
         ArgumentCaptor<Form> captor = ArgumentCaptor.forClass(Form.class);
         verify(formRepository).save(captor.capture());
         assertThat(captor.getValue().getVersion()).isEqualTo(3);
+    }
+
+    @Test
+    void throwsBadRequestWhenCategoryAssignedToNonScoreableType() {
+        when(questionRepository.findByIdAndSectionIdAndTenantId(questionId, sectionId, tenantId))
+                .thenReturn(Optional.of(question));
+
+        var command = new UpdateQuestionCommand(
+                questionId, sectionId, formId, tenantId, userId,
+                "T", null, QuestionType.TEXT, false, UUID.randomUUID(), null, null, Map.of());
+
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.question.category_not_scoreable")
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
+                        .isEqualTo(HttpStatus.BAD_REQUEST));
+
+        verify(questionRepository, never()).save(any());
+    }
+
+    @Test
+    void allowsCategoryWhenTypeSupportsScoring() {
+        when(questionRepository.findByIdAndSectionIdAndTenantId(questionId, sectionId, tenantId))
+                .thenReturn(Optional.of(question));
+        when(configFactory.build(any(), any())).thenReturn(new TextConfig());
+        when(questionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var command = new UpdateQuestionCommand(
+                questionId, sectionId, formId, tenantId, userId,
+                "T", null, QuestionType.SINGLE, false, UUID.randomUUID(), null, null, Map.of());
+
+        assertThat(service.execute(command)).isNotNull();
+        verify(questionRepository).save(any());
     }
 
     @Test

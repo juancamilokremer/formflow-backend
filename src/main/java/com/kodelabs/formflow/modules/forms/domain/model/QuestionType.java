@@ -37,4 +37,8 @@ public enum QuestionType {
         }
         throw new IllegalArgumentException("Unknown QuestionType: " + code);
     }
+
+    public boolean supportsScoring() {
+        return this == SINGLE || this == MULTIPLE || this == SCALE;
+    }
 }

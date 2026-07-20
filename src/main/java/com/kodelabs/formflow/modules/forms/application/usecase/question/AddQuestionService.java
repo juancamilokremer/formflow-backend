@@ -39,6 +39,11 @@ public class AddQuestionService implements AddQuestionUseCase {
 
         conditionalLogicValidator.validate(command.conditionalLogic(), command.formId(), command.tenantId());
 
+        if (command.categoryId() != null && !command.type().supportsScoring()) {
+            throw new BusinessException("error.question.category_not_scoreable",
+                    HttpStatus.BAD_REQUEST, command.type().code());
+        }
+
         int nextPosition = questionRepository.countActiveBySectionId(section.getId());
 
         FormQuestion question = FormQuestion.builder()
