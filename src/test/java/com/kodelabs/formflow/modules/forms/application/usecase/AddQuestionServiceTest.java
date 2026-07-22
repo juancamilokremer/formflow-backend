@@ -7,6 +7,7 @@ import com.kodelabs.formflow.modules.forms.application.usecase.question.AddQuest
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
+import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
 import com.kodelabs.formflow.modules.forms.domain.model.config.TextConfig;
@@ -89,6 +90,7 @@ class AddQuestionServiceTest {
 
     @Test
     void throwsBadRequestWhenCategoryAssignedToNonScoreableType() {
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.of(section));
 
@@ -127,6 +129,7 @@ class AddQuestionServiceTest {
 
     @Test
     void throwsNotFoundWhenSectionDoesNotExist() {
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.empty());
 
@@ -138,5 +141,48 @@ class AddQuestionServiceTest {
                 .hasMessage("error.section.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
                         .isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void throwsBadRequestWhenFormIsLocked() {
+        Form lockedForm = Form.builder().id(formId).tenantId(tenantId).name("F")
+                .type(FormType.CANDIDATES).status(FormStatus.ACTIVE)
+                .version(1).build();
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(lockedForm);
+
+        var command = new AddQuestionCommand(
+                formId, sectionId, tenantId, userId, "Q", null,
+                QuestionType.TEXT, false, null, null, null, Map.of());
+
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.question.form_locked")
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
+                        .isEqualTo(HttpStatus.BAD_REQUEST));
+
+        verify(sectionRepository, never()).findByIdAndFormIdAndTenantId(any(), any(), any());
+        verify(questionRepository, never()).save(any());
+    }
+
+    @Test
+    void allowsAddingQuestionWhenFormIsRegistrationEvenIfActive() {
+        Form registrationForm = Form.builder().id(formId).tenantId(tenantId).name("F")
+                .type(FormType.REGISTRATION).status(FormStatus.ARCHIVED)
+                .version(1).build();
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(registrationForm);
+        when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
+                .thenReturn(Optional.of(section));
+        when(questionRepository.countActiveBySectionId(sectionId)).thenReturn(0);
+        when(configFactory.build(any(), any())).thenReturn(new TextConfig());
+        FormQuestion saved = FormQuestion.builder().id(UUID.randomUUID()).sectionId(sectionId)
+                .formId(formId).title("Q").type(QuestionType.TEXT).position(0).build();
+        when(questionRepository.save(any())).thenReturn(saved);
+        when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var command = new AddQuestionCommand(
+                formId, sectionId, tenantId, userId, "Q", null,
+                QuestionType.TEXT, false, null, null, null, Map.of());
+
+        assertThat(service.execute(command)).isNotNull();
     }
 }

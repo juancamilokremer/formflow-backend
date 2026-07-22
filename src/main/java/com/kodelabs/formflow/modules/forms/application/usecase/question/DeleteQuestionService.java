@@ -24,6 +24,11 @@ public class DeleteQuestionService implements DeleteQuestionUseCase {
     @Override
     @Transactional
     public void execute(DeleteQuestionCommand command) {
+        Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
+        if (form.isLocked()) {
+            throw new BusinessException("error.question.form_locked", HttpStatus.BAD_REQUEST);
+        }
+
         FormQuestion question = questionRepository
                 .findByIdAndSectionIdAndTenantId(command.questionId(), command.sectionId(), command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.question.not_found",
@@ -32,7 +37,6 @@ public class DeleteQuestionService implements DeleteQuestionUseCase {
         question.softDelete();
         questionRepository.save(question);
 
-        Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
         form.incrementVersion();
         form.setUpdatedBy(command.userId());
         formRepository.save(form);
