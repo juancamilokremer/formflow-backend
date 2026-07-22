@@ -33,9 +33,7 @@ public class AddQuestionService implements AddQuestionUseCase {
     @Transactional
     public QuestionResult execute(AddQuestionCommand command) {
         Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
-        if (form.isLocked()) {
-            throw new BusinessException("error.question.form_locked", HttpStatus.BAD_REQUEST);
-        }
+        form.assertEditable();
 
         FormSection section = sectionRepository
                 .findByIdAndFormIdAndTenantId(command.sectionId(), command.formId(), command.tenantId())

@@ -23,4 +23,7 @@ public interface FormRepositoryPort {
 
     /** Returns a non-deleted form with sections and questions loaded, without tenant constraint. */
     Optional<Form> findByIdPublicWithSections(UUID formId);
+
+    /** Highest version number among all forms sharing the given lineage root (root included). */
+    int findMaxVersionInFamily(UUID rootId, UUID tenantId);
 }

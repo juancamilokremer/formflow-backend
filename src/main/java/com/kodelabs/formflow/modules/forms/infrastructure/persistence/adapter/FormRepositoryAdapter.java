@@ -76,4 +76,10 @@ public class FormRepositoryAdapter implements FormRepositoryPort {
             return form;
         });
     }
+
+    @Override
+    public int findMaxVersionInFamily(UUID rootId, UUID tenantId) {
+        Integer max = formJpa.findMaxVersionInFamily(rootId, tenantId);
+        return max != null ? max : 0;
+    }
 }

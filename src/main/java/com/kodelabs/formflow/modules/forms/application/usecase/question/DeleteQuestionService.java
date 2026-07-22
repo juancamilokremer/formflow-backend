@@ -25,9 +25,7 @@ public class DeleteQuestionService implements DeleteQuestionUseCase {
     @Transactional
     public void execute(DeleteQuestionCommand command) {
         Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
-        if (form.isLocked()) {
-            throw new BusinessException("error.question.form_locked", HttpStatus.BAD_REQUEST);
-        }
+        form.assertEditable();
 
         FormQuestion question = questionRepository
                 .findByIdAndSectionIdAndTenantId(command.questionId(), command.sectionId(), command.tenantId())

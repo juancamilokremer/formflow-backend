@@ -40,8 +40,8 @@ public class UpdateQuestionService implements UpdateQuestionUseCase {
                 command.conditionalLogic(), command.formId(), command.tenantId(), command.questionId());
 
         QuestionConfig newConfig = configFactory.build(command.type(), command.rawConfig());
-        if (form.isLocked() && isStructuralChange(command, question, newConfig)) {
-            throw new BusinessException("error.question.form_locked", HttpStatus.BAD_REQUEST);
+        if (isStructuralChange(command, question, newConfig)) {
+            form.assertEditable();
         }
 
         applyUpdates(question, command, newConfig);
