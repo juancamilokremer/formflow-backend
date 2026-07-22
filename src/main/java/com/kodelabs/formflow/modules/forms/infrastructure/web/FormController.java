@@ -2,12 +2,14 @@ package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
 import com.kodelabs.formflow.modules.forms.domain.port.in.CreateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteFormUseCase;
+import com.kodelabs.formflow.modules.forms.domain.port.in.GenerateFormVersionUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ListFormsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormStatusUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteFormCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.GenerateFormVersionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListFormsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormCommand;
@@ -56,6 +58,7 @@ public class FormController {
     private final UpdateFormUseCase updateForm;
     private final UpdateFormStatusUseCase updateFormStatus;
     private final DeleteFormUseCase deleteForm;
+    private final GenerateFormVersionUseCase generateFormVersion;
 
     @PostMapping
     @Operation(
@@ -163,5 +166,26 @@ public class FormController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         deleteForm.execute(new DeleteFormCommand(id, tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/{id}/versions")
+    @Operation(
+            summary = "Generar una nueva versión de un formulario",
+            description = "Clona la estructura de un formulario bloqueado (CANDIDATES/DIAGNOSTIC con una " +
+                    "convocatoria activa o archivada) en un formulario nuevo editable (DRAFT), enlazado por " +
+                    "linaje al original. No hay límite de versiones generadas a partir de un mismo formulario.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201", description = "Nueva versión creada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "El formulario origen no está bloqueado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
+    public ResponseEntity<ApiResponse<FormSummaryResponse>> generateVersion(
+            @PathVariable UUID id, Authentication auth) {
+        var result = generateFormVersion.execute(
+                new GenerateFormVersionCommand(id, tenantId(), userId(auth)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(FormSummaryResponse.from(result)));
     }
 }

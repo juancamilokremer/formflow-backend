@@ -24,4 +24,9 @@ public class FormLoader {
         return formRepository.findByIdPublicWithSections(formId)
                 .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
     }
+
+    public Form loadWithSectionsOrThrow(UUID formId, UUID tenantId) {
+        return formRepository.findByIdAndTenantIdWithSections(formId, tenantId)
+                .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
+    }
 }

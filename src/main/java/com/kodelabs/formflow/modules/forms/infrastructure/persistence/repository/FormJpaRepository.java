@@ -22,4 +22,8 @@ public interface FormJpaRepository extends JpaRepository<FormJpaEntity, UUID> {
 
     @Query("SELECT f FROM FormJpaEntity f WHERE f.id = :id AND f.deletedAt IS NULL")
     Optional<FormJpaEntity> findActiveById(@Param("id") UUID id);
+
+    @Query("SELECT MAX(f.version) FROM FormJpaEntity f WHERE f.tenantId = :tenantId AND f.deletedAt IS NULL " +
+            "AND (f.id = :rootId OR f.rootFormId = :rootId)")
+    Integer findMaxVersionInFamily(@Param("rootId") UUID rootId, @Param("tenantId") UUID tenantId);
 }

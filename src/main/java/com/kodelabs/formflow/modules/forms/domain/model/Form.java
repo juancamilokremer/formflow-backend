@@ -1,10 +1,12 @@
 package com.kodelabs.formflow.modules.forms.domain.model;
 
+import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -64,5 +66,17 @@ public class Form {
     public boolean isLocked() {
         return status != FormStatus.DRAFT
                 && (type == FormType.CANDIDATES || type == FormType.DIAGNOSTIC);
+    }
+
+    public void assertEditable() {
+        if (isLocked()) {
+            throw new BusinessException("error.question.form_locked", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public void assertLockedForVersioning() {
+        if (!isLocked()) {
+            throw new BusinessException("error.form.version_source_not_locked", HttpStatus.BAD_REQUEST);
+        }
     }
 }
