@@ -32,6 +32,11 @@ public class AddQuestionService implements AddQuestionUseCase {
     @Override
     @Transactional
     public QuestionResult execute(AddQuestionCommand command) {
+        Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
+        if (form.isLocked()) {
+            throw new BusinessException("error.question.form_locked", HttpStatus.BAD_REQUEST);
+        }
+
         FormSection section = sectionRepository
                 .findByIdAndFormIdAndTenantId(command.sectionId(), command.formId(), command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.section.not_found",
@@ -63,7 +68,6 @@ public class AddQuestionService implements AddQuestionUseCase {
 
         FormQuestion saved = questionRepository.save(question);
 
-        Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
         form.incrementVersion();
         form.setUpdatedBy(command.userId());
         formRepository.save(form);

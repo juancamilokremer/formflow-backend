@@ -4,6 +4,7 @@ import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.application.usecase.question.DeleteQuestionService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
+import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteQuestionCommand;
@@ -78,6 +79,7 @@ class DeleteQuestionServiceTest {
 
     @Test
     void throwsNotFoundWhenQuestionDoesNotExist() {
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
         when(questionRepository.findByIdAndSectionIdAndTenantId(questionId, sectionId, tenantId))
                 .thenReturn(Optional.empty());
 
@@ -88,7 +90,38 @@ class DeleteQuestionServiceTest {
                 .hasMessage("error.question.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
                         .isEqualTo(HttpStatus.NOT_FOUND));
+    }
 
-        verify(formLoader, never()).loadOrThrow(any(), any());
+    @Test
+    void throwsBadRequestWhenFormIsLocked() {
+        Form lockedForm = Form.builder().id(formId).tenantId(tenantId).name("F")
+                .type(FormType.DIAGNOSTIC).status(FormStatus.ARCHIVED).version(1).build();
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(lockedForm);
+
+        var command = new DeleteQuestionCommand(questionId, sectionId, formId, tenantId, userId);
+
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.question.form_locked")
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus())
+                        .isEqualTo(HttpStatus.BAD_REQUEST));
+
+        verify(questionRepository, never()).findByIdAndSectionIdAndTenantId(any(), any(), any());
+        verify(questionRepository, never()).save(any());
+    }
+
+    @Test
+    void allowsDeletingQuestionWhenFormIsRegistrationEvenIfActive() {
+        Form registrationForm = Form.builder().id(formId).tenantId(tenantId).name("F")
+                .type(FormType.REGISTRATION).status(FormStatus.ACTIVE).version(1).build();
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(registrationForm);
+        when(questionRepository.findByIdAndSectionIdAndTenantId(questionId, sectionId, tenantId))
+                .thenReturn(Optional.of(question));
+        when(questionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.execute(new DeleteQuestionCommand(questionId, sectionId, formId, tenantId, userId));
+
+        verify(questionRepository).save(any());
     }
 }
