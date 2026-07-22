@@ -51,6 +51,12 @@ public class FormJpaEntity {
     @Column(name = "time_limit_seconds")
     private Integer timeLimitSeconds;
 
+    @Column(name = "previous_version_id")
+    private UUID previousVersionId;
+
+    @Column(name = "root_form_id")
+    private UUID rootFormId;
+
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
