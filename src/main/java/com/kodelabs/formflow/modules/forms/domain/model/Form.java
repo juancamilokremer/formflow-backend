@@ -36,6 +36,9 @@ public class Form {
 
     private Integer timeLimitSeconds;
 
+    private UUID previousVersionId;
+    private UUID rootFormId;
+
     @Builder.Default
     private List<FormSection> sections = new ArrayList<>();
 
@@ -55,5 +58,11 @@ public class Form {
 
     public void softDelete() {
         this.deletedAt = Instant.now();
+    }
+
+    /** Structural edits are blocked for CANDIDATES/DIAGNOSTIC forms once published or archived. */
+    public boolean isLocked() {
+        return status != FormStatus.DRAFT
+                && (type == FormType.CANDIDATES || type == FormType.DIAGNOSTIC);
     }
 }
