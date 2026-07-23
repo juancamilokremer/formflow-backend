@@ -11,6 +11,7 @@ public record UpdateConvocatoriaCommand(
         UUID tenantId,
         UUID userId,
         String name,
+        UUID formId,
         List<CategoryWeight> categoryWeights,
         ScoringConfig scoringConfig
 ) {}

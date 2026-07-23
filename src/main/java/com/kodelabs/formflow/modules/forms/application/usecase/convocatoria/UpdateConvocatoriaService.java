@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaFormValidator;
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateConvocatoriaUseCase;
@@ -21,6 +22,7 @@ public class UpdateConvocatoriaService implements UpdateConvocatoriaUseCase {
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final CandidateRepositoryPort candidateRepository;
+    private final ConvocatoriaFormValidator formValidator;
     private final ConvocatoriaWeightValidator weightValidator;
 
     @Override
@@ -45,6 +47,10 @@ public class UpdateConvocatoriaService implements UpdateConvocatoriaUseCase {
 
     private void applyUpdates(Convocatoria convocatoria, UpdateConvocatoriaCommand command) {
         convocatoria.setName(command.name());
+        if (command.formId() != null) {
+            formValidator.validateExists(command.formId(), command.tenantId());
+            convocatoria.setFormId(command.formId());
+        }
         if (command.categoryWeights() != null) convocatoria.setCategoryWeights(command.categoryWeights());
         if (command.scoringConfig() != null) convocatoria.setScoringConfig(command.scoringConfig());
     }

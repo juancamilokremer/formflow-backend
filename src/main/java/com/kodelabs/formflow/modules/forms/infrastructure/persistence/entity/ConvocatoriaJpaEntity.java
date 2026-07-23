@@ -35,11 +35,14 @@ public class ConvocatoriaJpaEntity {
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
-    @Column(name = "form_id", nullable = false)
+    @Column(name = "form_id")
     private UUID formId;
 
     @Column(name = "name", nullable = false)
     private String name;
+
+    @Column(name = "type", nullable = false)
+    private String type;
 
     @Column(name = "status", nullable = false)
     private String status;

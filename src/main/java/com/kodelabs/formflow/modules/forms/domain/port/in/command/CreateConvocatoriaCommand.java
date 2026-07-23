@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.domain.port.in.command;
 
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ScoringConfig;
 
@@ -11,6 +12,7 @@ public record CreateConvocatoriaCommand(
         UUID userId,
         UUID formId,
         String name,
+        FormType type,
         List<CategoryWeight> categoryWeights,
         ScoringConfig scoringConfig
 ) {}

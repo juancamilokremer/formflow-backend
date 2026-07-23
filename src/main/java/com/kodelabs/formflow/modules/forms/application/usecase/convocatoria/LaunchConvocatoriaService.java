@@ -31,6 +31,7 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
     public ConvocatoriaResult execute(LaunchConvocatoriaCommand command) {
         Convocatoria convocatoria = loadDraftConvocatoria(command);
         weightValidator.validate(convocatoria.getCategoryWeights());
+        validateHasForm(convocatoria);
         validateHasCandidates(convocatoria);
         convocatoria.launch();
         Convocatoria saved = convocatoriaRepository.save(convocatoria);
@@ -48,6 +49,12 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
             throw new BusinessException("error.convocatoria.not_draft", HttpStatus.CONFLICT);
         }
         return convocatoria;
+    }
+
+    private void validateHasForm(Convocatoria convocatoria) {
+        if (convocatoria.getFormId() == null) {
+            throw new BusinessException("error.convocatoria.no_form", HttpStatus.BAD_REQUEST);
+        }
     }
 
     private void validateHasCandidates(Convocatoria convocatoria) {

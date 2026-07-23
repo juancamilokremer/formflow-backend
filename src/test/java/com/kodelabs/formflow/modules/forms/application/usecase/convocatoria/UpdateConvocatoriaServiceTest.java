@@ -1,6 +1,8 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaFormValidator;
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
@@ -24,6 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,12 +35,14 @@ class UpdateConvocatoriaServiceTest {
 
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
+    @Mock private ConvocatoriaFormValidator formValidator;
     @Mock private ConvocatoriaWeightValidator weightValidator;
     @InjectMocks private UpdateConvocatoriaService service;
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID userId   = UUID.randomUUID();
     private final UUID convId   = UUID.randomUUID();
+    private final UUID formId   = UUID.randomUUID();
 
     @Test
     void updatesDraftConvocatoriaNameAndWeights() {
@@ -49,17 +55,72 @@ class UpdateConvocatoriaServiceTest {
                 new CategoryWeight(UUID.randomUUID(), 40));
 
         ConvocatoriaResult result = service.execute(
-                new UpdateConvocatoriaCommand(convId, tenantId, userId, "Proceso Actualizado", weights, null));
+                new UpdateConvocatoriaCommand(convId, tenantId, userId, "Proceso Actualizado", null, weights, null));
 
         assertThat(result.name()).isEqualTo("Proceso Actualizado");
         assertThat(result.categoryWeights()).hasSize(2);
     }
 
     @Test
+    void attachesFormToConvocatoriaWithoutOne() {
+        Convocatoria draft = draftConvocatoriaWithoutForm();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of());
+
+        ConvocatoriaResult result = service.execute(
+                new UpdateConvocatoriaCommand(convId, tenantId, userId, "Proceso Original", formId, null, null));
+
+        assertThat(result.formId()).isEqualTo(formId);
+        verify(formValidator).validateExists(formId, tenantId);
+    }
+
+    @Test
+    void replacesFormWhileStillDraft() {
+        UUID newFormId = UUID.randomUUID();
+        Convocatoria draft = draftConvocatoria();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of());
+
+        ConvocatoriaResult result = service.execute(
+                new UpdateConvocatoriaCommand(convId, tenantId, userId, "Proceso Original", newFormId, null, null));
+
+        assertThat(result.formId()).isEqualTo(newFormId);
+    }
+
+    @Test
+    void leavesFormUntouchedWhenNotProvided() {
+        Convocatoria draft = draftConvocatoria();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of());
+
+        ConvocatoriaResult result = service.execute(
+                new UpdateConvocatoriaCommand(convId, tenantId, userId, "Proceso Original", null, null, null));
+
+        assertThat(result.formId()).isEqualTo(draft.getFormId());
+        verifyNoInteractions(formValidator);
+    }
+
+    @Test
+    void throwsNotFoundWhenFormDoesNotExist() {
+        Convocatoria draft = draftConvocatoriaWithoutForm();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        doThrow(new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId))
+                .when(formValidator).validateExists(formId, tenantId);
+
+        var command = new UpdateConvocatoriaCommand(convId, tenantId, userId, "X", formId, null, null);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
     void throwsNotFoundWhenConvocatoriaDoesNotExist() {
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.empty());
 
-        var command = new UpdateConvocatoriaCommand(convId, tenantId, userId, "X", null, null);
+        var command = new UpdateConvocatoriaCommand(convId, tenantId, userId, "X", null, null, null);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
@@ -71,7 +132,7 @@ class UpdateConvocatoriaServiceTest {
         active.launch();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(active));
 
-        var command = new UpdateConvocatoriaCommand(convId, tenantId, userId, "X", null, null);
+        var command = new UpdateConvocatoriaCommand(convId, tenantId, userId, "X", null, null, null);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
@@ -84,7 +145,7 @@ class UpdateConvocatoriaServiceTest {
         doThrow(new BusinessException("error.convocatoria.weights_must_sum_100", HttpStatus.BAD_REQUEST, 50))
                 .when(weightValidator).validate(invalidWeights);
 
-        var command = new UpdateConvocatoriaCommand(convId, tenantId, userId, "X", invalidWeights, null);
+        var command = new UpdateConvocatoriaCommand(convId, tenantId, userId, "X", null, invalidWeights, null);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
@@ -92,6 +153,13 @@ class UpdateConvocatoriaServiceTest {
 
     private Convocatoria draftConvocatoria() {
         return Convocatoria.builder().id(convId).tenantId(tenantId)
-                .formId(UUID.randomUUID()).name("Proceso Original").status(ConvocatoriaStatus.DRAFT).build();
+                .formId(UUID.randomUUID()).name("Proceso Original")
+                .type(FormType.CANDIDATES).status(ConvocatoriaStatus.DRAFT).build();
+    }
+
+    private Convocatoria draftConvocatoriaWithoutForm() {
+        return Convocatoria.builder().id(convId).tenantId(tenantId)
+                .formId(null).name("Proceso Original")
+                .type(FormType.CANDIDATES).status(ConvocatoriaStatus.DRAFT).build();
     }
 }

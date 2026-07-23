@@ -70,7 +70,7 @@ public class ConvocatoriaController {
     public ResponseEntity<ApiResponse<ConvocatoriaResponse>> create(
             @Valid @RequestBody CreateConvocatoriaRequest request, Authentication auth) {
         var result = createConvocatoria.execute(new CreateConvocatoriaCommand(
-                tenantId(), userId(auth), request.formId(), request.name(),
+                tenantId(), userId(auth), request.formId(), request.name(), request.type(),
                 toWeightsDomain(request.categoryWeights()),
                 toScoringDomain(request.scoringConfig())));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(ConvocatoriaResponse.from(result)));
@@ -100,7 +100,7 @@ public class ConvocatoriaController {
     public ResponseEntity<ApiResponse<ConvocatoriaResponse>> update(
             @PathVariable UUID id, @Valid @RequestBody UpdateConvocatoriaRequest request, Authentication auth) {
         var result = updateConvocatoria.execute(new UpdateConvocatoriaCommand(
-                id, tenantId(), userId(auth), request.name(),
+                id, tenantId(), userId(auth), request.name(), request.formId(),
                 toWeightsDomain(request.categoryWeights()),
                 toScoringDomain(request.scoringConfig())));
         return ResponseEntity.ok(ApiResponse.ok(ConvocatoriaResponse.from(result)));
