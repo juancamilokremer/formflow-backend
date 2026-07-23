@@ -26,4 +26,7 @@ public interface FormRepositoryPort {
 
     /** Highest version number among all forms sharing the given lineage root (root included). */
     int findMaxVersionInFamily(UUID rootId, UUID tenantId);
+
+    /** All forms sharing the given lineage root (root included), ordered by version ascending. */
+    List<Form> findFamilyByRootId(UUID rootId, UUID tenantId);
 }
