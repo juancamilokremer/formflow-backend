@@ -5,6 +5,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.DuplicateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GenerateFormVersionUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormUseCase;
+import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormVersionHistoryUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ListFormsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormStatusUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormUseCase;
@@ -13,6 +14,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteFormComm
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DuplicateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GenerateFormVersionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormQuery;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormVersionHistoryQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListFormsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormStatusCommand;
@@ -21,6 +23,7 @@ import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.Update
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormStatusRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormDetailResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormSummaryResponse;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormVersionResponse;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -62,6 +65,7 @@ public class FormController {
     private final DeleteFormUseCase deleteForm;
     private final GenerateFormVersionUseCase generateFormVersion;
     private final DuplicateFormUseCase duplicateForm;
+    private final GetFormVersionHistoryUseCase getFormVersionHistory;
 
     @PostMapping
     @Operation(
@@ -208,5 +212,22 @@ public class FormController {
             @PathVariable UUID id, Authentication auth) {
         var result = duplicateForm.execute(new DuplicateFormCommand(id, tenantId(), userId(auth)));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(FormSummaryResponse.from(result)));
+    }
+
+    @GetMapping("/{id}/versions")
+    @Operation(
+            summary = "Historial de versiones de un formulario",
+            description = "Devuelve todos los formularios que comparten linaje con el indicado (la familia " +
+                    "completa: el original y todas las versiones generadas a partir de él), ordenados por " +
+                    "número de versión ascendente. Metadata liviana, sin secciones ni preguntas.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Historial de versiones")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "No autenticado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
+    public ResponseEntity<ApiResponse<List<FormVersionResponse>>> getVersionHistory(@PathVariable UUID id) {
+        var results = getFormVersionHistory.execute(new GetFormVersionHistoryQuery(id, tenantId()));
+        return ResponseEntity.ok(ApiResponse.ok(results.stream().map(FormVersionResponse::from).toList()));
     }
 }
