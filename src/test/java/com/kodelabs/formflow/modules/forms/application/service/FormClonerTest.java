@@ -86,6 +86,19 @@ class FormClonerTest {
     }
 
     @Test
+    void clonesWithoutLineageAndCustomNameWhenNameOverloadIsUsed() {
+        Form origin = Form.builder().id(UUID.randomUUID()).tenantId(tenantId)
+                .name("Original").type(FormType.CANDIDATES).sections(List.of()).build();
+
+        Form result = cloner.clone(origin, userId, null, null, 1, "Original (copia)");
+
+        assertThat(result.getName()).isEqualTo("Original (copia)");
+        assertThat(result.getPreviousVersionId()).isNull();
+        assertThat(result.getRootFormId()).isNull();
+        assertThat(result.getVersion()).isEqualTo(1);
+    }
+
+    @Test
     void clonesSectionsAndQuestionsWithNewIdsAndCopiedFields() {
         UUID sectionId = UUID.randomUUID();
         UUID questionId = UUID.randomUUID();

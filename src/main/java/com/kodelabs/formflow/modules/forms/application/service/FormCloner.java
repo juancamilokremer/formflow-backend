@@ -34,9 +34,13 @@ public class FormCloner {
     private final FormQuestionRepositoryPort questionRepository;
 
     public Form clone(Form origin, UUID userId, UUID previousVersionId, UUID rootFormId, int version) {
+        return clone(origin, userId, previousVersionId, rootFormId, version, origin.getName());
+    }
+
+    public Form clone(Form origin, UUID userId, UUID previousVersionId, UUID rootFormId, int version, String name) {
         Form newForm = Form.builder()
                 .tenantId(origin.getTenantId())
-                .name(origin.getName())
+                .name(name)
                 .description(origin.getDescription())
                 .type(origin.getType())
                 .timeLimitSeconds(origin.getTimeLimitSeconds())
