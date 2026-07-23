@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response;
 
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ScoringConfig;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
@@ -13,6 +14,7 @@ public record ConvocatoriaResponse(
         UUID tenantId,
         UUID formId,
         String name,
+        FormType type,
         String status,
         List<CategoryWeight> categoryWeights,
         ScoringConfig scoringConfig,
@@ -24,7 +26,7 @@ public record ConvocatoriaResponse(
 ) {
     public static ConvocatoriaResponse from(ConvocatoriaResult r) {
         return new ConvocatoriaResponse(
-                r.id(), r.tenantId(), r.formId(), r.name(), r.status(),
+                r.id(), r.tenantId(), r.formId(), r.name(), r.type(), r.status(),
                 r.categoryWeights(), r.scoringConfig(),
                 r.startDate(), r.endDate(), r.createdAt(), r.updatedAt(),
                 r.candidates().stream().map(CandidateResponse::from).toList()

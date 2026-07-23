@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.domain.model.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,6 +23,7 @@ public class Convocatoria {
     private UUID tenantId;
     private UUID formId;
     private String name;
+    private FormType type;
 
     @Builder.Default
     private ConvocatoriaStatus status = ConvocatoriaStatus.DRAFT;

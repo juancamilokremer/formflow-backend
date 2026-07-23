@@ -100,6 +100,17 @@ class LaunchConvocatoriaServiceTest {
     }
 
     @Test
+    void throwsBadRequestWhenNoFormAttached() {
+        Convocatoria draft = draftConvocatoriaWithoutForm();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+
+        var command = new LaunchConvocatoriaCommand(convId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
     void throwsNotFoundWhenConvocatoriaDoesNotExist() {
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.empty());
 
@@ -111,6 +122,11 @@ class LaunchConvocatoriaServiceTest {
 
     private Convocatoria draftConvocatoria() {
         return Convocatoria.builder().id(convId).tenantId(tenantId).formId(UUID.randomUUID())
+                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
+    }
+
+    private Convocatoria draftConvocatoriaWithoutForm() {
+        return Convocatoria.builder().id(convId).tenantId(tenantId).formId(null)
                 .name("Test").status(ConvocatoriaStatus.DRAFT).build();
     }
 }

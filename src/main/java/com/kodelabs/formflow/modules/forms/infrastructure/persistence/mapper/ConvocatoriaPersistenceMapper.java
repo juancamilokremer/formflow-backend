@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.forms.infrastructure.persistence.mapper;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
@@ -30,6 +31,7 @@ public class ConvocatoriaPersistenceMapper {
                 .tenantId(entity.getTenantId())
                 .formId(entity.getFormId())
                 .name(entity.getName())
+                .type(FormType.valueOf(entity.getType()))
                 .status(ConvocatoriaStatus.valueOf(entity.getStatus()))
                 .categoryWeights(weights)
                 .scoringConfig(scoringConfig)
@@ -48,6 +50,7 @@ public class ConvocatoriaPersistenceMapper {
                 .tenantId(domain.getTenantId())
                 .formId(domain.getFormId())
                 .name(domain.getName())
+                .type(domain.getType().name())
                 .status(domain.getStatus().name())
                 .categoryWeights(objectMapper.writeValueAsString(domain.getCategoryWeights()))
                 .scoringConfig(objectMapper.writeValueAsString(domain.getScoringConfig()))
