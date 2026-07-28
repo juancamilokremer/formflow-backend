@@ -2,6 +2,8 @@ package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaEmailSender;
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
+import com.kodelabs.formflow.modules.forms.domain.model.Form;
+import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.port.in.LaunchConvocatoriaUseCase;
@@ -9,6 +11,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.LaunchConvocat
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +26,7 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final CandidateRepositoryPort candidateRepository;
+    private final FormRepositoryPort formRepository;
     private final ConvocatoriaWeightValidator weightValidator;
     private final ConvocatoriaEmailSender emailSender;
 
@@ -33,6 +37,7 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
         weightValidator.validate(convocatoria.getCategoryWeights());
         validateHasForm(convocatoria);
         validateHasCandidates(convocatoria);
+        publishFormIfNeeded(convocatoria, command);
         convocatoria.launch();
         Convocatoria saved = convocatoriaRepository.save(convocatoria);
         List<Candidate> candidates = candidateRepository.findAllByConvocatoriaId(saved.getId());
@@ -54,6 +59,19 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
     private void validateHasForm(Convocatoria convocatoria) {
         if (convocatoria.getFormId() == null) {
             throw new BusinessException("error.convocatoria.no_form", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /** A form attached via "crear nuevo"/"duplicar" starts as DRAFT — publish it as part of launching so the
+     *  public candidate link (which only serves ACTIVE forms) works as soon as invitations go out. */
+    private void publishFormIfNeeded(Convocatoria convocatoria, LaunchConvocatoriaCommand command) {
+        Form form = formRepository.findByIdAndTenantId(convocatoria.getFormId(), command.tenantId())
+                .orElseThrow(() -> new BusinessException("error.form.not_found",
+                        HttpStatus.NOT_FOUND, convocatoria.getFormId()));
+        if (form.getStatus() != FormStatus.ACTIVE) {
+            form.setStatus(FormStatus.ACTIVE);
+            form.setUpdatedBy(command.userId());
+            formRepository.save(form);
         }
     }
 
