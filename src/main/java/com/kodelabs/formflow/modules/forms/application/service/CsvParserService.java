@@ -1,6 +1,8 @@
 package com.kodelabs.formflow.modules.forms.application.service;
 
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.i18n.Messages;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -10,14 +12,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class CsvParserService {
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final char UTF8_BOM = '﻿';
+
+    private final Messages messages;
 
     public record CsvCandidate(String name, String email) {}
 
@@ -36,28 +45,54 @@ public class CsvParserService {
 
     private List<CsvCandidate> readRows(BufferedReader reader) throws IOException {
         List<CsvCandidate> results = new ArrayList<>();
+        String firstLine = stripBom(reader.readLine());
+        if (firstLine == null) return results;
+
+        String delimiter = detectDelimiter(firstLine);
+        int lineNumber = 1;
+        if (!isHeader(firstLine, delimiter) && !firstLine.isBlank()) {
+            results.add(parseLine(firstLine, delimiter, lineNumber));
+        }
+
         String line;
-        int lineNumber = 0;
         while ((line = reader.readLine()) != null) {
             lineNumber++;
-            if (lineNumber == 1 && isHeader(line)) continue;
-            if (!line.isBlank()) results.add(parseLine(line, lineNumber));
+            if (!line.isBlank()) results.add(parseLine(line, delimiter, lineNumber));
         }
         return results;
     }
 
-    private boolean isHeader(String line) {
-        String[] parts = line.split(",", -1);
+    private String stripBom(String line) {
+        if (line != null && !line.isEmpty() && line.charAt(0) == UTF8_BOM) {
+            return line.substring(1);
+        }
+        return line;
+    }
+
+    /** A file uses one delimiter throughout — detected once from the header, from whichever appears more often. */
+    private String detectDelimiter(String headerLine) {
+        long commaCount = headerLine.chars().filter(c -> c == ',').count();
+        long semicolonCount = headerLine.chars().filter(c -> c == ';').count();
+        return semicolonCount > commaCount ? ";" : ",";
+    }
+
+    private boolean isHeader(String line, String delimiter) {
+        String[] parts = line.split(delimiter, -1);
         if (parts.length < 2) return false;
         String col1 = parts[0].trim().toLowerCase();
         String col2 = parts[1].trim().toLowerCase();
-        boolean col1IsLabel = col1.equals("nombre") || col1.equals("name") || col1.equals("candidato");
-        boolean col2IsLabel = col2.equals("email") || col2.equals("correo") || col2.equals("e-mail");
-        return col1IsLabel || col2IsLabel;
+        return headerLabels("csv.header.name_labels").contains(col1)
+                || headerLabels("csv.header.email_labels").contains(col2);
     }
 
-    private CsvCandidate parseLine(String line, int lineNumber) {
-        String[] parts = line.split(",", -1);
+    private Set<String> headerLabels(String key) {
+        return Arrays.stream(messages.get(key).split(","))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+    }
+
+    private CsvCandidate parseLine(String line, String delimiter, int lineNumber) {
+        String[] parts = line.split(delimiter, -1);
         if (parts.length < 2) {
             throw new BusinessException("error.convocatoria.csv_invalid_row",
                     HttpStatus.BAD_REQUEST, lineNumber);
