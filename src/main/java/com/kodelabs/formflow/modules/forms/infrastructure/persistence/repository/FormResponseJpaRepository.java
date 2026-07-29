@@ -19,6 +19,10 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponseJpa
 
     boolean existsByRespondentToken(UUID respondentToken);
 
+    boolean existsByCandidateIdAndFormId(UUID candidateId, UUID formId);
+
+    long countByCandidateId(UUID candidateId);
+
     List<FormResponseJpaEntity> findAllByFormIdAndTenantId(UUID formId, UUID tenantId);
 
     @Query("SELECT r FROM FormResponseJpaEntity r WHERE r.formId = :formId AND r.tenantId = :tenantId ORDER BY r.submittedAt DESC")

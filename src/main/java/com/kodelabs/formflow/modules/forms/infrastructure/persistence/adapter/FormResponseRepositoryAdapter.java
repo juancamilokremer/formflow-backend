@@ -65,6 +65,16 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
     }
 
     @Override
+    public boolean existsByCandidateIdAndFormId(UUID candidateId, UUID formId) {
+        return responseJpa.existsByCandidateIdAndFormId(candidateId, formId);
+    }
+
+    @Override
+    public long countByCandidateId(UUID candidateId) {
+        return responseJpa.countByCandidateId(candidateId);
+    }
+
+    @Override
     public List<FormResponse> findAllByFormIdAndTenantId(UUID formId, UUID tenantId) {
         return responseJpa.findAllByFormIdAndTenantId(formId, tenantId).stream()
                 .map(entity -> responseMapper.toDomain(entity, answerJpa.findAllByResponseId(entity.getId())))

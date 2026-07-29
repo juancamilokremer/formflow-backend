@@ -11,6 +11,8 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateFormScore;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateScores;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
@@ -44,6 +46,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -126,6 +129,8 @@ class SubmitCandidateResponseServiceTest {
                 .build();
 
         snapshot = new FormSnapshot(formId, "Test Form", "CANDIDATES", 1, Instant.now(), List.of());
+
+        lenient().when(responseRepository.countByCandidateId(any())).thenReturn(1L);
     }
 
     @Test
@@ -142,7 +147,7 @@ class SubmitCandidateResponseServiceTest {
         when(candidateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         SubmitCandidateResponseCommand command = new SubmitCandidateResponseCommand(
-                candidateToken, null, List.of(new AnswerItem(questionId, "opt-1")));
+                candidateToken, formId, null, List.of(new AnswerItem(questionId, "opt-1")));
 
         SubmitCandidateResponseResult result = service.execute(command);
 
@@ -160,7 +165,7 @@ class SubmitCandidateResponseServiceTest {
     void candidateTokenNotFound_throwsNotFound() {
         when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.empty());
 
-        var command = new SubmitCandidateResponseCommand(candidateToken, null, List.of());
+        var command = new SubmitCandidateResponseCommand(candidateToken, formId, null, List.of());
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
@@ -168,16 +173,13 @@ class SubmitCandidateResponseServiceTest {
     }
 
     @Test
-    void candidateAlreadyResponded_throwsConflict() {
-        Candidate responded = Candidate.builder()
-                .token(candidateToken)
-                .convocatoriaId(convocatoriaId)
-                .tenantId(tenantId)
-                .status(CandidateStatus.RESPONDED)
-                .build();
-        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(responded));
+    void formAlreadyRespondedByCandidate_throwsConflict() {
+        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
+                .thenReturn(Optional.of(activeConvocatoria));
+        when(responseRepository.existsByCandidateIdAndFormId(invitedCandidate.getId(), formId)).thenReturn(true);
 
-        var command = new SubmitCandidateResponseCommand(candidateToken, null, List.of());
+        var command = new SubmitCandidateResponseCommand(candidateToken, formId, null, List.of());
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
@@ -185,6 +187,23 @@ class SubmitCandidateResponseServiceTest {
                     BusinessException be = (BusinessException) ex;
                     assertThat(be.getStatus()).isEqualTo(HttpStatus.CONFLICT);
                     assertThat(be.getMessageKey()).isEqualTo("error.candidate.already_responded");
+                });
+    }
+
+    @Test
+    void formNotAttachedToConvocatoria_throwsBadRequest() {
+        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
+                .thenReturn(Optional.of(activeConvocatoria));
+
+        var command = new SubmitCandidateResponseCommand(candidateToken, UUID.randomUUID(), null, List.of());
+
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> {
+                    BusinessException be = (BusinessException) ex;
+                    assertThat(be.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(be.getMessageKey()).isEqualTo("error.convocatoria.form_not_attached");
                 });
     }
 
@@ -199,7 +218,7 @@ class SubmitCandidateResponseServiceTest {
         when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
                 .thenReturn(Optional.of(closed));
 
-        var command = new SubmitCandidateResponseCommand(candidateToken, null, List.of());
+        var command = new SubmitCandidateResponseCommand(candidateToken, formId, null, List.of());
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
@@ -214,7 +233,7 @@ class SubmitCandidateResponseServiceTest {
         when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
         when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
 
-        var command = new SubmitCandidateResponseCommand(candidateToken, null, List.of());
+        var command = new SubmitCandidateResponseCommand(candidateToken, formId, null, List.of());
 
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
@@ -223,5 +242,91 @@ class SubmitCandidateResponseServiceTest {
                     assertThat(be.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(be.getMessageKey()).isEqualTo("error.response.required_question_empty");
                 });
+    }
+
+    @Test
+    void firstOfTwoForms_setsInProgressStatusWithNullTotal() {
+        UUID formId2 = UUID.randomUUID();
+        Convocatoria twoFormConvocatoria = Convocatoria.builder()
+                .id(convocatoriaId).tenantId(tenantId).status(ConvocatoriaStatus.ACTIVE)
+                .forms(List.of(
+                        ConvocatoriaForm.builder().convocatoriaId(convocatoriaId).formId(formId)
+                                .weight(60).categoryWeights(List.of()).build(),
+                        ConvocatoriaForm.builder().convocatoriaId(convocatoriaId).formId(formId2)
+                                .weight(40).categoryWeights(List.of()).build()))
+                .build();
+
+        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
+                .thenReturn(Optional.of(twoFormConvocatoria));
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
+        when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
+        when(candidateScoringService.compute(any(), any(), any()))
+                .thenReturn(new ScoringResult(90.0, Map.of()));
+        when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
+        when(responseRepository.save(any())).thenReturn(savedResponse);
+        when(responseRepository.countByCandidateId(invitedCandidate.getId())).thenReturn(1L);
+        when(candidateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SubmitCandidateResponseCommand command = new SubmitCandidateResponseCommand(
+                candidateToken, formId, null, List.of(new AnswerItem(questionId, "opt-1")));
+
+        service.execute(command);
+
+        ArgumentCaptor<Candidate> captor = ArgumentCaptor.forClass(Candidate.class);
+        verify(candidateRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(CandidateStatus.IN_PROGRESS);
+        assertThat(captor.getValue().getScores().total()).isNull();
+        assertThat(captor.getValue().getScores().perForm()).hasSize(1);
+        assertThat(captor.getValue().getRespondedAt()).isNull();
+    }
+
+    @Test
+    void secondOfTwoForms_completesAndComputesWeightedTotal() {
+        UUID formId2 = UUID.randomUUID();
+        UUID convFormId1 = UUID.randomUUID();
+        UUID convFormId2 = UUID.randomUUID();
+        Convocatoria twoFormConvocatoria = Convocatoria.builder()
+                .id(convocatoriaId).tenantId(tenantId).status(ConvocatoriaStatus.ACTIVE)
+                .forms(List.of(
+                        ConvocatoriaForm.builder().id(convFormId1).convocatoriaId(convocatoriaId).formId(formId)
+                                .weight(60).categoryWeights(List.of()).build(),
+                        ConvocatoriaForm.builder().id(convFormId2).convocatoriaId(convocatoriaId).formId(formId2)
+                                .weight(40).categoryWeights(List.of()).build()))
+                .build();
+
+        Candidate inProgressCandidate = Candidate.builder()
+                .id(UUID.randomUUID())
+                .token(candidateToken)
+                .convocatoriaId(convocatoriaId)
+                .tenantId(tenantId)
+                .status(CandidateStatus.IN_PROGRESS)
+                .scores(new CandidateScores(null, List.of(
+                        new CandidateFormScore(convFormId1, formId, 90.0, Map.of()))))
+                .build();
+
+        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(inProgressCandidate));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
+                .thenReturn(Optional.of(twoFormConvocatoria));
+        when(formLoader.loadPublicOrThrow(formId2)).thenReturn(activeForm);
+        when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
+        when(candidateScoringService.compute(any(), any(), any()))
+                .thenReturn(new ScoringResult(70.0, Map.of()));
+        when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
+        when(responseRepository.save(any())).thenReturn(savedResponse);
+        when(responseRepository.countByCandidateId(inProgressCandidate.getId())).thenReturn(2L);
+        when(candidateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SubmitCandidateResponseCommand command = new SubmitCandidateResponseCommand(
+                candidateToken, formId2, null, List.of(new AnswerItem(questionId, "opt-1")));
+
+        service.execute(command);
+
+        ArgumentCaptor<Candidate> captor = ArgumentCaptor.forClass(Candidate.class);
+        verify(candidateRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(CandidateStatus.RESPONDED);
+        assertThat(captor.getValue().getScores().perForm()).hasSize(2);
+        assertThat(captor.getValue().getScores().total()).isEqualTo(90.0 * 0.6 + 70.0 * 0.4);
+        assertThat(captor.getValue().getRespondedAt()).isNotNull();
     }
 }

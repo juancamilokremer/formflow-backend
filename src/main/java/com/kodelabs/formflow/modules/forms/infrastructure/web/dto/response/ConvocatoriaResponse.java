@@ -22,14 +22,16 @@ public record ConvocatoriaResponse(
         Instant endDate,
         Instant createdAt,
         Instant updatedAt,
-        List<CandidateResponse> candidates
+        List<CandidateResponse> candidates,
+        List<ConvocatoriaFormResponse> forms
 ) {
     public static ConvocatoriaResponse from(ConvocatoriaResult r) {
         return new ConvocatoriaResponse(
                 r.id(), r.tenantId(), r.formId(), r.name(), r.type(), r.status(),
                 r.categoryWeights(), r.scoringConfig(),
                 r.startDate(), r.endDate(), r.createdAt(), r.updatedAt(),
-                r.candidates().stream().map(CandidateResponse::from).toList()
+                r.candidates().stream().map(CandidateResponse::from).toList(),
+                r.forms().stream().map(ConvocatoriaFormResponse::from).toList()
         );
     }
 }

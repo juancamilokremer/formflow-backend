@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record SubmitCandidateResponseCommand(
         UUID candidateToken,
+        UUID formId,
         Instant startedAt,
         List<AnswerItem> answers
 ) {}

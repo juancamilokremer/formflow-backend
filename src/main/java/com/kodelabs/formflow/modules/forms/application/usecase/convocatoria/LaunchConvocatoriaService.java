@@ -6,6 +6,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.port.in.LaunchConvocatoriaUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.LaunchConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
@@ -34,10 +35,11 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
     @Transactional
     public ConvocatoriaResult execute(LaunchConvocatoriaCommand command) {
         Convocatoria convocatoria = loadDraftConvocatoria(command);
-        weightValidator.validate(convocatoria.getCategoryWeights());
         validateHasForm(convocatoria);
+        convocatoria.getForms().forEach(f -> weightValidator.validate(f.getCategoryWeights()));
+        weightValidator.validateFormWeights(convocatoria.getForms());
         validateHasCandidates(convocatoria);
-        publishFormIfNeeded(convocatoria, command);
+        publishFormsIfNeeded(convocatoria, command);
         convocatoria.launch();
         Convocatoria saved = convocatoriaRepository.save(convocatoria);
         List<Candidate> candidates = candidateRepository.findAllByConvocatoriaId(saved.getId());
@@ -57,21 +59,24 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
     }
 
     private void validateHasForm(Convocatoria convocatoria) {
-        if (convocatoria.getFormId() == null) {
+        if (convocatoria.getForms().isEmpty()) {
             throw new BusinessException("error.convocatoria.no_form", HttpStatus.BAD_REQUEST);
         }
     }
 
-    /** A form attached via "crear nuevo"/"duplicar" starts as DRAFT — publish it as part of launching so the
-     *  public candidate link (which only serves ACTIVE forms) works as soon as invitations go out. */
-    private void publishFormIfNeeded(Convocatoria convocatoria, LaunchConvocatoriaCommand command) {
-        Form form = formRepository.findByIdAndTenantId(convocatoria.getFormId(), command.tenantId())
-                .orElseThrow(() -> new BusinessException("error.form.not_found",
-                        HttpStatus.NOT_FOUND, convocatoria.getFormId()));
-        if (form.getStatus() != FormStatus.ACTIVE) {
-            form.setStatus(FormStatus.ACTIVE);
-            form.setUpdatedBy(command.userId());
-            formRepository.save(form);
+    /** Un formulario adjuntado via "crear nuevo"/"duplicar" arranca en DRAFT — se publican todos los
+     *  formularios de la convocatoria al lanzar, para que el link público del candidato (que solo sirve
+     *  formularios ACTIVE) funcione apenas salgan las invitaciones. */
+    private void publishFormsIfNeeded(Convocatoria convocatoria, LaunchConvocatoriaCommand command) {
+        for (ConvocatoriaForm cf : convocatoria.getForms()) {
+            Form form = formRepository.findByIdAndTenantId(cf.getFormId(), command.tenantId())
+                    .orElseThrow(() -> new BusinessException("error.form.not_found",
+                            HttpStatus.NOT_FOUND, cf.getFormId()));
+            if (form.getStatus() != FormStatus.ACTIVE) {
+                form.setStatus(FormStatus.ACTIVE);
+                form.setUpdatedBy(command.userId());
+                formRepository.save(form);
+            }
         }
     }
 

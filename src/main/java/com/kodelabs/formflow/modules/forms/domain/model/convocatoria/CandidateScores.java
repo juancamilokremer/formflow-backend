@@ -1,6 +1,5 @@
 package com.kodelabs.formflow.modules.forms.domain.model.convocatoria;
 
-import java.util.Map;
-import java.util.UUID;
+import java.util.List;
 
-public record CandidateScores(double total, Map<UUID, Double> byCategory) {}
+public record CandidateScores(Double total, List<CandidateFormScore> perForm) {}

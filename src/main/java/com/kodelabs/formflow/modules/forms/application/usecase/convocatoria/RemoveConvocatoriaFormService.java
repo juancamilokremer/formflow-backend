@@ -1,10 +1,9 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
-import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateConvocatoriaUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateConvocatoriaCommand;
-import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
-import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.in.RemoveConvocatoriaFormUseCase;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.RemoveConvocatoriaFormCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -16,20 +15,22 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UpdateConvocatoriaService implements UpdateConvocatoriaUseCase {
+public class RemoveConvocatoriaFormService implements RemoveConvocatoriaFormUseCase {
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
-    private final CandidateRepositoryPort candidateRepository;
+    private final ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
 
     @Override
     @Transactional
-    public ConvocatoriaResult execute(UpdateConvocatoriaCommand command) {
-        Convocatoria convocatoria = loadDraftConvocatoria(command.id(), command.tenantId());
-        convocatoria.setName(command.name());
-        if (command.scoringConfig() != null) convocatoria.setScoringConfig(command.scoringConfig());
-        Convocatoria saved = convocatoriaRepository.save(convocatoria);
-        var candidates = candidateRepository.findAllByConvocatoriaId(saved.getId());
-        return ConvocatoriaResult.from(saved, candidates);
+    public void execute(RemoveConvocatoriaFormCommand command) {
+        Convocatoria convocatoria = loadDraftConvocatoria(command.convocatoriaId(), command.tenantId());
+        boolean exists = convocatoria.getForms().stream()
+                .anyMatch(f -> f.getId().equals(command.convocatoriaFormId()));
+        if (!exists) {
+            throw new BusinessException(
+                    "error.convocatoria.form_not_found", HttpStatus.NOT_FOUND, command.convocatoriaFormId());
+        }
+        convocatoriaFormRepository.deleteById(command.convocatoriaFormId());
     }
 
     private Convocatoria loadDraftConvocatoria(UUID id, UUID tenantId) {

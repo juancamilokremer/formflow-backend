@@ -7,7 +7,7 @@ import com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -23,7 +23,24 @@ public class ConvocatoriaFormRepositoryAdapter implements ConvocatoriaFormReposi
     }
 
     @Override
-    public Optional<ConvocatoriaForm> findByConvocatoriaId(UUID convocatoriaId) {
-        return jpaRepository.findByConvocatoriaId(convocatoriaId).map(mapper::toDomain);
+    public List<ConvocatoriaForm> saveAll(List<ConvocatoriaForm> forms) {
+        return jpaRepository.saveAll(forms.stream().map(mapper::toEntity).toList())
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<ConvocatoriaForm> findAllByConvocatoriaId(UUID convocatoriaId) {
+        return jpaRepository.findAllByConvocatoriaIdOrderByPositionAsc(convocatoriaId)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public int countByConvocatoriaId(UUID convocatoriaId) {
+        return jpaRepository.countByConvocatoriaId(convocatoriaId);
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        jpaRepository.deleteById(id);
     }
 }

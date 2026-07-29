@@ -1,0 +1,1 @@
+ALTER TABLE convocatoria_forms DROP CONSTRAINT uq_convocatoria_forms_convocatoria_id;

@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.service;
 
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,14 @@ public class ConvocatoriaWeightValidator {
         int total = weights.stream().mapToInt(CategoryWeight::weight).sum();
         if (total != 100) {
             throw new BusinessException("error.convocatoria.weights_must_sum_100", HttpStatus.BAD_REQUEST, total);
+        }
+    }
+
+    public void validateFormWeights(List<ConvocatoriaForm> forms) {
+        if (forms == null || forms.isEmpty()) return;
+        int total = forms.stream().mapToInt(ConvocatoriaForm::getWeight).sum();
+        if (total != 100) {
+            throw new BusinessException("error.convocatoria.form_weights_must_sum_100", HttpStatus.BAD_REQUEST, total);
         }
     }
 }

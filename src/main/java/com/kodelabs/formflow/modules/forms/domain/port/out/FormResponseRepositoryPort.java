@@ -12,6 +12,10 @@ public interface FormResponseRepositoryPort {
 
     FormResponse save(FormResponse response);
 
+    boolean existsByCandidateIdAndFormId(UUID candidateId, UUID formId);
+
+    long countByCandidateId(UUID candidateId);
+
     Optional<FormResponse> findByIdAndTenantId(UUID id, UUID tenantId);
 
     Optional<FormResponse> findByRespondentToken(UUID respondentToken);

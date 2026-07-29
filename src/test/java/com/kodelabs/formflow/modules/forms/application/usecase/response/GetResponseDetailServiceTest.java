@@ -22,7 +22,6 @@ import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -89,7 +88,7 @@ class GetResponseDetailServiceTest {
                 .build();
         Candidate candidate = Candidate.builder()
                 .id(candidateId)
-                .scores(new CandidateScores(88.5, Map.of()))
+                .scores(new CandidateScores(88.5, List.of()))
                 .build();
 
         when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);

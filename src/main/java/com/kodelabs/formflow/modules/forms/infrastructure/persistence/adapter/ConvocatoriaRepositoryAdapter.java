@@ -65,10 +65,8 @@ public class ConvocatoriaRepositoryAdapter implements ConvocatoriaRepositoryPort
 
     private Convocatoria hydrate(ConvocatoriaJpaEntity entity) {
         Convocatoria convocatoria = mapper.toDomain(entity);
-        convocatoria.setForms(formJpaRepository.findByConvocatoriaId(entity.getId())
-                .map(formMapper::toDomain)
-                .map(List::of)
-                .orElseGet(List::of));
+        convocatoria.setForms(formJpaRepository.findAllByConvocatoriaIdOrderByPositionAsc(entity.getId())
+                .stream().map(formMapper::toDomain).toList());
         return convocatoria;
     }
 }
