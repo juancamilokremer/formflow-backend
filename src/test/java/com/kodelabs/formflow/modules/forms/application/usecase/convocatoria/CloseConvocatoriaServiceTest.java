@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CloseConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
@@ -59,7 +60,8 @@ class CloseConvocatoriaServiceTest {
     @Test
     void throwsConflictWhenConvocatoriaIsNotActive() {
         Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
-                .formId(UUID.randomUUID()).name("Test").status(ConvocatoriaStatus.DRAFT).build();
+                .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
+                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
 
         var command = new CloseConvocatoriaCommand(convId, tenantId, userId);
@@ -70,7 +72,8 @@ class CloseConvocatoriaServiceTest {
 
     private Convocatoria activeConvocatoria() {
         Convocatoria c = Convocatoria.builder().id(convId).tenantId(tenantId)
-                .formId(UUID.randomUUID()).name("Test").status(ConvocatoriaStatus.DRAFT).build();
+                .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
+                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
         c.launch();
         return c;
     }

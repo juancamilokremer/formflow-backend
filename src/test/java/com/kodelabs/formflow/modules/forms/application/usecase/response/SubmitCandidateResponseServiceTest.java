@@ -14,6 +14,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
@@ -90,9 +91,11 @@ class SubmitCandidateResponseServiceTest {
         activeConvocatoria = Convocatoria.builder()
                 .id(convocatoriaId)
                 .tenantId(tenantId)
-                .formId(formId)
+                .forms(List.of(ConvocatoriaForm.builder()
+                        .convocatoriaId(convocatoriaId).formId(formId).weight(100)
+                        .categoryWeights(List.of(new CategoryWeight(UUID.randomUUID(), 100)))
+                        .build()))
                 .status(ConvocatoriaStatus.ACTIVE)
-                .categoryWeights(List.of(new CategoryWeight(UUID.randomUUID(), 100)))
                 .build();
 
         FormQuestion question = FormQuestion.builder()

@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListConvocatoriasQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaSummaryResult;
@@ -32,9 +33,11 @@ class ListConvocatoriasServiceTest {
         UUID conv1Id = UUID.randomUUID();
         UUID conv2Id = UUID.randomUUID();
         Convocatoria c1 = Convocatoria.builder().id(conv1Id).tenantId(tenantId)
-                .formId(UUID.randomUUID()).name("Proceso A").status(ConvocatoriaStatus.ACTIVE).build();
+                .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
+                .name("Proceso A").status(ConvocatoriaStatus.ACTIVE).build();
         Convocatoria c2 = Convocatoria.builder().id(conv2Id).tenantId(tenantId)
-                .formId(UUID.randomUUID()).name("Proceso B").status(ConvocatoriaStatus.DRAFT).build();
+                .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
+                .name("Proceso B").status(ConvocatoriaStatus.DRAFT).build();
         when(convocatoriaRepository.findActiveByTenantId(tenantId)).thenReturn(List.of(c1, c2));
         when(candidateRepository.countByConvocatoriaId(conv1Id)).thenReturn(5L);
         when(candidateRepository.countByConvocatoriaId(conv2Id)).thenReturn(0L);

@@ -21,7 +21,6 @@ public class Convocatoria {
 
     private UUID id;
     private UUID tenantId;
-    private UUID formId;
     private String name;
     private FormType type;
 
@@ -29,7 +28,7 @@ public class Convocatoria {
     private ConvocatoriaStatus status = ConvocatoriaStatus.DRAFT;
 
     @Builder.Default
-    private List<CategoryWeight> categoryWeights = new ArrayList<>();
+    private List<ConvocatoriaForm> forms = new ArrayList<>();
 
     @Builder.Default
     private ScoringConfig scoringConfig = ScoringConfig.defaults();
@@ -39,6 +38,14 @@ public class Convocatoria {
     private Instant deletedAt;
     private Instant createdAt;
     private Instant updatedAt;
+
+    public UUID getFormId() {
+        return forms.isEmpty() ? null : forms.get(0).getFormId();
+    }
+
+    public List<CategoryWeight> getCategoryWeights() {
+        return forms.isEmpty() ? List.of() : forms.get(0).getCategoryWeights();
+    }
 
     public boolean isDraft()   { return status == ConvocatoriaStatus.DRAFT; }
     public boolean isActive()  { return status == ConvocatoriaStatus.ACTIVE; }

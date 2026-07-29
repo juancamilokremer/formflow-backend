@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetConvocatoriaQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
@@ -37,7 +38,8 @@ class GetConvocatoriaServiceTest {
     @Test
     void returnsConvocatoriaWithCandidates() {
         Convocatoria conv = Convocatoria.builder().id(convId).tenantId(tenantId)
-                .formId(UUID.randomUUID()).name("Analista RRHH").status(ConvocatoriaStatus.ACTIVE).build();
+                .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
+                .name("Analista RRHH").status(ConvocatoriaStatus.ACTIVE).build();
         Candidate candidate = Candidate.builder().id(UUID.randomUUID()).convocatoriaId(convId)
                 .tenantId(tenantId).name("María G.").email("maria@test.com")
                 .status(CandidateStatus.INVITED).token(UUID.randomUUID()).build();

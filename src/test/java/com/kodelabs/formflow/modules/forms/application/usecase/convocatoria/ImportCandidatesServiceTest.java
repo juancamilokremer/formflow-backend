@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.application.service.CsvParserService;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ImportCandidatesCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ImportResult;
@@ -72,6 +73,7 @@ class ImportCandidatesServiceTest {
 
     private Convocatoria draftConvocatoria() {
         return Convocatoria.builder().id(convId).tenantId(tenantId)
-                .formId(UUID.randomUUID()).name("Test").status(ConvocatoriaStatus.DRAFT).build();
+                .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
+                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
     }
 }
