@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase.form;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetPublicFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetPublicCandidateFormQuery;
@@ -64,7 +65,7 @@ class GetPublicCandidateFormServiceTest {
         activeConvocatoria = Convocatoria.builder()
                 .id(convocatoriaId)
                 .tenantId(tenantId)
-                .formId(formId)
+                .forms(List.of(ConvocatoriaForm.builder().formId(formId).weight(100).build()))
                 .name("Analista RRHH — Julio 2026")
                 .status(ConvocatoriaStatus.ACTIVE)
                 .build();
@@ -122,7 +123,8 @@ class GetPublicCandidateFormServiceTest {
     @Test
     void closedConvocatoria_throwsConflict() {
         Convocatoria closed = Convocatoria.builder()
-                .id(convocatoriaId).tenantId(tenantId).formId(formId)
+                .id(convocatoriaId).tenantId(tenantId)
+                .forms(List.of(ConvocatoriaForm.builder().formId(formId).weight(100).build()))
                 .name("Test").status(ConvocatoriaStatus.CLOSED).build();
 
         when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));

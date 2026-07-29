@@ -9,8 +9,10 @@ import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatori
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ScoringConfig;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -27,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +37,7 @@ import static org.mockito.Mockito.when;
 class CreateConvocatoriaServiceTest {
 
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
+    @Mock private ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
     @Mock private ConvocatoriaFormValidator formValidator;
     @Spy  private ConvocatoriaWeightValidator weightValidator = new ConvocatoriaWeightValidator();
 
@@ -42,6 +46,11 @@ class CreateConvocatoriaServiceTest {
     private final UUID tenantId = UUID.randomUUID();
     private final UUID userId   = UUID.randomUUID();
     private final UUID formId   = UUID.randomUUID();
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(convocatoriaFormRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    }
 
     @Test
     void createsConvocatoriaInDraftStatus() {

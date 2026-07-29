@@ -5,12 +5,15 @@ import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeigh
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -34,6 +38,7 @@ import static org.mockito.Mockito.when;
 class UpdateConvocatoriaServiceTest {
 
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
+    @Mock private ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
     @Mock private ConvocatoriaFormValidator formValidator;
     @Mock private ConvocatoriaWeightValidator weightValidator;
@@ -43,6 +48,11 @@ class UpdateConvocatoriaServiceTest {
     private final UUID userId   = UUID.randomUUID();
     private final UUID convId   = UUID.randomUUID();
     private final UUID formId   = UUID.randomUUID();
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(convocatoriaFormRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    }
 
     @Test
     void updatesDraftConvocatoriaNameAndWeights() {
@@ -153,13 +163,15 @@ class UpdateConvocatoriaServiceTest {
 
     private Convocatoria draftConvocatoria() {
         return Convocatoria.builder().id(convId).tenantId(tenantId)
-                .formId(UUID.randomUUID()).name("Proceso Original")
+                .forms(List.of(ConvocatoriaForm.builder()
+                        .convocatoriaId(convId).formId(UUID.randomUUID()).weight(100).build()))
+                .name("Proceso Original")
                 .type(FormType.CANDIDATES).status(ConvocatoriaStatus.DRAFT).build();
     }
 
     private Convocatoria draftConvocatoriaWithoutForm() {
         return Convocatoria.builder().id(convId).tenantId(tenantId)
-                .formId(null).name("Proceso Original")
+                .name("Proceso Original")
                 .type(FormType.CANDIDATES).status(ConvocatoriaStatus.DRAFT).build();
     }
 }

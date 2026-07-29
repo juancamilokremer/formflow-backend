@@ -7,6 +7,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.LaunchConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
@@ -161,7 +162,9 @@ class LaunchConvocatoriaServiceTest {
     }
 
     private Convocatoria draftConvocatoria() {
-        return Convocatoria.builder().id(convId).tenantId(tenantId).formId(UUID.randomUUID())
+        return Convocatoria.builder().id(convId).tenantId(tenantId)
+                .forms(List.of(ConvocatoriaForm.builder()
+                        .convocatoriaId(convId).formId(UUID.randomUUID()).weight(100).build()))
                 .name("Test").status(ConvocatoriaStatus.DRAFT).build();
     }
 
@@ -170,7 +173,7 @@ class LaunchConvocatoriaServiceTest {
     }
 
     private Convocatoria draftConvocatoriaWithoutForm() {
-        return Convocatoria.builder().id(convId).tenantId(tenantId).formId(null)
+        return Convocatoria.builder().id(convId).tenantId(tenantId)
                 .name("Test").status(ConvocatoriaStatus.DRAFT).build();
     }
 }

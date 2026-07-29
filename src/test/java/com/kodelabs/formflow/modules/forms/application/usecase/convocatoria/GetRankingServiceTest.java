@@ -7,6 +7,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateSc
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ScoringConfig;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetRankingQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.RankingEntryResult;
@@ -54,7 +55,8 @@ class GetRankingServiceTest {
 
         convocatoria = Convocatoria.builder()
                 .id(convId).tenantId(tenantId).name("Dev 2026")
-                .categoryWeights(List.of(new CategoryWeight(catId, 100)))
+                .forms(List.of(ConvocatoriaForm.builder()
+                        .categoryWeights(List.of(new CategoryWeight(catId, 100))).weight(100).build()))
                 .scoringConfig(new ScoringConfig(70, 50))
                 .build();
     }

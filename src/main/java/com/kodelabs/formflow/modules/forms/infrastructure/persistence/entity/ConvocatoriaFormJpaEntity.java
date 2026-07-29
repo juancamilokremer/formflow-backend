@@ -20,42 +20,36 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "convocatorias")
+@Table(name = "convocatoria_forms")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ConvocatoriaJpaEntity {
+public class ConvocatoriaFormJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "tenant_id", nullable = false)
-    private UUID tenantId;
+    @Column(name = "convocatoria_id", nullable = false)
+    private UUID convocatoriaId;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(name = "form_id", nullable = false)
+    private UUID formId;
 
-    @Column(name = "type", nullable = false)
-    private String type;
-
-    @Column(name = "status", nullable = false)
-    private String status;
+    @Column(name = "weight", nullable = false)
+    private int weight;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "scoring_config", columnDefinition = "jsonb", nullable = false)
-    private String scoringConfig;
+    @Column(name = "category_weights", columnDefinition = "jsonb", nullable = false)
+    private String categoryWeights;
 
-    @Column(name = "start_date")
-    private Instant startDate;
+    @Column(name = "min_score")
+    private Integer minScore;
 
-    @Column(name = "end_date")
-    private Instant endDate;
-
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
+    @Column(name = "position", nullable = false)
+    private int position;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

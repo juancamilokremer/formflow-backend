@@ -4,10 +4,12 @@ import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaFormV
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ScoringConfig;
 import com.kodelabs.formflow.modules.forms.domain.port.in.CreateConvocatoriaUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateConvocatoriaCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import java.util.List;
 public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
+    private final ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
     private final ConvocatoriaFormValidator formValidator;
     private final ConvocatoriaWeightValidator weightValidator;
 
@@ -32,6 +35,16 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
         validateType(command.type());
         weightValidator.validate(command.categoryWeights());
         Convocatoria saved = convocatoriaRepository.save(buildConvocatoria(command));
+        if (command.formId() != null) {
+            ConvocatoriaForm form = convocatoriaFormRepository.save(ConvocatoriaForm.builder()
+                    .convocatoriaId(saved.getId())
+                    .formId(command.formId())
+                    .weight(100)
+                    .categoryWeights(command.categoryWeights() != null ? command.categoryWeights() : List.of())
+                    .position(0)
+                    .build());
+            saved.setForms(List.of(form));
+        }
         return ConvocatoriaResult.from(saved, List.of());
     }
 
@@ -44,10 +57,8 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
     private Convocatoria buildConvocatoria(CreateConvocatoriaCommand command) {
         return Convocatoria.builder()
                 .tenantId(command.tenantId())
-                .formId(command.formId())
                 .name(command.name())
                 .type(command.type())
-                .categoryWeights(command.categoryWeights() != null ? command.categoryWeights() : List.of())
                 .scoringConfig(command.scoringConfig() != null ? command.scoringConfig() : ScoringConfig.defaults())
                 .build();
     }
