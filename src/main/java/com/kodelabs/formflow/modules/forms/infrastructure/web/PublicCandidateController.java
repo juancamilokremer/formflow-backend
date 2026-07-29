@@ -1,13 +1,17 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
+import com.kodelabs.formflow.modules.forms.domain.port.in.GetCandidatePortalUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetPublicCandidateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.SubmitCandidateResponseUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetCandidatePortalQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetPublicCandidateFormQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitCandidateResponseCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.result.CandidatePortalResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.PublicCandidateFormResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitCandidateResponseResult;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.SubmitResponseRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.CandidatePortalResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.PublicCandidateFormResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.SubmitPublicResponseDto;
 import com.kodelabs.formflow.shared.web.ApiResponse;
@@ -31,25 +35,42 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/public/candidates")
 @RequiredArgsConstructor
-@Tag(name = "Candidatos Públicos", description = "Endpoint público para que candidatos envíen su respuesta a una convocatoria. Sin autenticación requerida.")
+@Tag(name = "Candidatos Públicos", description = "Endpoint público para que candidatos vean y respondan los formularios de su convocatoria. Sin autenticación requerida.")
 public class PublicCandidateController {
 
+    private final GetCandidatePortalUseCase getCandidatePortal;
     private final GetPublicCandidateFormUseCase getPublicCandidateForm;
     private final SubmitCandidateResponseUseCase submitCandidateResponse;
 
     @GetMapping("/{candidateToken}")
     @Operation(
-            summary = "Obtener formulario del candidato",
-            description = "Retorna la estructura del formulario asociado al token del candidato, " +
-                    "junto con datos de la convocatoria y el estado de respuesta. " +
+            summary = "Obtener el portal del candidato",
+            description = "Retorna los datos de la convocatoria y la lista de formularios asignados al candidato " +
+                    "con su estado (pendiente/completado). No requiere autenticación.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Portal del candidato")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Token de candidato no encontrado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "La convocatoria ya está cerrada", content = @Content)
+    public ResponseEntity<ApiResponse<CandidatePortalResponse>> getPortal(
+            @PathVariable UUID candidateToken) {
+        CandidatePortalResult result = getCandidatePortal.execute(new GetCandidatePortalQuery(candidateToken));
+        return ResponseEntity.ok(ApiResponse.ok(CandidatePortalResponse.from(result)));
+    }
+
+    @GetMapping("/{candidateToken}/forms/{formId}")
+    @Operation(
+            summary = "Obtener un formulario puntual del candidato",
+            description = "Retorna la estructura de uno de los formularios de la convocatoria, " +
+                    "junto con datos de la convocatoria y si ese formulario específico ya fue respondido. " +
                     "No requiere autenticación.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Formulario listo para responder")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "El formulario no pertenece a la convocatoria del candidato", content = @Content)
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Token de candidato no encontrado", content = @Content)
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "La convocatoria ya está cerrada", content = @Content)
     public ResponseEntity<ApiResponse<PublicCandidateFormResponse>> getCandidateForm(
-            @PathVariable UUID candidateToken) {
+            @PathVariable UUID candidateToken,
+            @PathVariable UUID formId) {
         PublicCandidateFormResult result = getPublicCandidateForm.execute(
-                new GetPublicCandidateFormQuery(candidateToken));
+                new GetPublicCandidateFormQuery(candidateToken, formId));
         return ResponseEntity.ok(ApiResponse.ok(PublicCandidateFormResponse.from(result)));
     }
 

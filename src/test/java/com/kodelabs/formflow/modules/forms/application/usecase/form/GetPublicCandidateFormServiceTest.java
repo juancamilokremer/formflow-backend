@@ -11,6 +11,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.PublicCandidate
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.PublicFormResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ class GetPublicCandidateFormServiceTest {
 
     @Mock private CandidateRepositoryPort candidateRepository;
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
+    @Mock private FormResponseRepositoryPort responseRepository;
     @Mock private GetPublicFormUseCase getPublicForm;
     @InjectMocks private GetPublicCandidateFormService service;
 
@@ -80,9 +82,10 @@ class GetPublicCandidateFormServiceTest {
         when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
         when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
                 .thenReturn(Optional.of(activeConvocatoria));
+        when(responseRepository.existsByCandidateIdAndFormId(invitedCandidate.getId(), formId)).thenReturn(false);
         when(getPublicForm.execute(any())).thenReturn(mockFormResult);
 
-        PublicCandidateFormResult result = service.execute(new GetPublicCandidateFormQuery(candidateToken));
+        PublicCandidateFormResult result = service.execute(new GetPublicCandidateFormQuery(candidateToken, formId));
 
         assertThat(result.candidateName()).isEqualTo("María García");
         assertThat(result.convocatoriaName()).isEqualTo("Analista RRHH — Julio 2026");
@@ -91,27 +94,39 @@ class GetPublicCandidateFormServiceTest {
     }
 
     @Test
-    void alreadyRespondedCandidate_returnsAlreadyRespondedTrue() {
-        Candidate responded = Candidate.builder()
-                .id(UUID.randomUUID()).token(candidateToken)
-                .convocatoriaId(convocatoriaId).tenantId(tenantId)
-                .name("María García").status(CandidateStatus.RESPONDED).build();
-
-        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(responded));
+    void formAlreadyRespondedByCandidate_returnsAlreadyRespondedTrue() {
+        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
         when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
                 .thenReturn(Optional.of(activeConvocatoria));
+        when(responseRepository.existsByCandidateIdAndFormId(invitedCandidate.getId(), formId)).thenReturn(true);
         when(getPublicForm.execute(any())).thenReturn(mockFormResult);
 
-        PublicCandidateFormResult result = service.execute(new GetPublicCandidateFormQuery(candidateToken));
+        PublicCandidateFormResult result = service.execute(new GetPublicCandidateFormQuery(candidateToken, formId));
 
         assertThat(result.alreadyResponded()).isTrue();
+    }
+
+    @Test
+    void formNotAttachedToConvocatoria_throwsBadRequest() {
+        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
+                .thenReturn(Optional.of(activeConvocatoria));
+
+        UUID unattachedFormId = UUID.randomUUID();
+        assertThatThrownBy(() -> service.execute(new GetPublicCandidateFormQuery(candidateToken, unattachedFormId)))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> {
+                    BusinessException be = (BusinessException) ex;
+                    assertThat(be.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(be.getMessageKey()).isEqualTo("error.convocatoria.form_not_attached");
+                });
     }
 
     @Test
     void tokenNotFound_throwsNotFound() {
         when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new GetPublicCandidateFormQuery(candidateToken)))
+        assertThatThrownBy(() -> service.execute(new GetPublicCandidateFormQuery(candidateToken, formId)))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> {
                     BusinessException be = (BusinessException) ex;
@@ -131,7 +146,7 @@ class GetPublicCandidateFormServiceTest {
         when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
                 .thenReturn(Optional.of(closed));
 
-        assertThatThrownBy(() -> service.execute(new GetPublicCandidateFormQuery(candidateToken)))
+        assertThatThrownBy(() -> service.execute(new GetPublicCandidateFormQuery(candidateToken, formId)))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> {
                     BusinessException be = (BusinessException) ex;
