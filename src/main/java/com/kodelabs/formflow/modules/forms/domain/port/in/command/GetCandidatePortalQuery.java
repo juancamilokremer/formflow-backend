@@ -2,4 +2,4 @@ package com.kodelabs.formflow.modules.forms.domain.port.in.command;
 
 import java.util.UUID;
 
-public record GetPublicCandidateFormQuery(UUID candidateToken, UUID formId) {}
+public record GetCandidatePortalQuery(UUID candidateToken) {}
