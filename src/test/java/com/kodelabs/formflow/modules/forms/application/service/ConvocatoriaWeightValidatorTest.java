@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.service;
 
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,34 @@ class ConvocatoriaWeightValidatorTest {
                 new CategoryWeight(UUID.randomUUID(), 60),
                 new CategoryWeight(UUID.randomUUID(), 60));
         assertThatThrownBy(() -> validator.validate(weights))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void nullFormsAreValid() {
+        assertThatNoException().isThrownBy(() -> validator.validateFormWeights(null));
+    }
+
+    @Test
+    void emptyFormsAreValid() {
+        assertThatNoException().isThrownBy(() -> validator.validateFormWeights(List.of()));
+    }
+
+    @Test
+    void formWeightsExactlyOneHundredIsValid() {
+        var forms = List.of(
+                ConvocatoriaForm.builder().weight(60).build(),
+                ConvocatoriaForm.builder().weight(40).build());
+        assertThatNoException().isThrownBy(() -> validator.validateFormWeights(forms));
+    }
+
+    @Test
+    void throwsBadRequestWhenFormWeightsDoNotSumTo100() {
+        var forms = List.of(
+                ConvocatoriaForm.builder().weight(60).build(),
+                ConvocatoriaForm.builder().weight(30).build());
+        assertThatThrownBy(() -> validator.validateFormWeights(forms))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
     }

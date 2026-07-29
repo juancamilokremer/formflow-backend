@@ -152,6 +152,44 @@ class LaunchConvocatoriaServiceTest {
     }
 
     @Test
+    void throwsBadRequestWhenFormWeightsDoNotSumTo100() {
+        Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
+                .forms(List.of(
+                        ConvocatoriaForm.builder().convocatoriaId(convId).formId(UUID.randomUUID()).weight(60).build(),
+                        ConvocatoriaForm.builder().convocatoriaId(convId).formId(UUID.randomUUID()).weight(30).build()))
+                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+
+        var command = new LaunchConvocatoriaCommand(convId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void publishesEveryAttachedFormWhenStillDraft() {
+        UUID formId1 = UUID.randomUUID();
+        UUID formId2 = UUID.randomUUID();
+        Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
+                .forms(List.of(
+                        ConvocatoriaForm.builder().convocatoriaId(convId).formId(formId1).weight(60).build(),
+                        ConvocatoriaForm.builder().convocatoriaId(convId).formId(formId2).weight(40).build()))
+                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
+        Form draftForm1 = Form.builder().id(formId1).tenantId(tenantId).status(FormStatus.DRAFT).build();
+        Form draftForm2 = Form.builder().id(formId2).tenantId(tenantId).status(FormStatus.DRAFT).build();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(candidateRepository.countByConvocatoriaId(convId)).thenReturn(1L);
+        when(formRepository.findByIdAndTenantId(formId1, tenantId)).thenReturn(Optional.of(draftForm1));
+        when(formRepository.findByIdAndTenantId(formId2, tenantId)).thenReturn(Optional.of(draftForm2));
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of());
+
+        service.execute(new LaunchConvocatoriaCommand(convId, tenantId, userId));
+
+        verify(formRepository, times(2)).save(any());
+    }
+
+    @Test
     void throwsNotFoundWhenConvocatoriaDoesNotExist() {
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.empty());
 

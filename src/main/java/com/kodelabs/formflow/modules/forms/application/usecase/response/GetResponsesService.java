@@ -49,7 +49,7 @@ public class GetResponsesService implements GetResponsesUseCase {
                 .toList();
         if (candidateIds.isEmpty()) return Map.of();
         return candidateRepository.findAllByIds(candidateIds).stream()
-                .filter(c -> c.getScores() != null)
+                .filter(c -> c.getScores() != null && c.getScores().total() != null)
                 .collect(Collectors.toMap(Candidate::getId, c -> c.getScores().total()));
     }
 

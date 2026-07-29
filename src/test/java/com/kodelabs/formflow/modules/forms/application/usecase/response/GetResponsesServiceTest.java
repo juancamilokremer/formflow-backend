@@ -20,7 +20,6 @@ import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,7 +75,7 @@ class GetResponsesServiceTest {
                 .submittedAt(Instant.now()).build();
         Candidate candidate = Candidate.builder()
                 .id(candidateId)
-                .scores(new CandidateScores(75.0, Map.of()))
+                .scores(new CandidateScores(75.0, List.of()))
                 .build();
 
         when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);

@@ -10,10 +10,13 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateFormScore;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateResponseSubmittedEvent;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateScores;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.port.in.SubmitCandidateResponseUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitCandidateResponseCommand;
@@ -31,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,26 +65,24 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
     @Override
     @Transactional
     public SubmitCandidateResponseResult execute(SubmitCandidateResponseCommand command) {
-        Candidate candidate = loadInvitedCandidate(command.candidateToken());
+        Candidate candidate = loadCandidate(command.candidateToken());
         Convocatoria convocatoria = loadActiveConvocatoria(candidate.getConvocatoriaId(), candidate.getTenantId());
-        Form form = loadFormWithQuestions(convocatoria.getFormId());
+        ConvocatoriaForm targetForm = resolveConvocatoriaForm(convocatoria, command.formId());
+        guardNotAlreadyResponded(candidate.getId(), targetForm.getFormId());
+        Form form = loadFormWithQuestions(targetForm.getFormId());
         Map<UUID, Object> answerMap = buildAnswerMap(command.answers());
         validateRequiredQuestions(form, answerMap);
-        ScoringResult scoring = computeScoring(form, convocatoria, answerMap);
+        ScoringResult scoring = computeScoring(form, targetForm.getCategoryWeights(), answerMap);
         FormResponse response = persistResponse(form, convocatoria, candidate, command);
-        recordCandidateResponse(candidate, response, scoring);
+        recordCandidateResponse(candidate, convocatoria, targetForm, response, scoring);
         eventPublisher.publishEvent(new CandidateResponseSubmittedEvent(
                 candidate.getId(), convocatoria.getId(), candidate.getTenantId()));
         return new SubmitCandidateResponseResult(response.getRespondentToken());
     }
 
-    private Candidate loadInvitedCandidate(UUID token) {
-        Candidate candidate = candidateRepository.findByToken(token)
+    private Candidate loadCandidate(UUID token) {
+        return candidateRepository.findByToken(token)
                 .orElseThrow(() -> new BusinessException("error.candidate.not_found", HttpStatus.NOT_FOUND, token));
-        if (candidate.getStatus() != CandidateStatus.INVITED) {
-            throw new BusinessException("error.candidate.already_responded", HttpStatus.CONFLICT);
-        }
-        return candidate;
     }
 
     private Convocatoria loadActiveConvocatoria(UUID convocatoriaId, UUID tenantId) {
@@ -93,12 +95,26 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
         return conv;
     }
 
+    private ConvocatoriaForm resolveConvocatoriaForm(Convocatoria convocatoria, UUID formId) {
+        return convocatoria.getForms().stream()
+                .filter(f -> f.getFormId().equals(formId))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(
+                        "error.convocatoria.form_not_attached", HttpStatus.BAD_REQUEST, formId));
+    }
+
+    private void guardNotAlreadyResponded(UUID candidateId, UUID formId) {
+        if (responseRepository.existsByCandidateIdAndFormId(candidateId, formId)) {
+            throw new BusinessException("error.candidate.already_responded", HttpStatus.CONFLICT);
+        }
+    }
+
     private Form loadFormWithQuestions(UUID formId) {
         return formLoader.loadPublicOrThrow(formId);
     }
 
-    private ScoringResult computeScoring(Form form, Convocatoria convocatoria, Map<UUID, Object> answerMap) {
-        return candidateScoringService.compute(form, convocatoria, answerMap);
+    private ScoringResult computeScoring(Form form, List<CategoryWeight> categoryWeights, Map<UUID, Object> answerMap) {
+        return candidateScoringService.compute(form, categoryWeights, answerMap);
     }
 
     private FormResponse persistResponse(Form form, Convocatoria convocatoria, Candidate candidate,
@@ -117,14 +133,35 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
                 .build());
     }
 
-    private void recordCandidateResponse(Candidate candidate, FormResponse response, ScoringResult scoring) {
+    private void recordCandidateResponse(Candidate candidate, Convocatoria convocatoria, ConvocatoriaForm targetForm,
+                                          FormResponse response, ScoringResult scoring) {
         Map<UUID, Double> byCategory = scoring.scoresByCategory().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().contribution()));
-        candidate.setStatus(CandidateStatus.RESPONDED);
+        CandidateFormScore formScore = new CandidateFormScore(
+                targetForm.getId(), targetForm.getFormId(), scoring.totalScore(), byCategory);
+
+        List<CandidateFormScore> perForm = new ArrayList<>(
+                candidate.getScores() != null && candidate.getScores().perForm() != null
+                        ? candidate.getScores().perForm() : List.of());
+        perForm.add(formScore);
+
+        long completedForms = responseRepository.countByCandidateId(candidate.getId());
+        boolean allFormsCompleted = completedForms >= convocatoria.getForms().size();
+
+        candidate.setStatus(allFormsCompleted ? CandidateStatus.RESPONDED : CandidateStatus.IN_PROGRESS);
         candidate.setResponseId(response.getId());
-        candidate.setScores(new CandidateScores(scoring.totalScore(), byCategory));
-        candidate.setRespondedAt(Instant.now());
+        candidate.setScores(new CandidateScores(
+                allFormsCompleted ? computeFinalTotal(perForm, convocatoria.getForms()) : null, perForm));
+        if (allFormsCompleted) candidate.setRespondedAt(Instant.now());
         candidateRepository.save(candidate);
+    }
+
+    private Double computeFinalTotal(List<CandidateFormScore> perForm, List<ConvocatoriaForm> forms) {
+        Map<UUID, Integer> weightByConvocatoriaFormId = forms.stream()
+                .collect(Collectors.toMap(ConvocatoriaForm::getId, ConvocatoriaForm::getWeight));
+        return perForm.stream()
+                .mapToDouble(fs -> fs.total() * weightByConvocatoriaFormId.getOrDefault(fs.convocatoriaFormId(), 0) / 100.0)
+                .sum();
     }
 
     private AnswerValue toAnswerValue(AnswerItem item) {

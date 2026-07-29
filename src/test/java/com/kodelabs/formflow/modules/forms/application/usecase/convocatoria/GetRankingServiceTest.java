@@ -1,8 +1,10 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.CandidateClassifier;
 import com.kodelabs.formflow.modules.forms.domain.model.Category;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateClassification;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateFormScore;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateScores;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -40,11 +43,14 @@ class GetRankingServiceTest {
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
     @Mock private CategoryRepositoryPort categoryRepository;
+    @Spy  private CandidateClassifier candidateClassifier = new CandidateClassifier();
     @InjectMocks private GetRankingService service;
 
     private UUID convId;
     private UUID tenantId;
     private UUID catId;
+    private UUID convocatoriaFormId;
+    private UUID formId;
     private Convocatoria convocatoria;
 
     @BeforeEach
@@ -52,10 +58,13 @@ class GetRankingServiceTest {
         convId = UUID.randomUUID();
         tenantId = UUID.randomUUID();
         catId = UUID.randomUUID();
+        convocatoriaFormId = UUID.randomUUID();
+        formId = UUID.randomUUID();
 
         convocatoria = Convocatoria.builder()
                 .id(convId).tenantId(tenantId).name("Dev 2026")
                 .forms(List.of(ConvocatoriaForm.builder()
+                        .id(convocatoriaFormId).formId(formId)
                         .categoryWeights(List.of(new CategoryWeight(catId, 100))).weight(100).build()))
                 .scoringConfig(new ScoringConfig(70, 50))
                 .build();
@@ -144,11 +153,13 @@ class GetRankingServiceTest {
     }
 
     private Candidate candidateWithScore(String name, double totalScore) {
+        CandidateFormScore formScore = new CandidateFormScore(
+                convocatoriaFormId, formId, totalScore, Map.of(catId, totalScore));
         return Candidate.builder()
                 .id(UUID.randomUUID()).convocatoriaId(convId).tenantId(tenantId)
                 .name(name).email(name.toLowerCase() + "@test.com")
                 .status(CandidateStatus.RESPONDED)
-                .scores(new CandidateScores(totalScore, Map.of(catId, totalScore)))
+                .scores(new CandidateScores(totalScore, List.of(formScore)))
                 .build();
     }
 

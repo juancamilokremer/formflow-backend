@@ -23,14 +23,16 @@ public record ConvocatoriaResult(
         Instant endDate,
         Instant createdAt,
         Instant updatedAt,
-        List<CandidateResult> candidates
+        List<CandidateResult> candidates,
+        List<ConvocatoriaFormResult> forms
 ) {
     public static ConvocatoriaResult from(Convocatoria c, List<Candidate> candidates) {
         return new ConvocatoriaResult(
                 c.getId(), c.getTenantId(), c.getFormId(), c.getName(), c.getType(),
                 c.getStatus().name(), c.getCategoryWeights(), c.getScoringConfig(),
                 c.getStartDate(), c.getEndDate(), c.getCreatedAt(), c.getUpdatedAt(),
-                candidates.stream().map(CandidateResult::from).toList()
+                candidates.stream().map(CandidateResult::from).toList(),
+                c.getForms().stream().map(ConvocatoriaFormResult::from).toList()
         );
     }
 }

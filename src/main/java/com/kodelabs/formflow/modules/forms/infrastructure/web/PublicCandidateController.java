@@ -53,18 +53,20 @@ public class PublicCandidateController {
         return ResponseEntity.ok(ApiResponse.ok(PublicCandidateFormResponse.from(result)));
     }
 
-    @PostMapping("/{candidateToken}/responses")
+    @PostMapping("/{candidateToken}/forms/{formId}/responses")
     @Operation(
-            summary = "Enviar respuesta de candidato",
-            description = "Registra la respuesta de un candidato identificado por su token único. " +
-                    "Calcula el puntaje automáticamente con los pesos de categorías de la convocatoria. " +
-                    "Solo se puede responder una vez por candidato.")
+            summary = "Enviar respuesta de candidato a un formulario",
+            description = "Registra la respuesta de un candidato a uno de los formularios de la convocatoria. " +
+                    "Calcula el puntaje de ese formulario automáticamente con sus pesos de categorías. " +
+                    "Solo se puede responder una vez cada formulario; el candidato puede responder los demás " +
+                    "formularios de la convocatoria por separado.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Respuesta registrada y puntaje calculado")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Pregunta obligatoria sin respuesta o datos inválidos", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Pregunta obligatoria sin respuesta, formulario no pertenece a la convocatoria, o datos inválidos", content = @Content)
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Token de candidato no encontrado", content = @Content)
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "El candidato ya respondió o la convocatoria no está activa", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Ese formulario ya fue respondido o la convocatoria no está activa", content = @Content)
     public ResponseEntity<ApiResponse<SubmitPublicResponseDto>> submitResponse(
             @PathVariable UUID candidateToken,
+            @PathVariable UUID formId,
             @Valid @RequestBody SubmitResponseRequest request) {
 
         List<AnswerItem> answers = request.answers().stream()
@@ -72,7 +74,7 @@ public class PublicCandidateController {
                 .toList();
 
         SubmitCandidateResponseResult result = submitCandidateResponse.execute(
-                new SubmitCandidateResponseCommand(candidateToken, request.startedAt(), answers));
+                new SubmitCandidateResponseCommand(candidateToken, formId, request.startedAt(), answers));
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(new SubmitPublicResponseDto(result.respondentToken())));
