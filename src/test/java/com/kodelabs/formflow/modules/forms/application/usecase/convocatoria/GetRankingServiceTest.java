@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.application.service.CandidateClassifier;
 import com.kodelabs.formflow.modules.forms.domain.model.Category;
+import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateClassification;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateFormScore;
@@ -13,9 +14,11 @@ import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatori
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ScoringConfig;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetRankingQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.RankingEntryResult;
+import com.kodelabs.formflow.modules.forms.domain.port.in.result.RankingFormScoreResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CategoryRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,8 +36,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,6 +48,7 @@ class GetRankingServiceTest {
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
     @Mock private CategoryRepositoryPort categoryRepository;
+    @Mock private FormRepositoryPort formRepository;
     @Spy  private CandidateClassifier candidateClassifier = new CandidateClassifier();
     @InjectMocks private GetRankingService service;
 
@@ -68,6 +74,9 @@ class GetRankingServiceTest {
                         .categoryWeights(List.of(new CategoryWeight(catId, 100))).weight(100).build()))
                 .scoringConfig(new ScoringConfig(70, 50))
                 .build();
+
+        lenient().when(formRepository.findByIdAndTenantId(formId, tenantId))
+                .thenReturn(Optional.of(Form.builder().id(formId).tenantId(tenantId).name("Prueba técnica").build()));
     }
 
     @Test
@@ -129,6 +138,47 @@ class GetRankingServiceTest {
 
         assertThat(result.get(0).scoresByCategory()).containsKey("Habilidades Blandas");
         assertThat(result.get(0).scoresByCategory().get("Habilidades Blandas")).isEqualTo(80.0);
+    }
+
+    @Test
+    void formScoresReflectPerFormCompletionAndWeight() {
+        UUID formId2 = UUID.randomUUID();
+        UUID convFormId2 = UUID.randomUUID();
+        Convocatoria twoFormConvocatoria = Convocatoria.builder()
+                .id(convId).tenantId(tenantId).name("Dev 2026")
+                .forms(List.of(
+                        ConvocatoriaForm.builder().id(convocatoriaFormId).formId(formId)
+                                .weight(60).categoryWeights(List.of()).position(0).build(),
+                        ConvocatoriaForm.builder().id(convFormId2).formId(formId2)
+                                .weight(40).categoryWeights(List.of()).position(1).build()))
+                .scoringConfig(new ScoringConfig(70, 50))
+                .build();
+
+        Candidate partial = Candidate.builder()
+                .id(UUID.randomUUID()).convocatoriaId(convId).tenantId(tenantId)
+                .name("Luis").email("luis@test.com")
+                .status(CandidateStatus.IN_PROGRESS)
+                .scores(new CandidateScores(null, List.of(
+                        new CandidateFormScore(convocatoriaFormId, formId, 85.0, Map.of()))))
+                .build();
+
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(twoFormConvocatoria));
+        when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of(partial));
+        when(formRepository.findByIdAndTenantId(formId2, tenantId))
+                .thenReturn(Optional.of(Form.builder().id(formId2).tenantId(tenantId).name("Perfil").build()));
+
+        List<RankingEntryResult> result = service.execute(new GetRankingQuery(convId, tenantId));
+
+        assertThat(result).hasSize(1);
+        List<RankingFormScoreResult> formScores = result.get(0).formScores();
+        assertThat(formScores).hasSize(2);
+        assertThat(formScores.get(0).formName()).isEqualTo("Prueba técnica");
+        assertThat(formScores.get(0).weight()).isEqualTo(60);
+        assertThat(formScores.get(0).completed()).isTrue();
+        assertThat(formScores.get(0).score()).isEqualTo(85.0);
+        assertThat(formScores.get(1).formName()).isEqualTo("Perfil");
+        assertThat(formScores.get(1).completed()).isFalse();
+        assertThat(formScores.get(1).score()).isNull();
     }
 
     @Test

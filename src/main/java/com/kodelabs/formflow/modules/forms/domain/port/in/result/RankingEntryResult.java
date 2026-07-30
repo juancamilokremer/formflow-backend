@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.domain.port.in.result;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateClassification;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,5 +18,6 @@ public record RankingEntryResult(
         Double totalScore,
         CandidateClassification classification,
         Map<String, Double> scoresByCategory,
-        Instant respondedAt
+        Instant respondedAt,
+        List<RankingFormScoreResult> formScores
 ) {}
