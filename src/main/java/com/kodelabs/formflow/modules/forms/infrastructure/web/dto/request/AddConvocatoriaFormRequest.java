@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public record AddConvocatoriaFormRequest(
         @NotNull UUID formId,
-        @Min(1) @Max(100) int weight,
+        @Min(0) @Max(100) int weight,
         @Valid List<CategoryWeightRequest> categoryWeights,
         @Min(0) @Max(100) Integer minScore
 ) {}
