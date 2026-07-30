@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 import com.kodelabs.formflow.modules.forms.application.service.CandidateClassifier;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateClassification;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetConvocatoriaStatsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetConvocatoriaStatsQuery;
@@ -41,11 +42,16 @@ public class GetConvocatoriaStatsService implements GetConvocatoriaStatsUseCase 
 
     private ConvocatoriaStatsResult computeStats(Convocatoria convocatoria, List<Candidate> candidates) {
         int total = candidates.size();
+        int notStarted = (int) candidates.stream()
+                .filter(c -> c.getStatus() == CandidateStatus.INVITED || c.getStatus() == CandidateStatus.EXPIRED)
+                .count();
+        int inProgress = (int) candidates.stream()
+                .filter(c -> c.getStatus() == CandidateStatus.IN_PROGRESS)
+                .count();
         List<Candidate> respondedList = candidates.stream()
-                .filter(c -> c.getScores() != null && c.getScores().total() != null)
+                .filter(c -> c.getStatus() == CandidateStatus.RESPONDED)
                 .toList();
         int responded = respondedList.size();
-        int pending = total - responded;
 
         int aptoCount    = (int) respondedList.stream().filter(c -> classify(c, convocatoria) == CandidateClassification.APTO).count();
         int revisarCount = (int) respondedList.stream().filter(c -> classify(c, convocatoria) == CandidateClassification.REVISAR).count();
@@ -55,7 +61,7 @@ public class GetConvocatoriaStatsService implements GetConvocatoriaStatsUseCase 
 
         return new ConvocatoriaStatsResult(
                 convocatoria.getId(), convocatoria.getName(),
-                total, responded, pending,
+                total, notStarted, inProgress, responded,
                 aptoCount, revisarCount, noAptoCount,
                 Math.round(participationPct * 10.0) / 10.0
         );
