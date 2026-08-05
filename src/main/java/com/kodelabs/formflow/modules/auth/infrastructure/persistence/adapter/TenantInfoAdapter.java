@@ -30,6 +30,8 @@ public class TenantInfoAdapter implements TenantInfoPort {
                 .map(UserJpaEntity::getEmail)
                 .orElse(null);
 
-        return Optional.of(new TenantInfo(tenant.get().getName(), adminEmail));
+        return Optional.of(new TenantInfo(
+                tenant.get().getName(), adminEmail,
+                tenant.get().getLogoUrl(), tenant.get().getPrimaryColor()));
     }
 }
