@@ -78,7 +78,7 @@ public class ConvocatoriaEmailSender {
 
     private TenantInfo resolveTenantInfo(UUID tenantId) {
         return tenantInfoPort.findByTenantId(tenantId)
-                .orElse(new TenantInfo("FormFlow", null));
+                .orElse(new TenantInfo("FormFlow", null, null, null));
     }
 
     private String buildSurveyUrl(UUID convocatoriaId, UUID candidateToken) {
