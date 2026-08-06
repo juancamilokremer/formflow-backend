@@ -29,7 +29,7 @@ public class MatrixStatsCalculator implements QuestionStatsCalculator {
         if (!(question.getConfig() instanceof MatrixConfig cfg)) {
             return new QuestionStatsResult(
                     question.getId(), question.getTitle(), type().code(),
-                    totalResponses, 0, null, null, null, null, List.of());
+                    totalResponses, 0, null, null, null, null, List.of(), List.of());
         }
 
         List<MatrixRow> rows = cfg.getRows();
@@ -68,6 +68,6 @@ public class MatrixStatsCalculator implements QuestionStatsCalculator {
 
         return new QuestionStatsResult(
                 question.getId(), question.getTitle(), type().code(),
-                totalResponses, answered, null, null, null, null, matrixRows);
+                totalResponses, answered, null, null, null, null, matrixRows, List.of());
     }
 }

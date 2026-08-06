@@ -98,7 +98,7 @@ class GetFormStatsServiceTest {
         QuestionStatsResult questionStats = new QuestionStatsResult(
                 questionId, "Tipo de cargo", "single", 2, 2,
                 List.of(new OptionDistribution(opt1Id.toString(), "Desarrollador", 2, 100.0)),
-                null, null, null, null);
+                null, null, null, null, List.of());
 
         QuestionStatsCalculator mockCalc = mockCalculator(SINGLE, questionStats);
 
@@ -119,7 +119,7 @@ class GetFormStatsServiceTest {
     @Test
     void returnsEmptyStatsWhenNoResponses() {
         QuestionStatsResult emptyStats = new QuestionStatsResult(
-                questionId, "Tipo de cargo", "single", 0, 0, List.of(), null, null, null, null);
+                questionId, "Tipo de cargo", "single", 0, 0, List.of(), null, null, null, null, List.of());
 
         QuestionStatsCalculator mockCalc = mockCalculator(SINGLE, emptyStats);
 

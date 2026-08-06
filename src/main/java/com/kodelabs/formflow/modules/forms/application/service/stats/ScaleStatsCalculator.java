@@ -52,7 +52,7 @@ public class ScaleStatsCalculator implements QuestionStatsCalculator {
 
         return new QuestionStatsResult(
                 question.getId(), question.getTitle(), type().code(),
-                totalResponses, answered, distributions, average, median, null, null);
+                totalResponses, answered, distributions, average, median, null, null, List.of());
     }
 
     private double computeMedian(List<Integer> values) {

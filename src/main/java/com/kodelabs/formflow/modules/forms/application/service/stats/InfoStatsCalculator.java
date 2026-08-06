@@ -21,6 +21,6 @@ public class InfoStatsCalculator implements QuestionStatsCalculator {
     public QuestionStatsResult calculate(FormQuestion question, int totalResponses, List<Object> answers) {
         return new QuestionStatsResult(
                 question.getId(), question.getTitle(), type().code(),
-                totalResponses, 0, null, null, null, null, null);
+                totalResponses, 0, null, null, null, null, null, List.of());
     }
 }

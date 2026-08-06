@@ -44,6 +44,6 @@ public class NpsStatsCalculator implements QuestionStatsCalculator {
 
         return new QuestionStatsResult(
                 question.getId(), question.getTitle(), type().code(),
-                totalResponses, answered, distributions, average, null, npsScore, null);
+                totalResponses, answered, distributions, average, null, npsScore, null, List.of());
     }
 }

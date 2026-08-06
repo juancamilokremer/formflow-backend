@@ -53,6 +53,6 @@ public class MultipleStatsCalculator implements QuestionStatsCalculator {
 
         return new QuestionStatsResult(
                 question.getId(), question.getTitle(), type().code(),
-                totalResponses, answered, distributions, null, null, null, null);
+                totalResponses, answered, distributions, null, null, null, null, List.of());
     }
 }

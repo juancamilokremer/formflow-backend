@@ -15,7 +15,8 @@ public record QuestionStatsResponse(
         Double average,
         Double median,
         Double npsScore,
-        List<MatrixRowStatsResponse> matrixRows
+        List<MatrixRowStatsResponse> matrixRows,
+        List<String> sampleAnswers
 ) {
     public static QuestionStatsResponse from(QuestionStatsResult r) {
         List<OptionDistributionResponse> dists = r.distributions() != null
@@ -27,6 +28,6 @@ public record QuestionStatsResponse(
         return new QuestionStatsResponse(
                 r.questionId(), r.title(), r.type(),
                 r.totalResponses(), r.answeredCount(),
-                dists, r.average(), r.median(), r.npsScore(), rows);
+                dists, r.average(), r.median(), r.npsScore(), rows, r.sampleAnswers());
     }
 }
