@@ -5,8 +5,10 @@ import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
+import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormStatsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormStatsQuery;
+import com.kodelabs.formflow.modules.forms.domain.port.in.result.DailyResponseCountResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormStatsResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.QuestionStatsResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
@@ -17,10 +19,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 
 @Service
@@ -38,7 +46,58 @@ public class GetFormStatsService implements GetFormStatsUseCase {
         List<FormResponse> responses = loadAllResponses(query.formId(), query.tenantId());
         Map<UUID, List<Object>> answersByQuestion = groupAnswersByQuestion(responses);
         List<QuestionStatsResult> questionStats = computeStatsPerQuestion(form, responses.size(), answersByQuestion);
-        return new FormStatsResult(form.getId(), form.getName(), responses.size(), questionStats);
+        return new FormStatsResult(
+                form.getId(), form.getName(), responses.size(),
+                computeCompletionRate(responses),
+                computeAvgResponseTimeSeconds(responses),
+                computeTimeline(responses),
+                questionStats);
+    }
+
+    private Double computeCompletionRate(List<FormResponse> responses) {
+        if (responses.isEmpty()) return null;
+        double totalRate = 0;
+        for (FormResponse response : responses) {
+            int totalQuestions = countQuestionsInSnapshot(response.getFormSnapshot());
+            if (totalQuestions == 0) continue;
+            Set<UUID> answeredQuestionIds = new HashSet<>();
+            for (var answer : response.getAnswers()) {
+                if (answer.getValue() != null) {
+                    answeredQuestionIds.add(answer.getQuestionId());
+                }
+            }
+            totalRate += (double) answeredQuestionIds.size() / totalQuestions;
+        }
+        return totalRate / responses.size();
+    }
+
+    private int countQuestionsInSnapshot(FormSnapshot snapshot) {
+        if (snapshot == null || snapshot.sections() == null) return 0;
+        return snapshot.sections().stream()
+                .filter(s -> s.questions() != null)
+                .mapToInt(s -> s.questions().size())
+                .sum();
+    }
+
+    private Long computeAvgResponseTimeSeconds(List<FormResponse> responses) {
+        List<Long> durations = responses.stream()
+                .filter(r -> r.getStartedAt() != null && r.getSubmittedAt() != null)
+                .map(r -> Duration.between(r.getStartedAt(), r.getSubmittedAt()).getSeconds())
+                .toList();
+        if (durations.isEmpty()) return null;
+        return durations.stream().mapToLong(Long::longValue).sum() / durations.size();
+    }
+
+    private List<DailyResponseCountResult> computeTimeline(List<FormResponse> responses) {
+        Map<LocalDate, Integer> countsByDay = new TreeMap<>();
+        for (FormResponse response : responses) {
+            if (response.getSubmittedAt() == null) continue;
+            LocalDate day = response.getSubmittedAt().atZone(ZoneOffset.UTC).toLocalDate();
+            countsByDay.merge(day, 1, Integer::sum);
+        }
+        return countsByDay.entrySet().stream()
+                .map(e -> new DailyResponseCountResult(e.getKey(), e.getValue()))
+                .toList();
     }
 
     private Form loadFormWithQuestions(UUID formId, UUID tenantId) {

@@ -7,5 +7,8 @@ public record FormStatsResult(
         UUID formId,
         String formName,
         int totalResponses,
+        Double completionRate,
+        Long avgResponseTimeSeconds,
+        List<DailyResponseCountResult> timeline,
         List<QuestionStatsResult> questions
 ) {}

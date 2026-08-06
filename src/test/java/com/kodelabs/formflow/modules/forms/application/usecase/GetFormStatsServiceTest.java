@@ -10,6 +10,9 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
+import com.kodelabs.formflow.modules.forms.domain.model.snapshot.QuestionSnapshot;
+import com.kodelabs.formflow.modules.forms.domain.model.snapshot.SectionSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormStatsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormStatsResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.OptionDistribution;
@@ -25,6 +28,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -137,6 +143,111 @@ class GetFormStatsServiceTest {
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
 
         assertThat(result.questions()).isEmpty();
+    }
+
+    @Test
+    void completionRate_averagesAnsweredOverTotalQuestionsInResponseSnapshot() {
+        FormSnapshot twoQuestionSnapshot = snapshotWithQuestionCount(2);
+
+        FormResponse fullyAnswered = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .formSnapshot(twoQuestionSnapshot)
+                .answers(List.of(
+                        AnswerValue.builder().questionId(UUID.randomUUID()).value("a").build(),
+                        AnswerValue.builder().questionId(UUID.randomUUID()).value("b").build()))
+                .build();
+        FormResponse halfAnswered = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .formSnapshot(twoQuestionSnapshot)
+                .answers(List.of(AnswerValue.builder().questionId(UUID.randomUUID()).value("a").build()))
+                .build();
+
+        when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId))
+                .thenReturn(List.of(fullyAnswered, halfAnswered));
+        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
+
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+
+        assertThat(result.completionRate()).isEqualTo(0.75); // (1.0 + 0.5) / 2
+    }
+
+    @Test
+    void completionRate_isNullWhenThereAreNoResponses() {
+        when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of());
+        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
+
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+
+        assertThat(result.completionRate()).isNull();
+    }
+
+    @Test
+    void avgResponseTimeSeconds_averagesOnlyResponsesThatHaveStartedAt() {
+        Instant base = Instant.parse("2026-08-01T10:00:00Z");
+        FormResponse withTiming = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .startedAt(base).submittedAt(base.plusSeconds(120))
+                .answers(List.of())
+                .build();
+        FormResponse withoutStartedAt = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .submittedAt(base.plusSeconds(500))
+                .answers(List.of())
+                .build();
+
+        when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId))
+                .thenReturn(List.of(withTiming, withoutStartedAt));
+        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
+
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+
+        assertThat(result.avgResponseTimeSeconds()).isEqualTo(120L);
+    }
+
+    @Test
+    void avgResponseTimeSeconds_isNullWhenNoResponseHasStartedAt() {
+        FormResponse withoutStartedAt = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .submittedAt(Instant.now()).answers(List.of()).build();
+
+        when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(withoutStartedAt));
+        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
+
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+
+        assertThat(result.avgResponseTimeSeconds()).isNull();
+    }
+
+    @Test
+    void timeline_groupsResponsesByUtcSubmissionDate() {
+        FormResponse dayOneFirst = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .submittedAt(Instant.parse("2026-08-01T08:00:00Z")).answers(List.of()).build();
+        FormResponse dayOneSecond = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .submittedAt(Instant.parse("2026-08-01T22:00:00Z")).answers(List.of()).build();
+        FormResponse dayTwo = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .submittedAt(Instant.parse("2026-08-02T09:00:00Z")).answers(List.of()).build();
+
+        when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId))
+                .thenReturn(List.of(dayOneFirst, dayOneSecond, dayTwo));
+        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
+
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+
+        assertThat(result.timeline()).hasSize(2);
+        assertThat(result.timeline().get(0).date()).isEqualTo(LocalDate.of(2026, 8, 1));
+        assertThat(result.timeline().get(0).count()).isEqualTo(2);
+        assertThat(result.timeline().get(1).date()).isEqualTo(LocalDate.of(2026, 8, 2));
+        assertThat(result.timeline().get(1).count()).isEqualTo(1);
+    }
+
+    private FormSnapshot snapshotWithQuestionCount(int count) {
+        List<QuestionSnapshot> questions = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            questions.add(new QuestionSnapshot(
+                    UUID.randomUUID(), "Q" + i, null, "single", i, true, null, null, null));
+        }
+        SectionSnapshot section = new SectionSnapshot(UUID.randomUUID(), "Sección", null, 0, null, questions);
+        return new FormSnapshot(formId, "Evaluación", "candidates", 1, Instant.now(), List.of(section));
     }
 
     @Test
