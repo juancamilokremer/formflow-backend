@@ -9,11 +9,18 @@ public record FormStatsResponse(
         UUID formId,
         String formName,
         int totalResponses,
+        Double completionRate,
+        Long avgResponseTimeSeconds,
+        List<DailyResponseCountResponse> timeline,
         List<QuestionStatsResponse> questions
 ) {
     public static FormStatsResponse from(FormStatsResult r) {
         List<QuestionStatsResponse> questions = r.questions().stream()
                 .map(QuestionStatsResponse::from).toList();
-        return new FormStatsResponse(r.formId(), r.formName(), r.totalResponses(), questions);
+        List<DailyResponseCountResponse> timeline = r.timeline().stream()
+                .map(DailyResponseCountResponse::from).toList();
+        return new FormStatsResponse(
+                r.formId(), r.formName(), r.totalResponses(),
+                r.completionRate(), r.avgResponseTimeSeconds(), timeline, questions);
     }
 }
