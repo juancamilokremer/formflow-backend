@@ -1,15 +1,19 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository;
 
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.entity.FormSectionJpaEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface FormSectionJpaRepository extends JpaRepository<FormSectionJpaEntity, UUID> {
+public interface FormSectionJpaRepository extends Repository<FormSectionJpaEntity, UUID> {
+
+    FormSectionJpaEntity save(FormSectionJpaEntity section);
+
+    List<FormSectionJpaEntity> saveAll(Iterable<FormSectionJpaEntity> sections);
 
     @Query("SELECT s FROM FormSectionJpaEntity s WHERE s.id = :id AND s.formId = :formId AND s.tenantId = :tenantId AND s.deletedAt IS NULL")
     Optional<FormSectionJpaEntity> findActiveByIdAndFormIdAndTenantId(

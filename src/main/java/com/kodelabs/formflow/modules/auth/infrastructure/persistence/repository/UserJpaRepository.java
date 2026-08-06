@@ -2,12 +2,14 @@ package com.kodelabs.formflow.modules.auth.infrastructure.persistence.repository
 
 import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.entity.UserJpaEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
-public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
+public interface UserJpaRepository extends Repository<UserJpaEntity, UUID> {
+
+    UserJpaEntity save(UserJpaEntity user);
 
     Optional<UserJpaEntity> findByEmailAndTenantId(String email, UUID tenantId);
 
