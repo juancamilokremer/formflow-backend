@@ -3,15 +3,17 @@ package com.kodelabs.formflow.modules.forms.infrastructure.persistence.repositor
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.entity.FormResponseJpaEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface FormResponseJpaRepository extends JpaRepository<FormResponseJpaEntity, UUID> {
+public interface FormResponseJpaRepository extends Repository<FormResponseJpaEntity, UUID> {
+
+    FormResponseJpaEntity save(FormResponseJpaEntity response);
 
     Optional<FormResponseJpaEntity> findByIdAndTenantId(UUID id, UUID tenantId);
 

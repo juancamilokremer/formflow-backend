@@ -1,13 +1,19 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository;
 
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.entity.CandidateJpaEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface CandidateJpaRepository extends JpaRepository<CandidateJpaEntity, UUID> {
+public interface CandidateJpaRepository extends Repository<CandidateJpaEntity, UUID> {
+
+    CandidateJpaEntity save(CandidateJpaEntity candidate);
+
+    List<CandidateJpaEntity> saveAll(Iterable<CandidateJpaEntity> candidates);
+
+    void deleteById(UUID id);
 
     Optional<CandidateJpaEntity> findByIdAndConvocatoriaId(UUID id, UUID convocatoriaId);
 

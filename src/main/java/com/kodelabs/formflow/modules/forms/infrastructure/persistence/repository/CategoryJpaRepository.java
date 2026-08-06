@@ -1,15 +1,19 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository;
 
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.entity.CategoryJpaEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface CategoryJpaRepository extends JpaRepository<CategoryJpaEntity, UUID> {
+public interface CategoryJpaRepository extends Repository<CategoryJpaEntity, UUID> {
+
+    CategoryJpaEntity save(CategoryJpaEntity category);
+
+    void deleteById(UUID id);
 
     Optional<CategoryJpaEntity> findByIdAndTenantId(UUID id, UUID tenantId);
 

@@ -1,9 +1,9 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.repository;
 
 import com.kodelabs.formflow.modules.forms.infrastructure.persistence.entity.ConvocatoriaJpaEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ConvocatoriaJpaRepository extends JpaRepository<ConvocatoriaJpaEntity, UUID> {
+public interface ConvocatoriaJpaRepository extends Repository<ConvocatoriaJpaEntity, UUID> {
+
+    ConvocatoriaJpaEntity save(ConvocatoriaJpaEntity convocatoria);
 
     Optional<ConvocatoriaJpaEntity> findByIdAndTenantId(UUID id, UUID tenantId);
 
