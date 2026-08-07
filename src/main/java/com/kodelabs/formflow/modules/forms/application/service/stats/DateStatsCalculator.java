@@ -25,6 +25,6 @@ public class DateStatsCalculator implements QuestionStatsCalculator {
 
         return new QuestionStatsResult(
                 question.getId(), question.getTitle(), type().code(),
-                totalResponses, answered, null, null, null, null, null);
+                totalResponses, answered, null, null, null, null, null, List.of());
     }
 }

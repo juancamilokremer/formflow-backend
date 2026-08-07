@@ -13,5 +13,6 @@ public record QuestionStatsResult(
         Double average,
         Double median,
         Double npsScore,
-        List<MatrixRowStats> matrixRows
+        List<MatrixRowStats> matrixRows,
+        List<String> sampleAnswers
 ) {}
