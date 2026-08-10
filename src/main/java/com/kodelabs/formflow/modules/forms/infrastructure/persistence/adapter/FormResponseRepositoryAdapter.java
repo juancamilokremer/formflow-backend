@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -76,8 +77,15 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
 
     @Override
     public List<FormResponse> findAllByFormIdAndTenantId(UUID formId, UUID tenantId) {
-        return responseJpa.findAllByFormIdAndTenantId(formId, tenantId).stream()
-                .map(entity -> responseMapper.toDomain(entity, answerJpa.findAllByResponseId(entity.getId())))
+        List<FormResponseJpaEntity> entities = responseJpa.findAllByFormIdAndTenantId(formId, tenantId);
+        if (entities.isEmpty()) return List.of();
+
+        List<UUID> responseIds = entities.stream().map(FormResponseJpaEntity::getId).toList();
+        Map<UUID, List<AnswerValueJpaEntity>> answersByResponseId = answerJpa.findAllByResponseIdIn(responseIds).stream()
+                .collect(Collectors.groupingBy(AnswerValueJpaEntity::getResponseId));
+
+        return entities.stream()
+                .map(entity -> responseMapper.toDomain(entity, answersByResponseId.getOrDefault(entity.getId(), List.of())))
                 .toList();
     }
 
