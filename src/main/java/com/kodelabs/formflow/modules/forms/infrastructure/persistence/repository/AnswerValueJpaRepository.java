@@ -12,5 +12,7 @@ public interface AnswerValueJpaRepository extends Repository<AnswerValueJpaEntit
 
     List<AnswerValueJpaEntity> findAllByResponseId(UUID responseId);
 
+    List<AnswerValueJpaEntity> findAllByResponseIdIn(List<UUID> responseIds);
+
     void deleteAllByResponseId(UUID responseId);
 }
