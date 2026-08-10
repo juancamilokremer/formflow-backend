@@ -14,16 +14,19 @@ public record ResponseDetailResponse(
         UUID convocatoriaId,
         UUID candidateId,
         Double totalScore,
+        List<ResponseCategoryScoreResponse> categoryScores,
         FormSnapshot formSnapshot,
-        List<AnswerValueResponse> answers,
+        List<AnswerDetailResponse> answers,
         Instant submittedAt,
         Instant startedAt
 ) {
     public static ResponseDetailResponse from(ResponseDetailResult r) {
         return new ResponseDetailResponse(
                 r.id(), r.formId(), r.respondentToken(), r.convocatoriaId(), r.candidateId(),
-                r.totalScore(), r.formSnapshot(),
-                r.answers().stream().map(AnswerValueResponse::from).toList(),
+                r.totalScore(),
+                r.categoryScores() == null ? null : r.categoryScores().stream().map(ResponseCategoryScoreResponse::from).toList(),
+                r.formSnapshot(),
+                r.answers().stream().map(AnswerDetailResponse::from).toList(),
                 r.submittedAt(), r.startedAt());
     }
 }

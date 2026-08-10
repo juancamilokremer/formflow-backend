@@ -13,8 +13,9 @@ public record ResponseDetailResult(
         UUID convocatoriaId,
         UUID candidateId,
         Double totalScore,
+        List<ResponseCategoryScoreResult> categoryScores,
         FormSnapshot formSnapshot,
-        List<AnswerValueResult> answers,
+        List<AnswerDetailResult> answers,
         Instant submittedAt,
         Instant startedAt
 ) {}
