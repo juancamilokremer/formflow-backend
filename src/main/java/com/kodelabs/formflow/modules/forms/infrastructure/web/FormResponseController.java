@@ -43,8 +43,8 @@ public class FormResponseController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Formulario no encontrado", content = @Content)
     public ResponseEntity<ApiResponse<ResponsePageResponse>> getResponses(
             @PathVariable UUID formId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "${app.pagination.default-page:0}") int page,
+            @RequestParam(defaultValue = "${app.pagination.default-size:20}") int size,
             @RequestParam(required = false) Instant submittedAtFrom,
             @RequestParam(required = false) Instant submittedAtTo) {
         var result = getResponses.execute(

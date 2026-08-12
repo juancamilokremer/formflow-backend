@@ -102,3 +102,6 @@ app:
       core-pool-size: ${EMAIL_POOL_CORE:2}
       max-pool-size: ${EMAIL_POOL_MAX:4}
       queue-capacity: ${EMAIL_QUEUE_CAPACITY:100}
+  pagination:
+    default-page: ${PAGINATION_DEFAULT_PAGE:0}
+    default-size: ${PAGINATION_DEFAULT_SIZE:20}
