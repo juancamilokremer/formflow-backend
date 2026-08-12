@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.kodelabs.formflow.shared.web.ControllerUtils.tenantId;
@@ -43,8 +44,11 @@ public class FormResponseController {
     public ResponseEntity<ApiResponse<ResponsePageResponse>> getResponses(
             @PathVariable UUID formId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        var result = getResponses.execute(new GetResponsesQuery(formId, tenantId(), page, size));
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Instant submittedAtFrom,
+            @RequestParam(required = false) Instant submittedAtTo) {
+        var result = getResponses.execute(
+                new GetResponsesQuery(formId, tenantId(), page, size, submittedAtFrom, submittedAtTo));
         return ResponseEntity.ok(ApiResponse.ok(ResponsePageResponse.from(result)));
     }
 

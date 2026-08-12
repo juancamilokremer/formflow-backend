@@ -16,6 +16,7 @@ import com.kodelabs.formflow.modules.reports.domain.port.out.FormResponseDataPor
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,10 +41,11 @@ public class FormResponseDataAdapter implements FormResponseDataPort {
     private final AnswerDisplayFormatter answerDisplayFormatter;
 
     @Override
-    public ExportableFormData load(UUID formId, UUID tenantId) {
+    public ExportableFormData load(UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo) {
         FormSnapshot snapshot = snapshotBuilder.build(formId, tenantId);
         List<QuestionSnapshot> questions = orderedExportableQuestions(snapshot);
-        List<FormResponse> responses = responseRepository.findAllByFormIdAndTenantId(formId, tenantId);
+        List<FormResponse> responses = responseRepository.findAllByFormIdAndTenantId(
+                formId, tenantId, submittedAtFrom, submittedAtTo);
 
         ExportableForm form = new ExportableForm(
                 snapshot.formName(),

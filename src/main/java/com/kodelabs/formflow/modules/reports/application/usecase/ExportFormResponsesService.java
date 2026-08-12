@@ -25,7 +25,8 @@ public class ExportFormResponsesService implements ExportFormResponsesUseCase {
 
     @Override
     public ExportResult execute(ExportFormResponsesQuery query) {
-        ExportableFormData data = dataPort.load(query.formId(), query.tenantId());
+        ExportableFormData data = dataPort.load(
+                query.formId(), query.tenantId(), query.submittedAtFrom(), query.submittedAtTo());
         List<List<String>> rows = rowBuilder.build(data);
         ResponseExporter exporter = exporterRegistry.find(query.format())
                 .orElseThrow(() -> new BusinessException(

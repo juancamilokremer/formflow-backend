@@ -15,8 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.kodelabs.formflow.shared.web.ControllerUtils.tenantId;
@@ -37,8 +39,11 @@ public class FormExportController {
                     "en el orden actual del formulario, con las respuestas de opción resueltas a texto legible.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Archivo Excel")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Formulario no encontrado", content = @Content)
-    public ResponseEntity<byte[]> exportExcel(@PathVariable UUID formId) {
-        return export(formId, ExportFormat.EXCEL);
+    public ResponseEntity<byte[]> exportExcel(
+            @PathVariable UUID formId,
+            @RequestParam(required = false) Instant submittedAtFrom,
+            @RequestParam(required = false) Instant submittedAtTo) {
+        return export(formId, ExportFormat.EXCEL, submittedAtFrom, submittedAtTo);
     }
 
     @GetMapping("/{formId}/export/csv")
@@ -47,12 +52,17 @@ public class FormExportController {
             description = "Misma estructura que el export a Excel, en formato CSV.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Archivo CSV")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Formulario no encontrado", content = @Content)
-    public ResponseEntity<byte[]> exportCsv(@PathVariable UUID formId) {
-        return export(formId, ExportFormat.CSV);
+    public ResponseEntity<byte[]> exportCsv(
+            @PathVariable UUID formId,
+            @RequestParam(required = false) Instant submittedAtFrom,
+            @RequestParam(required = false) Instant submittedAtTo) {
+        return export(formId, ExportFormat.CSV, submittedAtFrom, submittedAtTo);
     }
 
-    private ResponseEntity<byte[]> export(UUID formId, ExportFormat format) {
-        ExportResult result = exportFormResponses.execute(new ExportFormResponsesQuery(formId, tenantId(), format));
+    private ResponseEntity<byte[]> export(
+            UUID formId, ExportFormat format, Instant submittedAtFrom, Instant submittedAtTo) {
+        ExportResult result = exportFormResponses.execute(
+                new ExportFormResponsesQuery(formId, tenantId(), format, submittedAtFrom, submittedAtTo));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"")
                 .contentType(MediaType.parseMediaType(result.contentType()))

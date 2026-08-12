@@ -76,8 +76,10 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
     }
 
     @Override
-    public List<FormResponse> findAllByFormIdAndTenantId(UUID formId, UUID tenantId) {
-        List<FormResponseJpaEntity> entities = responseJpa.findAllByFormIdAndTenantId(formId, tenantId);
+    public List<FormResponse> findAllByFormIdAndTenantId(
+            UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo) {
+        List<FormResponseJpaEntity> entities =
+                responseJpa.findAllByFormIdAndTenantId(formId, tenantId, submittedAtFrom, submittedAtTo);
         if (entities.isEmpty()) return List.of();
 
         List<UUID> responseIds = entities.stream().map(FormResponseJpaEntity::getId).toList();
@@ -90,16 +92,18 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
     }
 
     @Override
-    public List<FormResponse> findPageByFormIdAndTenantId(UUID formId, UUID tenantId, int page, int size) {
-        return responseJpa.findPageByFormAndTenant(formId, tenantId, PageRequest.of(page, size))
+    public List<FormResponse> findPageByFormIdAndTenantId(
+            UUID formId, UUID tenantId, int page, int size, Instant submittedAtFrom, Instant submittedAtTo) {
+        return responseJpa.findPageByFormAndTenant(
+                        formId, tenantId, submittedAtFrom, submittedAtTo, PageRequest.of(page, size))
                 .stream()
                 .map(entity -> responseMapper.toDomain(entity, List.of()))
                 .toList();
     }
 
     @Override
-    public long countByFormIdAndTenantId(UUID formId, UUID tenantId) {
-        return responseJpa.countByFormIdAndTenantId(formId, tenantId);
+    public long countByFormIdAndTenantId(UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo) {
+        return responseJpa.countByFormIdAndTenantId(formId, tenantId, submittedAtFrom, submittedAtTo);
     }
 
     @Override
