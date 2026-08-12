@@ -89,6 +89,9 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        // Content-Disposition isn't in the browser's default CORS-safelisted response
+        // headers — without this, JS can't read the export filename cross-origin.
+        config.setExposedHeaders(List.of("Content-Disposition"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
