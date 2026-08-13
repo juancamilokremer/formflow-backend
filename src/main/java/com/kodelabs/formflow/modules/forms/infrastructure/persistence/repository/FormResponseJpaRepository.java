@@ -26,9 +26,13 @@ public interface FormResponseJpaRepository extends Repository<FormResponseJpaEnt
 
     long countByCandidateId(UUID candidateId);
 
+    // ORDER BY doesn't affect the stats use case (it aggregates, order-independent)
+    // but does affect the export use case — this is what makes the exported rows
+    // match the same most-recent-first order as the "Respuestas individuales" table.
     @Query("SELECT r FROM FormResponseJpaEntity r WHERE r.formId = :formId AND r.tenantId = :tenantId "
             + "AND r.submittedAt >= COALESCE(:submittedAtFrom, r.submittedAt) "
-            + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt)")
+            + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt) "
+            + "ORDER BY r.submittedAt DESC")
     List<FormResponseJpaEntity> findAllByFormIdAndTenantId(
             @Param("formId") UUID formId, @Param("tenantId") UUID tenantId,
             @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo);
