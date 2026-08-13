@@ -16,8 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.kodelabs.formflow.shared.web.ControllerUtils.tenantId;
@@ -60,8 +62,11 @@ public class FormAnalyticsController {
                     responseCode = "401", description = "No autenticado", content = @Content)
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    public ResponseEntity<ApiResponse<FormStatsResponse>> stats(@PathVariable UUID id) {
-        var result = getFormStats.execute(new GetFormStatsQuery(id, tenantId()));
+    public ResponseEntity<ApiResponse<FormStatsResponse>> stats(
+            @PathVariable UUID id,
+            @RequestParam(required = false) Instant submittedAtFrom,
+            @RequestParam(required = false) Instant submittedAtTo) {
+        var result = getFormStats.execute(new GetFormStatsQuery(id, tenantId(), submittedAtFrom, submittedAtTo));
         return ResponseEntity.ok(ApiResponse.ok(FormStatsResponse.from(result)));
     }
 }

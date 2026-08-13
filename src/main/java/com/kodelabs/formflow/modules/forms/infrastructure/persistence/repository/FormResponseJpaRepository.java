@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,12 +26,32 @@ public interface FormResponseJpaRepository extends Repository<FormResponseJpaEnt
 
     long countByCandidateId(UUID candidateId);
 
-    List<FormResponseJpaEntity> findAllByFormIdAndTenantId(UUID formId, UUID tenantId);
+    // ORDER BY doesn't affect the stats use case (it aggregates, order-independent)
+    // but does affect the export use case — this is what makes the exported rows
+    // match the same most-recent-first order as the "Respuestas individuales" table.
+    @Query("SELECT r FROM FormResponseJpaEntity r WHERE r.formId = :formId AND r.tenantId = :tenantId "
+            + "AND r.submittedAt >= COALESCE(:submittedAtFrom, r.submittedAt) "
+            + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt) "
+            + "ORDER BY r.submittedAt DESC")
+    List<FormResponseJpaEntity> findAllByFormIdAndTenantId(
+            @Param("formId") UUID formId, @Param("tenantId") UUID tenantId,
+            @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo);
 
-    @Query("SELECT r FROM FormResponseJpaEntity r WHERE r.formId = :formId AND r.tenantId = :tenantId ORDER BY r.submittedAt DESC")
-    Page<FormResponseJpaEntity> findPageByFormAndTenant(@Param("formId") UUID formId, @Param("tenantId") UUID tenantId, Pageable pageable);
+    @Query("SELECT r FROM FormResponseJpaEntity r WHERE r.formId = :formId AND r.tenantId = :tenantId "
+            + "AND r.submittedAt >= COALESCE(:submittedAtFrom, r.submittedAt) "
+            + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt) "
+            + "ORDER BY r.submittedAt DESC")
+    Page<FormResponseJpaEntity> findPageByFormAndTenant(
+            @Param("formId") UUID formId, @Param("tenantId") UUID tenantId,
+            @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo,
+            Pageable pageable);
 
-    long countByFormIdAndTenantId(UUID formId, UUID tenantId);
+    @Query("SELECT COUNT(r) FROM FormResponseJpaEntity r WHERE r.formId = :formId AND r.tenantId = :tenantId "
+            + "AND r.submittedAt >= COALESCE(:submittedAtFrom, r.submittedAt) "
+            + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt)")
+    long countByFormIdAndTenantId(
+            @Param("formId") UUID formId, @Param("tenantId") UUID tenantId,
+            @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo);
 
     @Query("SELECT r.formId, COUNT(r.id) FROM FormResponseJpaEntity r WHERE r.formId IN :formIds GROUP BY r.formId")
     List<Object[]> countGroupedByFormIds(@Param("formIds") List<UUID> formIds);

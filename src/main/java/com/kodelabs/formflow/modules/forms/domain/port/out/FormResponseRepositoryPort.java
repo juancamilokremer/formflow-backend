@@ -22,11 +22,13 @@ public interface FormResponseRepositoryPort {
 
     boolean existsByRespondentToken(UUID respondentToken);
 
-    List<FormResponse> findAllByFormIdAndTenantId(UUID formId, UUID tenantId);
+    List<FormResponse> findAllByFormIdAndTenantId(
+            UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo);
 
-    List<FormResponse> findPageByFormIdAndTenantId(UUID formId, UUID tenantId, int page, int size);
+    List<FormResponse> findPageByFormIdAndTenantId(
+            UUID formId, UUID tenantId, int page, int size, Instant submittedAtFrom, Instant submittedAtTo);
 
-    long countByFormIdAndTenantId(UUID formId, UUID tenantId);
+    long countByFormIdAndTenantId(UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo);
 
     Map<UUID, Integer> countByFormIds(List<UUID> formIds);
 

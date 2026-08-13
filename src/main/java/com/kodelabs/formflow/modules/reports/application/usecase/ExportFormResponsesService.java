@@ -25,8 +25,9 @@ public class ExportFormResponsesService implements ExportFormResponsesUseCase {
 
     @Override
     public ExportResult execute(ExportFormResponsesQuery query) {
-        ExportableFormData data = dataPort.load(query.formId(), query.tenantId());
-        List<List<String>> rows = rowBuilder.build(data);
+        ExportableFormData data = dataPort.load(
+                query.formId(), query.tenantId(), query.submittedAtFrom(), query.submittedAtTo());
+        List<List<String>> rows = rowBuilder.build(data, query.timezone());
         ResponseExporter exporter = exporterRegistry.find(query.format())
                 .orElseThrow(() -> new BusinessException(
                         "error.export.unsupported_format", HttpStatus.BAD_REQUEST, query.format()));

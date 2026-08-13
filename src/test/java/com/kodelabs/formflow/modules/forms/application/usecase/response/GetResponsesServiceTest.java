@@ -52,11 +52,11 @@ class GetResponsesServiceTest {
         FormResponse r2 = responseWithoutCandidate();
 
         when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
-        when(responseRepository.countByFormIdAndTenantId(formId, tenantId)).thenReturn(25L);
-        when(responseRepository.findPageByFormIdAndTenantId(formId, tenantId, 0, 20))
+        when(responseRepository.countByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(25L);
+        when(responseRepository.findPageByFormIdAndTenantId(formId, tenantId, 0, 20, null, null))
                 .thenReturn(List.of(r1, r2));
 
-        ResponsePageResult result = service.execute(new GetResponsesQuery(formId, tenantId, 0, 20));
+        ResponsePageResult result = service.execute(new GetResponsesQuery(formId, tenantId, 0, 20, null, null));
 
         assertThat(result.items()).hasSize(2);
         assertThat(result.totalElements()).isEqualTo(25);
@@ -79,12 +79,12 @@ class GetResponsesServiceTest {
                 .build();
 
         when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
-        when(responseRepository.countByFormIdAndTenantId(formId, tenantId)).thenReturn(1L);
-        when(responseRepository.findPageByFormIdAndTenantId(formId, tenantId, 0, 20))
+        when(responseRepository.countByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(1L);
+        when(responseRepository.findPageByFormIdAndTenantId(formId, tenantId, 0, 20, null, null))
                 .thenReturn(List.of(response));
         when(candidateRepository.findAllByIds(List.of(candidateId))).thenReturn(List.of(candidate));
 
-        ResponsePageResult result = service.execute(new GetResponsesQuery(formId, tenantId, 0, 20));
+        ResponsePageResult result = service.execute(new GetResponsesQuery(formId, tenantId, 0, 20, null, null));
 
         assertThat(result.items().get(0).totalScore()).isEqualTo(75.0);
     }
@@ -95,20 +95,36 @@ class GetResponsesServiceTest {
         FormResponse response = responseWithoutCandidate();
 
         when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
-        when(responseRepository.countByFormIdAndTenantId(formId, tenantId)).thenReturn(1L);
-        when(responseRepository.findPageByFormIdAndTenantId(any(), any(), anyInt(), anyInt()))
+        when(responseRepository.countByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(1L);
+        when(responseRepository.findPageByFormIdAndTenantId(any(), any(), anyInt(), anyInt(), any(), any()))
                 .thenReturn(List.of(response));
 
-        ResponsePageResult result = service.execute(new GetResponsesQuery(formId, tenantId, 0, 20));
+        ResponsePageResult result = service.execute(new GetResponsesQuery(formId, tenantId, 0, 20, null, null));
 
         assertThat(result.items().get(0).totalScore()).isNull();
+    }
+
+    @Test
+    void passesTheRequestedDateRangeThroughToBothCountAndPageQueries() {
+        Instant from = Instant.parse("2026-08-01T00:00:00Z");
+        Instant to = Instant.parse("2026-08-07T23:59:59Z");
+        Form form = Form.builder().id(formId).tenantId(tenantId).build();
+
+        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
+        when(responseRepository.countByFormIdAndTenantId(formId, tenantId, from, to)).thenReturn(0L);
+        when(responseRepository.findPageByFormIdAndTenantId(formId, tenantId, 0, 20, from, to))
+                .thenReturn(List.of());
+
+        ResponsePageResult result = service.execute(new GetResponsesQuery(formId, tenantId, 0, 20, from, to));
+
+        assertThat(result.totalElements()).isZero();
     }
 
     @Test
     void formNotFound_throwsNotFound() {
         when(formLoader.loadOrThrow(formId, tenantId)).thenThrow(new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND, formId));
 
-        assertThatThrownBy(() -> service.execute(new GetResponsesQuery(formId, tenantId, 0, 20)))
+        assertThatThrownBy(() -> service.execute(new GetResponsesQuery(formId, tenantId, 0, 20, null, null)))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }

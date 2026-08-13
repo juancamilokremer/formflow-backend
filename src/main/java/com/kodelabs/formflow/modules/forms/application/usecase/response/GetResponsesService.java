@@ -30,9 +30,11 @@ public class GetResponsesService implements GetResponsesUseCase {
     @Transactional(readOnly = true)
     public ResponsePageResult execute(GetResponsesQuery query) {
         formLoader.loadOrThrow(query.formId(), query.tenantId());
-        long total = responseRepository.countByFormIdAndTenantId(query.formId(), query.tenantId());
+        long total = responseRepository.countByFormIdAndTenantId(
+                query.formId(), query.tenantId(), query.submittedAtFrom(), query.submittedAtTo());
         List<FormResponse> responses = responseRepository.findPageByFormIdAndTenantId(
-                query.formId(), query.tenantId(), query.page(), query.size());
+                query.formId(), query.tenantId(), query.page(), query.size(),
+                query.submittedAtFrom(), query.submittedAtTo());
         Map<UUID, Double> scoreByCandidate = loadScoresByCandidate(responses);
         List<ResponseSummaryResult> items = responses.stream()
                 .map(r -> toSummary(r, scoreByCandidate))

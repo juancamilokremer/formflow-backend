@@ -103,10 +103,10 @@ class GetFormStatsServiceTest {
         QuestionStatsCalculator mockCalc = mockCalculator(SINGLE, questionStats);
 
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(r1, r2));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of(r1, r2));
         when(statsRegistry.find(SINGLE)).thenReturn(Optional.of(mockCalc));
 
-        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
         assertThat(result.formId()).isEqualTo(formId);
         assertThat(result.totalResponses()).isEqualTo(2);
@@ -124,10 +124,10 @@ class GetFormStatsServiceTest {
         QuestionStatsCalculator mockCalc = mockCalculator(SINGLE, emptyStats);
 
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of());
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of());
         when(statsRegistry.find(SINGLE)).thenReturn(Optional.of(mockCalc));
 
-        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
         assertThat(result.totalResponses()).isZero();
         assertThat(result.questions()).hasSize(1);
@@ -137,10 +137,10 @@ class GetFormStatsServiceTest {
     @Test
     void skipsQuestionsWithNoRegisteredCalculator() {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of());
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of());
         when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
-        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
         assertThat(result.questions()).isEmpty();
     }
@@ -161,11 +161,11 @@ class GetFormStatsServiceTest {
                 .build();
 
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId))
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null))
                 .thenReturn(List.of(fullyAnswered, halfAnswered));
         when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
-        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
         assertThat(result.completionRate()).isEqualTo(0.75); // (1.0 + 0.5) / 2
     }
@@ -173,10 +173,10 @@ class GetFormStatsServiceTest {
     @Test
     void completionRate_isNullWhenThereAreNoResponses() {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of());
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of());
         when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
-        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
         assertThat(result.completionRate()).isNull();
     }
@@ -194,11 +194,11 @@ class GetFormStatsServiceTest {
                 .build();
 
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId))
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null))
                 .thenReturn(List.of(withTiming, withoutStartedAt));
         when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
-        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
         assertThat(result.avgResponseTimeSeconds()).isEqualTo(120L);
     }
@@ -209,10 +209,10 @@ class GetFormStatsServiceTest {
                 .submittedAt(Instant.now()).answers(List.of()).build();
 
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(withoutStartedAt));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of(withoutStartedAt));
         when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
-        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
         assertThat(result.avgResponseTimeSeconds()).isNull();
     }
@@ -227,11 +227,11 @@ class GetFormStatsServiceTest {
                 .submittedAt(Instant.parse("2026-08-02T09:00:00Z")).answers(List.of()).build();
 
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId))
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null))
                 .thenReturn(List.of(dayOneFirst, dayOneSecond, dayTwo));
         when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
-        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId));
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
         assertThat(result.timeline()).hasSize(2);
         assertThat(result.timeline().get(0).date()).isEqualTo(LocalDate.of(2026, 8, 1));
@@ -251,10 +251,24 @@ class GetFormStatsServiceTest {
     }
 
     @Test
+    void passesTheRequestedDateRangeThroughToTheRepository() {
+        Instant from = Instant.parse("2026-08-01T00:00:00Z");
+        Instant to = Instant.parse("2026-08-07T23:59:59Z");
+
+        when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, from, to)).thenReturn(List.of());
+        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
+
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, from, to));
+
+        assertThat(result.totalResponses()).isZero();
+    }
+
+    @Test
     void throwsNotFoundWhenFormDoesNotBelongToTenant() {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new GetFormStatsQuery(formId, tenantId)))
+        assertThatThrownBy(() -> service.execute(new GetFormStatsQuery(formId, tenantId, null, null)))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }

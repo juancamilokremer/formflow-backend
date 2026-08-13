@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.reports.domain.port.out;
 
 import com.kodelabs.formflow.modules.reports.domain.model.ExportableFormData;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -10,5 +11,5 @@ import java.util.UUID;
  */
 public interface FormResponseDataPort {
 
-    ExportableFormData load(UUID formId, UUID tenantId);
+    ExportableFormData load(UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo);
 }

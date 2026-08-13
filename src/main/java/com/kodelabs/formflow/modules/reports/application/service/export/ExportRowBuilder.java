@@ -8,7 +8,7 @@ import com.kodelabs.formflow.shared.i18n.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,16 +18,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExportRowBuilder {
 
-    private static final DateTimeFormatter SUBMITTED_AT_FORMAT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneOffset.UTC);
+    // Responses are stored as UTC instants. The zone comes from the caller (the
+    // browser knows its own IANA zone) so the export matches whatever the user
+    // is already seeing on screen, regardless of where the server runs.
+    private static final DateTimeFormatter SUBMITTED_AT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     private final Messages messages;
 
-    public List<List<String>> build(ExportableFormData data) {
+    public List<List<String>> build(ExportableFormData data, ZoneId timezone) {
+        DateTimeFormatter formatter = SUBMITTED_AT_FORMAT.withZone(timezone);
         List<List<String>> rows = new ArrayList<>();
         rows.add(header(data.form()));
         for (ExportableResponse response : data.responses()) {
-            rows.add(row(data.form(), response));
+            rows.add(row(data.form(), response, formatter));
         }
         return rows;
     }
@@ -39,9 +42,9 @@ public class ExportRowBuilder {
         return header;
     }
 
-    private List<String> row(ExportableForm form, ExportableResponse response) {
+    private List<String> row(ExportableForm form, ExportableResponse response, DateTimeFormatter formatter) {
         List<String> row = new ArrayList<>();
-        row.add(SUBMITTED_AT_FORMAT.format(response.submittedAt()));
+        row.add(formatter.format(response.submittedAt()));
         for (ExportableQuestion question : form.questions()) {
             row.add(response.displayValuesByQuestionId().getOrDefault(question.id(), ""));
         }

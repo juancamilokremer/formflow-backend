@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -43,7 +44,8 @@ public class GetFormStatsService implements GetFormStatsUseCase {
     @Transactional(readOnly = true)
     public FormStatsResult execute(GetFormStatsQuery query) {
         Form form = loadFormWithQuestions(query.formId(), query.tenantId());
-        List<FormResponse> responses = loadAllResponses(query.formId(), query.tenantId());
+        List<FormResponse> responses = loadAllResponses(
+                query.formId(), query.tenantId(), query.submittedAtFrom(), query.submittedAtTo());
         Map<UUID, List<Object>> answersByQuestion = groupAnswersByQuestion(responses);
         List<QuestionStatsResult> questionStats = computeStatsPerQuestion(form, responses.size(), answersByQuestion);
         return new FormStatsResult(
@@ -106,8 +108,9 @@ public class GetFormStatsService implements GetFormStatsUseCase {
                         "error.form.not_found", HttpStatus.NOT_FOUND, formId));
     }
 
-    private List<FormResponse> loadAllResponses(UUID formId, UUID tenantId) {
-        return responseRepository.findAllByFormIdAndTenantId(formId, tenantId);
+    private List<FormResponse> loadAllResponses(
+            UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo) {
+        return responseRepository.findAllByFormIdAndTenantId(formId, tenantId, submittedAtFrom, submittedAtTo);
     }
 
     private Map<UUID, List<Object>> groupAnswersByQuestion(List<FormResponse> responses) {

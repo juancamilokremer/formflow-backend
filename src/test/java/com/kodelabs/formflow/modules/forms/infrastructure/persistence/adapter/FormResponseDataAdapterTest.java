@@ -62,9 +62,9 @@ class FormResponseDataAdapterTest {
                 List.of(sectionB, sectionA));
 
         when(snapshotBuilder.build(formId, tenantId)).thenReturn(snapshot);
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of());
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of());
 
-        ExportableFormData data = adapter.load(formId, tenantId);
+        ExportableFormData data = adapter.load(formId, tenantId, null, null);
 
         assertThat(data.form().questions()).extracting("id").containsExactly(q1, q2);
         assertThat(data.form().formName()).isEqualTo("Encuesta");
@@ -84,14 +84,28 @@ class FormResponseDataAdapterTest {
                 .build();
 
         when(snapshotBuilder.build(formId, tenantId)).thenReturn(snapshot);
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(response));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of(response));
         when(answerDisplayFormatter.format(question1, "opt-senior")).thenReturn("Senior");
 
-        ExportableFormData data = adapter.load(formId, tenantId);
+        ExportableFormData data = adapter.load(formId, tenantId, null, null);
 
         assertThat(data.responses()).hasSize(1);
         assertThat(data.responses().get(0).submittedAt()).isEqualTo(Instant.parse("2026-08-01T10:00:00Z"));
         assertThat(data.responses().get(0).displayValuesByQuestionId()).containsEntry(q1, "Senior");
+    }
+
+    @Test
+    void passesTheRequestedDateRangeThroughToTheRepository() {
+        Instant from = Instant.parse("2026-08-01T00:00:00Z");
+        Instant to = Instant.parse("2026-08-07T23:59:59Z");
+        FormSnapshot snapshot = new FormSnapshot(formId, "Encuesta", "REGISTRATION", 1, Instant.now(), List.of());
+
+        when(snapshotBuilder.build(formId, tenantId)).thenReturn(snapshot);
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, from, to)).thenReturn(List.of());
+
+        ExportableFormData data = adapter.load(formId, tenantId, from, to);
+
+        assertThat(data.responses()).isEmpty();
     }
 
     @Test
@@ -108,10 +122,10 @@ class FormResponseDataAdapterTest {
                 .build();
 
         when(snapshotBuilder.build(formId, tenantId)).thenReturn(snapshot);
-        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId)).thenReturn(List.of(response));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of(response));
         when(answerDisplayFormatter.format(any(), any())).thenReturn(null);
 
-        ExportableFormData data = adapter.load(formId, tenantId);
+        ExportableFormData data = adapter.load(formId, tenantId, null, null);
 
         assertThat(data.responses().get(0).displayValuesByQuestionId()).isEmpty();
     }
