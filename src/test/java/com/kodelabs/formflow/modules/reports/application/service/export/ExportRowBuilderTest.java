@@ -13,6 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,7 +43,7 @@ class ExportRowBuilderTest {
                         new ExportableQuestion(q2, "Edad"))),
                 List.of());
 
-        List<List<String>> rows = builder.build(data);
+        List<List<String>> rows = builder.build(data, ZoneOffset.UTC);
 
         assertThat(rows.get(0)).containsExactly("Fecha de envío", "Nombre", "Edad");
     }
@@ -57,10 +59,24 @@ class ExportRowBuilderTest {
                 Instant.parse("2026-08-01T10:00:00Z"),
                 Map.of(q1, "Ana", q2, "30"));
 
-        List<List<String>> rows = builder.build(new ExportableFormData(form, List.of(response)));
+        List<List<String>> rows = builder.build(new ExportableFormData(form, List.of(response)), ZoneOffset.UTC);
 
         assertThat(rows).hasSize(2);
         assertThat(rows.get(1)).containsExactly("2026-08-01 10:00", "Ana", "30");
+    }
+
+    @Test
+    void formatsSubmittedAtInTheCallersTimezoneNotTheServersOwn() {
+        ExportableForm form = new ExportableForm("Encuesta", List.of());
+        ExportableResponse response = new ExportableResponse(Instant.parse("2026-08-01T10:00:00Z"), Map.of());
+        ExportableFormData data = new ExportableFormData(form, List.of(response));
+
+        List<List<String>> inBogota = builder.build(data, ZoneId.of("America/Bogota"));
+        List<List<String>> inTokyo = builder.build(data, ZoneId.of("Asia/Tokyo"));
+
+        // Same instant, different caller-supplied zone -> different rendered text.
+        assertThat(inBogota.get(1).get(0)).isEqualTo("2026-08-01 05:00");
+        assertThat(inTokyo.get(1).get(0)).isEqualTo("2026-08-01 19:00");
     }
 
     @Test
@@ -74,7 +90,7 @@ class ExportRowBuilderTest {
                 Instant.parse("2026-08-01T10:00:00Z"),
                 Map.of(q1, "Ana"));
 
-        List<List<String>> rows = builder.build(new ExportableFormData(form, List.of(response)));
+        List<List<String>> rows = builder.build(new ExportableFormData(form, List.of(response)), ZoneOffset.UTC);
 
         assertThat(rows.get(1)).containsExactly("2026-08-01 10:00", "Ana", "");
     }
@@ -83,7 +99,7 @@ class ExportRowBuilderTest {
     void formWithNoResponsesStillProducesTheHeaderRow() {
         ExportableForm form = new ExportableForm("Encuesta", List.of());
 
-        List<List<String>> rows = builder.build(new ExportableFormData(form, List.of()));
+        List<List<String>> rows = builder.build(new ExportableFormData(form, List.of()), ZoneOffset.UTC);
 
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0)).containsExactly("Fecha de envío");

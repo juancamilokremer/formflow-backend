@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static com.kodelabs.formflow.shared.web.ControllerUtils.tenantId;
@@ -36,14 +39,17 @@ public class FormExportController {
     @Operation(
             summary = "Exportar respuestas a Excel",
             description = "Genera un archivo .xlsx con una fila por respuesta y una columna por pregunta, " +
-                    "en el orden actual del formulario, con las respuestas de opción resueltas a texto legible.")
+                    "en el orden actual del formulario, con las respuestas de opción resueltas a texto legible. " +
+                    "La fecha de envío se muestra en la zona horaria indicada por el cliente (timezone), " +
+                    "para que coincida con lo que el usuario ve en pantalla.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Archivo Excel")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Formulario no encontrado", content = @Content)
     public ResponseEntity<byte[]> exportExcel(
             @PathVariable UUID formId,
             @RequestParam(required = false) Instant submittedAtFrom,
-            @RequestParam(required = false) Instant submittedAtTo) {
-        return export(formId, ExportFormat.EXCEL, submittedAtFrom, submittedAtTo);
+            @RequestParam(required = false) Instant submittedAtTo,
+            @RequestParam(required = false) String timezone) {
+        return export(formId, ExportFormat.EXCEL, submittedAtFrom, submittedAtTo, timezone);
     }
 
     @GetMapping("/{formId}/export/csv")
@@ -55,17 +61,30 @@ public class FormExportController {
     public ResponseEntity<byte[]> exportCsv(
             @PathVariable UUID formId,
             @RequestParam(required = false) Instant submittedAtFrom,
-            @RequestParam(required = false) Instant submittedAtTo) {
-        return export(formId, ExportFormat.CSV, submittedAtFrom, submittedAtTo);
+            @RequestParam(required = false) Instant submittedAtTo,
+            @RequestParam(required = false) String timezone) {
+        return export(formId, ExportFormat.CSV, submittedAtFrom, submittedAtTo, timezone);
     }
 
     private ResponseEntity<byte[]> export(
-            UUID formId, ExportFormat format, Instant submittedAtFrom, Instant submittedAtTo) {
-        ExportResult result = exportFormResponses.execute(
-                new ExportFormResponsesQuery(formId, tenantId(), format, submittedAtFrom, submittedAtTo));
+            UUID formId, ExportFormat format, Instant submittedAtFrom, Instant submittedAtTo, String timezone) {
+        ExportResult result = exportFormResponses.execute(new ExportFormResponsesQuery(
+                formId, tenantId(), format, submittedAtFrom, submittedAtTo, parseTimezone(timezone)));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"")
                 .contentType(MediaType.parseMediaType(result.contentType()))
                 .body(result.content());
+    }
+
+    // The caller (browser) knows its own IANA zone via Intl.DateTimeFormat — trusting an
+    // arbitrary string from a request param still needs a safe fallback for callers that
+    // omit it (older clients, direct API use) or send something malformed.
+    private ZoneId parseTimezone(String timezone) {
+        if (timezone == null || timezone.isBlank()) return ZoneOffset.UTC;
+        try {
+            return ZoneId.of(timezone);
+        } catch (DateTimeException e) {
+            return ZoneOffset.UTC;
+        }
     }
 }

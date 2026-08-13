@@ -19,6 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,11 +55,12 @@ class ExportFormResponsesServiceTest {
         ExportResult expected = new ExportResult(new byte[]{1, 2}, "encuesta.xlsx", "application/vnd.ms-excel");
 
         when(dataPort.load(formId, tenantId, null, null)).thenReturn(data);
-        when(rowBuilder.build(data)).thenReturn(rows);
+        when(rowBuilder.build(data, ZoneOffset.UTC)).thenReturn(rows);
         when(exporterRegistry.find(ExportFormat.EXCEL)).thenReturn(Optional.of(excelExporter));
         when(excelExporter.export("Encuesta", rows)).thenReturn(expected);
 
-        ExportResult result = service.execute(new ExportFormResponsesQuery(formId, tenantId, ExportFormat.EXCEL, null, null));
+        ExportResult result = service.execute(
+                new ExportFormResponsesQuery(formId, tenantId, ExportFormat.EXCEL, null, null, ZoneOffset.UTC));
 
         assertThat(result).isEqualTo(expected);
     }
@@ -70,11 +73,29 @@ class ExportFormResponsesServiceTest {
         ExportResult expected = new ExportResult(new byte[0], "encuesta.csv", "text/csv");
 
         when(dataPort.load(formId, tenantId, from, to)).thenReturn(data);
-        when(rowBuilder.build(data)).thenReturn(rows);
+        when(rowBuilder.build(data, ZoneOffset.UTC)).thenReturn(rows);
         when(exporterRegistry.find(ExportFormat.CSV)).thenReturn(Optional.of(excelExporter));
         when(excelExporter.export("Encuesta", rows)).thenReturn(expected);
 
-        ExportResult result = service.execute(new ExportFormResponsesQuery(formId, tenantId, ExportFormat.CSV, from, to));
+        ExportResult result = service.execute(
+                new ExportFormResponsesQuery(formId, tenantId, ExportFormat.CSV, from, to, ZoneOffset.UTC));
+
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    void passesTheRequestedTimezoneThroughToTheRowBuilder() {
+        ZoneId bogota = ZoneId.of("America/Bogota");
+        List<List<String>> rows = List.of();
+        ExportResult expected = new ExportResult(new byte[0], "encuesta.csv", "text/csv");
+
+        when(dataPort.load(formId, tenantId, null, null)).thenReturn(data);
+        when(rowBuilder.build(data, bogota)).thenReturn(rows);
+        when(exporterRegistry.find(ExportFormat.CSV)).thenReturn(Optional.of(excelExporter));
+        when(excelExporter.export("Encuesta", rows)).thenReturn(expected);
+
+        ExportResult result = service.execute(
+                new ExportFormResponsesQuery(formId, tenantId, ExportFormat.CSV, null, null, bogota));
 
         assertThat(result).isEqualTo(expected);
     }
@@ -82,10 +103,11 @@ class ExportFormResponsesServiceTest {
     @Test
     void throwsWhenNoExporterIsRegisteredForTheRequestedFormat() {
         when(dataPort.load(formId, tenantId, null, null)).thenReturn(data);
-        when(rowBuilder.build(data)).thenReturn(List.of());
+        when(rowBuilder.build(data, ZoneOffset.UTC)).thenReturn(List.of());
         when(exporterRegistry.find(ExportFormat.CSV)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.execute(new ExportFormResponsesQuery(formId, tenantId, ExportFormat.CSV, null, null)))
+        assertThatThrownBy(() -> service.execute(
+                new ExportFormResponsesQuery(formId, tenantId, ExportFormat.CSV, null, null, ZoneOffset.UTC)))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
     }
