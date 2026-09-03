@@ -115,6 +115,18 @@ Al resetear contraseña se invalidan todos los `refresh_tokens` activos del usua
 - Idempotencia por `stripe_event_id UNIQUE` en `invoices`
 - Plan se actualiza SOLO desde webhook, nunca desde redirect del frontend
 
+### Recolección de respuestas y scoring (M3)
+- `ScoringEngine` calcula el puntaje al momento del submit (público o de convocatoria), usando el `form_snapshot` — nunca recalcula contra la versión actual del formulario.
+- Single/Multiple guardan el **id de la opción** en `answer_values`, nunca el label (evita romper stats si se renombra una opción).
+- Evitar N+1 en agregaciones de stats (`GetFormStatsService`, `RankingService`): cargar respuestas + answer_values en batch, nunca lazy-load por respuesta dentro de un loop.
+- Exports (Excel/CSV): fechas se exportan en la zona horaria del cliente, no en UTC fijo — el cliente manda su offset.
+- Defaults de paginación centralizados en `application.yml`, no hardcodeados en el código.
+
+### Versionado y bloqueo de formularios (épica #69–#74)
+- Un formulario con convocatoria activa se bloquea para cambios estructurales (secciones/preguntas/opciones) pero permite cambios cosméticos y reorden.
+- "Nueva versión" y "Duplicar" son operaciones distintas: nueva versión mantiene linaje (mismo formulario lógico, incrementa `version`), duplicar crea un formulario independiente sin linaje.
+- Historial de versiones expuesto vía endpoint dedicado, no como parte del payload normal del formulario.
+
 ## Convenciones
 - Idioma del código: inglés
 - **Comentarios de código y mensajes de log: SIEMPRE en inglés**
@@ -130,10 +142,14 @@ Al resetear contraseña se invalidan todos los `refresh_tokens` activos del usua
 |-----------|--------|
 | M1 ✅ | #11 ✅ #12 ✅ #13 ✅ #14 ✅(falta config infra) #15 ✅ #25 ✅ #26 ✅ #33 ✅ |
 | M2 ✅ | #1 ✅ #2 ✅ #3 ✅ #4 ✅ #20 ✅ #21 ✅ #27 ✅ |
-| M3 | #16 #17 #18 #19 |
+| M3 🔄 29/31 | #16 ✅ #17 ✅ #19 ✅ #51–#56 ✅ #66 ✅ #67 ✅ #69–#74 ✅ #82 ✅ #97 ✅ #104 ✅ #108 ✅ #110 ✅ #112 ✅ #114 ✅ · abiertos: #18 #106 |
+| M3b ✅ | #84 #85 #86 #87 #88 |
+| M3d 🔄 iniciando | #89 #90 #91 (abiertos) |
 | M4 | #5 #6 #7 #8 |
-| M5 | #9 #10 #28 |
+| M5 | #9 #10 #28 #98 |
 | M6 | #22 #23 #24 |
+
+Nota: #103 (warning de Hibernate en tests) está abierto sin milestone asignado.
 
 ## Links
 - Issues: https://github.com/juancamilokremer/formflow-backend/issues
