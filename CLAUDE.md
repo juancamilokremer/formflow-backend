@@ -142,14 +142,15 @@ Al resetear contraseña se invalidan todos los `refresh_tokens` activos del usua
 |-----------|--------|
 | M1 ✅ | #11 ✅ #12 ✅ #13 ✅ #14 ✅(falta config infra) #15 ✅ #25 ✅ #26 ✅ #33 ✅ |
 | M2 ✅ | #1 ✅ #2 ✅ #3 ✅ #4 ✅ #20 ✅ #21 ✅ #27 ✅ |
-| M3 🔄 29/31 | #16 ✅ #17 ✅ #19 ✅ #51–#56 ✅ #66 ✅ #67 ✅ #69–#74 ✅ #82 ✅ #97 ✅ #104 ✅ #108 ✅ #110 ✅ #112 ✅ #114 ✅ · abiertos: #18 #106 |
+| M3 ✅ 31/31 | #16 ✅ #17 ✅ #18 ✅ #19 ✅ #51–#56 ✅ #66 ✅ #67 ✅ #69–#74 ✅ #82 ✅ #97 ✅ #104 ✅ #106 ✅ #108 ✅ #110 ✅ #112 ✅ #114 ✅ |
 | M3b ✅ | #84 #85 #86 #87 #88 |
 | M3d 🔄 iniciando | #89 #90 #91 (abiertos) |
+| M3e 🔄 iniciando | #116 #117 #118 #119 (abiertos) |
 | M4 | #5 #6 #7 #8 |
 | M5 | #9 #10 #28 #98 |
 | M6 | #22 #23 #24 |
 
-Nota: #103 (warning de Hibernate en tests) está abierto sin milestone asignado.
+Nota: #103 (warning de Hibernate en tests), #121 (assertEditable en secciones), #122 (createdAt/updatedAt null en respuesta inmediata) y #123 (exponer convocatoria(s) de cada formulario en GET /forms) están abiertos sin milestone asignado.
 
 ## Links
 - Issues: https://github.com/juancamilokremer/formflow-backend/issues
