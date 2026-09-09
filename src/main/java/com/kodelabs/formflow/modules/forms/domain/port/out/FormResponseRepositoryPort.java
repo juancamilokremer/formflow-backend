@@ -25,6 +25,9 @@ public interface FormResponseRepositoryPort {
     List<FormResponse> findAllByFormIdAndTenantId(
             UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo);
 
+    List<FormResponse> findAllByConvocatoriaIdAndTenantId(
+            UUID convocatoriaId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo);
+
     List<FormResponse> findPageByFormIdAndTenantId(
             UUID formId, UUID tenantId, int page, int size, Instant submittedAtFrom, Instant submittedAtTo);
 

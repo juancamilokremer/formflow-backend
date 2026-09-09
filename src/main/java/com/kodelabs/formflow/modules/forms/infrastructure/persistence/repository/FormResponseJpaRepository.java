@@ -37,6 +37,14 @@ public interface FormResponseJpaRepository extends Repository<FormResponseJpaEnt
             @Param("formId") UUID formId, @Param("tenantId") UUID tenantId,
             @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo);
 
+    @Query("SELECT r FROM FormResponseJpaEntity r WHERE r.convocatoriaId = :convocatoriaId AND r.tenantId = :tenantId "
+            + "AND r.submittedAt >= COALESCE(:submittedAtFrom, r.submittedAt) "
+            + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt) "
+            + "ORDER BY r.submittedAt DESC")
+    List<FormResponseJpaEntity> findAllByConvocatoriaIdAndTenantId(
+            @Param("convocatoriaId") UUID convocatoriaId, @Param("tenantId") UUID tenantId,
+            @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo);
+
     @Query("SELECT r FROM FormResponseJpaEntity r WHERE r.formId = :formId AND r.tenantId = :tenantId "
             + "AND r.submittedAt >= COALESCE(:submittedAtFrom, r.submittedAt) "
             + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt) "

@@ -1,10 +1,8 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.form;
 
-import com.kodelabs.formflow.modules.forms.application.service.stats.QuestionStatsRegistry;
+import com.kodelabs.formflow.modules.forms.application.service.QuestionStatsComputer;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
-import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
-import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormStatsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormStatsQuery;
@@ -23,8 +21,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +34,7 @@ public class GetFormStatsService implements GetFormStatsUseCase {
 
     private final FormRepositoryPort formRepository;
     private final FormResponseRepositoryPort responseRepository;
-    private final QuestionStatsRegistry statsRegistry;
+    private final QuestionStatsComputer questionStatsComputer;
 
     @Override
     @Transactional(readOnly = true)
@@ -46,8 +42,7 @@ public class GetFormStatsService implements GetFormStatsUseCase {
         Form form = loadFormWithQuestions(query.formId(), query.tenantId());
         List<FormResponse> responses = loadAllResponses(
                 query.formId(), query.tenantId(), query.submittedAtFrom(), query.submittedAtTo());
-        Map<UUID, List<Object>> answersByQuestion = groupAnswersByQuestion(responses);
-        List<QuestionStatsResult> questionStats = computeStatsPerQuestion(form, responses.size(), answersByQuestion);
+        List<QuestionStatsResult> questionStats = questionStatsComputer.compute(form, responses.size(), responses);
         return new FormStatsResult(
                 form.getId(), form.getName(), responses.size(),
                 computeCompletionRate(responses),
@@ -111,41 +106,5 @@ public class GetFormStatsService implements GetFormStatsUseCase {
     private List<FormResponse> loadAllResponses(
             UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo) {
         return responseRepository.findAllByFormIdAndTenantId(formId, tenantId, submittedAtFrom, submittedAtTo);
-    }
-
-    private Map<UUID, List<Object>> groupAnswersByQuestion(List<FormResponse> responses) {
-        Map<UUID, List<Object>> index = new HashMap<>();
-        for (FormResponse response : responses) {
-            for (var answer : response.getAnswers()) {
-                if (answer.getValue() != null) {
-                    index.computeIfAbsent(answer.getQuestionId(), k -> new ArrayList<>())
-                            .add(answer.getValue());
-                }
-            }
-        }
-        return index;
-    }
-
-    private List<QuestionStatsResult> computeStatsPerQuestion(
-            Form form, int totalResponses, Map<UUID, List<Object>> answersByQuestion) {
-        return extractQuestionsInOrder(form).stream()
-                .filter(q -> q.getType() != null)
-                .flatMap(q -> statsRegistry.find(q.getType())
-                        .map(calc -> calc.calculate(
-                                q, totalResponses,
-                                answersByQuestion.getOrDefault(q.getId(), List.of())))
-                        .stream())
-                .toList();
-    }
-
-    private List<FormQuestion> extractQuestionsInOrder(Form form) {
-        if (form.getSections() == null) return List.of();
-        return form.getSections().stream()
-                .sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition()))
-                .map(FormSection::getQuestions)
-                .filter(qs -> qs != null)
-                .flatMap(List::stream)
-                .sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition()))
-                .toList();
     }
 }
