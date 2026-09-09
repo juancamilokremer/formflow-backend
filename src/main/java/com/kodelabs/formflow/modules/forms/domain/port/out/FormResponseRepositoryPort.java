@@ -28,6 +28,8 @@ public interface FormResponseRepositoryPort {
     List<FormResponse> findAllByConvocatoriaIdAndTenantId(
             UUID convocatoriaId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo);
 
+    List<FormResponse> findAllByCandidateIdAndConvocatoriaId(UUID candidateId, UUID convocatoriaId, UUID tenantId);
+
     List<FormResponse> findPageByFormIdAndTenantId(
             UUID formId, UUID tenantId, int page, int size, Instant submittedAtFrom, Instant submittedAtTo);
 

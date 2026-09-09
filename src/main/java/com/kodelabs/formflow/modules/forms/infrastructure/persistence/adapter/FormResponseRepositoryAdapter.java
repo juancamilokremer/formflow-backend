@@ -108,6 +108,22 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
     }
 
     @Override
+    public List<FormResponse> findAllByCandidateIdAndConvocatoriaId(
+            UUID candidateId, UUID convocatoriaId, UUID tenantId) {
+        List<FormResponseJpaEntity> entities =
+                responseJpa.findAllByCandidateIdAndConvocatoriaId(candidateId, convocatoriaId, tenantId);
+        if (entities.isEmpty()) return List.of();
+
+        List<UUID> responseIds = entities.stream().map(FormResponseJpaEntity::getId).toList();
+        Map<UUID, List<AnswerValueJpaEntity>> answersByResponseId = answerJpa.findAllByResponseIdIn(responseIds).stream()
+                .collect(Collectors.groupingBy(AnswerValueJpaEntity::getResponseId));
+
+        return entities.stream()
+                .map(entity -> responseMapper.toDomain(entity, answersByResponseId.getOrDefault(entity.getId(), List.of())))
+                .toList();
+    }
+
+    @Override
     public List<FormResponse> findPageByFormIdAndTenantId(
             UUID formId, UUID tenantId, int page, int size, Instant submittedAtFrom, Instant submittedAtTo) {
         return responseJpa.findPageByFormAndTenant(
