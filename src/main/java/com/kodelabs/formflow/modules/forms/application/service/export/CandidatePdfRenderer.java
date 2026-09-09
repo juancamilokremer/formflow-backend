@@ -1,18 +1,17 @@
 package com.kodelabs.formflow.modules.forms.application.service.export;
 
+import com.kodelabs.formflow.shared.export.HtmlToPdfRenderer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-import org.xhtmlrenderer.pdf.ITextRenderer;
 
-import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Renders a candidate's convocatoria response as PDF: a Thymeleaf template produces well-formed
- * XHTML, which Flying Saucer (backed by OpenPDF) lays out and rasterizes to PDF bytes. Kept
- * separate from EmailTemplateService/TemplateRendererPort — that port is scoped to modules/notifications
- * and hardcodes the "email/" template prefix; PDF templates live in their own "pdf/" resource folder.
+ * Typed entry point for rendering a candidate's convocatoria response as PDF — delegates the
+ * actual Thymeleaf+Flying-Saucer mechanics to HtmlToPdfRenderer (shared, domain-agnostic) and
+ * only owns the "pdf/candidate-response" template name and how CandidatePdfData maps to its
+ * template variables.
  */
 @Component
 @RequiredArgsConstructor
@@ -20,27 +19,20 @@ public class CandidatePdfRenderer {
 
     private static final String TEMPLATE = "pdf/candidate-response";
 
-    private final TemplateEngine templateEngine;
+    private final HtmlToPdfRenderer htmlToPdfRenderer;
 
     public byte[] render(CandidatePdfData data) {
-        String html = templateEngine.process(TEMPLATE, toContext(data));
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ITextRenderer renderer = new ITextRenderer();
-        renderer.setDocumentFromString(html);
-        renderer.layout();
-        renderer.createPDF(out);
-        return out.toByteArray();
+        return htmlToPdfRenderer.render(TEMPLATE, toVariables(data));
     }
 
-    private Context toContext(CandidatePdfData data) {
-        Context context = new Context();
-        context.setVariable("candidateName", data.candidateName());
-        context.setVariable("candidateEmail", data.candidateEmail());
-        context.setVariable("convocatoriaName", data.convocatoriaName());
-        context.setVariable("totalScore", data.totalScore());
-        context.setVariable("classification", data.classification());
-        context.setVariable("forms", data.forms());
-        return context;
+    private Map<String, Object> toVariables(CandidatePdfData data) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("candidateName", data.candidateName());
+        variables.put("candidateEmail", data.candidateEmail());
+        variables.put("convocatoriaName", data.convocatoriaName());
+        variables.put("totalScore", data.totalScore());
+        variables.put("classification", data.classification());
+        variables.put("forms", data.forms());
+        return variables;
     }
 }

@@ -5,22 +5,15 @@
 <head>
     <meta charset="UTF-8" />
     <title>Respuesta de candidato</title>
+    <th:block th:replace="~{pdf/base-styles :: styles}" />
     <style>
-        @page { size: A4; margin: 2cm; }
-        body { font-family: Helvetica, Arial, sans-serif; color: #111827; font-size: 11px; }
-        h1 { font-size: 18px; margin: 0 0 4px; color: #111827; }
-        h2 { font-size: 14px; margin: 24px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #d1d5db; color: #1E1B4B; }
         .header { margin-bottom: 16px; }
-        .meta { color: #6b7280; font-size: 11px; margin: 2px 0; }
         .score-box { margin: 16px 0; padding: 10px 14px; background-color: #f3f4f6; border-radius: 4px; }
         .score-total { font-size: 20px; font-weight: bold; }
         .badge { display: inline; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: bold; color: #ffffff; }
         .badge-apto { background-color: #16a34a; }
         .badge-revisar { background-color: #d97706; }
         .badge-no_apto { background-color: #dc2626; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-        th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
-        th { background-color: #f9fafb; font-size: 10px; text-transform: uppercase; color: #6b7280; }
         .form-block { page-break-inside: avoid; }
         .no-answer { color: #9ca3af; font-style: italic; }
         .no-forms { color: #6b7280; font-style: italic; }

@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.application.service.export;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.AnswerDetailResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.CandidateFormExportResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ResponseCategoryScoreResult;
+import com.kodelabs.formflow.shared.export.HtmlToPdfRenderer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -30,7 +31,7 @@ class CandidatePdfRendererTest {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setTemplateResolver(resolver);
 
-        renderer = new CandidatePdfRenderer(templateEngine);
+        renderer = new CandidatePdfRenderer(new HtmlToPdfRenderer(templateEngine));
     }
 
     @Test
