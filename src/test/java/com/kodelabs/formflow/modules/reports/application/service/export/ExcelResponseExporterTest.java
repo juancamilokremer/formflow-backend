@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.reports.application.service.export;
 
 import com.kodelabs.formflow.modules.reports.domain.model.ExportFormat;
 import com.kodelabs.formflow.modules.reports.domain.port.in.result.ExportResult;
+import com.kodelabs.formflow.shared.export.ExcelRowWriter;
 import com.kodelabs.formflow.shared.i18n.Messages;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.lenient;
 class ExcelResponseExporterTest {
 
     @Mock private Messages messages;
+    @Spy private ExcelRowWriter excelRowWriter = new ExcelRowWriter();
     @InjectMocks private ExcelResponseExporter exporter;
 
     @BeforeEach
