@@ -16,7 +16,7 @@ spring:
     cache-names:
       - rate-limit-buckets
 
-  # SMTP: MailHog en dev (sin auth), SendGrid en prod via variables de entorno
+  # SMTP: Mailpit en dev (sin auth), SendGrid en prod via variables de entorno
   mail:
     host: ${SMTP_HOST:localhost}
     port: ${SMTP_PORT:1025}

@@ -22,6 +22,7 @@
         <jjwt.version>0.12.5</jjwt.version>
         <springdoc.version>2.5.0</springdoc.version>
         <poi.version>5.3.0</poi.version>
+        <flying-saucer.version>9.1.22</flying-saucer.version>
         <jacoco.version>0.8.12</jacoco.version>
         <archunit.version>1.3.0</archunit.version>
 
@@ -126,6 +127,14 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
+        </dependency>
+        <!-- PDF de respuesta individual: renderiza una plantilla Thymeleaf (HTML/CSS) a PDF.
+             Usa OpenPDF (LGPL/MPL, libre para uso comercial) como backend en vez del iText
+             clásico de flying-saucer-pdf (AGPL). -->
+        <dependency>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-pdf-openpdf</artifactId>
+            <version>${flying-saucer.version}</version>
         </dependency>
 
         <!-- ===== DOCUMENTACIÓN API ===== -->

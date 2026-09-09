@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- Variables: candidateName, candidateEmail, convocatoriaName, totalScore (Double, nullable),
+     classification (String: APTO|REVISAR|NO_APTO, nullable), forms (List<CandidateFormExportResult>) -->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Respuesta de candidato</title>
+    <th:block th:replace="~{pdf/base-styles :: styles}" />
+    <style>
+        .header { margin-bottom: 16px; }
+        .score-box { margin: 16px 0; padding: 10px 14px; background-color: #f3f4f6; border-radius: 4px; }
+        .score-total { font-size: 20px; font-weight: bold; }
+        .badge { display: inline; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: bold; color: #ffffff; }
+        .badge-apto { background-color: #16a34a; }
+        .badge-revisar { background-color: #d97706; }
+        .badge-no_apto { background-color: #dc2626; }
+        .form-block { page-break-inside: avoid; }
+        .no-answer { color: #9ca3af; font-style: italic; }
+        .no-forms { color: #6b7280; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 th:text="${candidateName}">Nombre del candidato</h1>
+        <p class="meta" th:text="${candidateEmail}">candidato@email.com</p>
+        <p class="meta" th:text="'Convocatoria: ' + ${convocatoriaName}">Convocatoria: Nombre</p>
+    </div>
+
+    <div class="score-box" th:if="${totalScore != null}">
+        <span class="score-total" th:text="${#numbers.formatDecimal(totalScore, 1, 1)} + ' / 100'">85.0 / 100</span>
+        <span th:if="${classification != null}"
+              th:class="'badge badge-' + ${#strings.toLowerCase(classification)}"
+              th:text="${classification}">APTO</span>
+    </div>
+
+    <p class="no-forms" th:if="${forms.isEmpty()}">Este candidato todavía no respondió ningún formulario.</p>
+
+    <div class="form-block" th:each="form : ${forms}">
+        <h2 th:text="${form.formName}">Nombre del formulario</h2>
+        <p class="meta" th:if="${form.formScore != null}"
+           th:text="'Puntaje: ' + ${#numbers.formatDecimal(form.formScore, 1, 1)}">Puntaje: 40.0</p>
+
+        <table th:if="${form.categoryScores != null and !form.categoryScores.isEmpty()}">
+            <thead>
+                <tr><th>Categoría</th><th>Puntaje</th></tr>
+            </thead>
+            <tbody>
+                <tr th:each="cs : ${form.categoryScores}">
+                    <td th:text="${cs.categoryName}">Categoría</td>
+                    <td th:text="${#numbers.formatDecimal(cs.score, 1, 1)}">10.0</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table>
+            <thead>
+                <tr><th>Pregunta</th><th>Respuesta</th></tr>
+            </thead>
+            <tbody>
+                <tr th:each="answer : ${form.answers}">
+                    <td th:text="${answer.questionTitle}">Pregunta</td>
+                    <td>
+                        <span th:if="${answer.displayValue != null}" th:text="${answer.displayValue}">Respuesta</span>
+                        <span th:unless="${answer.displayValue != null}" class="no-answer">Sin respuesta</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

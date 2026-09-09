@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 
 /**
- * SMTP adapter (MailHog in dev, SendGrid SMTP relay in prod).
+ * SMTP adapter (Mailpit in dev, SendGrid SMTP relay in prod).
  */
 @Component
 @RequiredArgsConstructor

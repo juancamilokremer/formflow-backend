@@ -21,9 +21,12 @@ services:
 
   # SMTP de desarrollo: captura todos los correos sin enviarlos realmente.
   # UI web para verlos: http://localhost:8025
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    container_name: formflow-mailhog
+  # Mailpit reemplaza a MailHog (sin mantenimiento desde 2020, con bugs de
+  # renderizado del cuerpo del correo) — mismo puerto SMTP/UI por defecto,
+  # API distinta: /api/v1/messages en vez de /api/v2/messages.
+  mailpit:
+    image: axllent/mailpit:v1.31.1
+    container_name: formflow-mailpit
     ports:
       - "1025:1025"   # SMTP
       - "8025:8025"   # UI web
