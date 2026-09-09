@@ -14,7 +14,7 @@ API REST de la plataforma SaaS de formularios dinámicos FormFlow.
 
 - Java 17+
 - Maven 3.9+
-- Docker y Docker Compose (PostgreSQL + MailHog locales)
+- Docker y Docker Compose (PostgreSQL + Mailpit locales)
 
 ## Inicio rápido
 
@@ -34,7 +34,7 @@ mvn test
 | API | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI JSON | http://localhost:8080/api-docs |
-| MailHog (bandeja de correos de dev) | http://localhost:8025 |
+| Mailpit (bandeja de correos de dev) | http://localhost:8025 |
 | PostgreSQL | localhost:5434 (`formflow` / `formflow123` / db `formflow_dev`) |
 | SonarQube (calidad de código) | http://localhost:9000 (ver sección abajo) |
 
@@ -43,7 +43,7 @@ mvn test
 1. `POST /api/v1/auth/register` crea una empresa + usuario admin (o usa `POST /api/v1/auth/login`)
 2. Copia el `accessToken` de la respuesta
 3. Botón **Authorize** (candado) → pega el token
-4. Los endpoints protegidos quedan autenticados; los correos enviados se ven en MailHog
+4. Los endpoints protegidos quedan autenticados; los correos enviados se ven en Mailpit
 
 ## Análisis de calidad (SonarQube)
 
