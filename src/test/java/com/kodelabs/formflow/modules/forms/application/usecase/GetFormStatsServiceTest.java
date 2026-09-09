@@ -1,7 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase;
 
-import com.kodelabs.formflow.modules.forms.application.service.stats.QuestionStatsCalculator;
-import com.kodelabs.formflow.modules.forms.application.service.stats.QuestionStatsRegistry;
+import com.kodelabs.formflow.modules.forms.application.service.QuestionStatsComputer;
 import com.kodelabs.formflow.modules.forms.application.usecase.form.GetFormStatsService;
 import com.kodelabs.formflow.modules.forms.domain.model.AnswerValue;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
@@ -37,6 +36,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +46,7 @@ class GetFormStatsServiceTest {
 
     @Mock private FormRepositoryPort formRepository;
     @Mock private FormResponseRepositoryPort responseRepository;
-    @Mock private QuestionStatsRegistry statsRegistry;
+    @Mock private QuestionStatsComputer questionStatsComputer;
     @InjectMocks private GetFormStatsService service;
 
     private static final QuestionType SINGLE = QuestionType.SINGLE;
@@ -100,11 +102,9 @@ class GetFormStatsServiceTest {
                 List.of(new OptionDistribution(opt1Id.toString(), "Desarrollador", 2, 100.0)),
                 null, null, null, null, List.of());
 
-        QuestionStatsCalculator mockCalc = mockCalculator(SINGLE, questionStats);
-
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of(r1, r2));
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.of(mockCalc));
+        when(questionStatsComputer.compute(eq(form), eq(2), anyList())).thenReturn(List.of(questionStats));
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
@@ -121,11 +121,9 @@ class GetFormStatsServiceTest {
         QuestionStatsResult emptyStats = new QuestionStatsResult(
                 questionId, "Tipo de cargo", "single", 0, 0, List.of(), null, null, null, null, List.of());
 
-        QuestionStatsCalculator mockCalc = mockCalculator(SINGLE, emptyStats);
-
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of());
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.of(mockCalc));
+        when(questionStatsComputer.compute(eq(form), eq(0), anyList())).thenReturn(List.of(emptyStats));
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
@@ -138,7 +136,7 @@ class GetFormStatsServiceTest {
     void skipsQuestionsWithNoRegisteredCalculator() {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of());
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
+        when(questionStatsComputer.compute(eq(form), anyInt(), anyList())).thenReturn(List.of());
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
@@ -163,7 +161,6 @@ class GetFormStatsServiceTest {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null))
                 .thenReturn(List.of(fullyAnswered, halfAnswered));
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
@@ -174,7 +171,6 @@ class GetFormStatsServiceTest {
     void completionRate_isNullWhenThereAreNoResponses() {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of());
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
@@ -196,7 +192,6 @@ class GetFormStatsServiceTest {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null))
                 .thenReturn(List.of(withTiming, withoutStartedAt));
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
@@ -210,7 +205,6 @@ class GetFormStatsServiceTest {
 
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of(withoutStartedAt));
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
@@ -229,7 +223,6 @@ class GetFormStatsServiceTest {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null))
                 .thenReturn(List.of(dayOneFirst, dayOneSecond, dayTwo));
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
 
@@ -257,7 +250,6 @@ class GetFormStatsServiceTest {
 
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, from, to)).thenReturn(List.of());
-        when(statsRegistry.find(SINGLE)).thenReturn(Optional.empty());
 
         FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, from, to));
 
@@ -271,17 +263,5 @@ class GetFormStatsServiceTest {
         assertThatThrownBy(() -> service.execute(new GetFormStatsQuery(formId, tenantId, null, null)))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
-    }
-
-    private QuestionStatsCalculator mockCalculator(QuestionType questionType, QuestionStatsResult result) {
-        return new QuestionStatsCalculator() {
-            @Override
-            public QuestionType type() { return questionType; }
-
-            @Override
-            public QuestionStatsResult calculate(FormQuestion question, int totalResponses, List<Object> answers) {
-                return result;
-            }
-        };
     }
 }
