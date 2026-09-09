@@ -19,14 +19,12 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositor
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.export.ExportFilenames;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +33,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ExportCandidateResponsePdfService implements ExportCandidateResponsePdfUseCase {
-
-    private static final DateTimeFormatter FILENAME_DATE = DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final CandidateRepositoryPort candidateRepository;
@@ -68,7 +64,7 @@ public class ExportCandidateResponsePdfService implements ExportCandidateRespons
                 classification != null ? classification.name() : null,
                 forms));
 
-        return new CandidateResponsePdfResult(content, buildFilename(candidate.getName()));
+        return new CandidateResponsePdfResult(content, ExportFilenames.build(candidate.getName(), "pdf"));
     }
 
     private Convocatoria loadConvocatoria(UUID convocatoriaId, UUID tenantId) {
@@ -108,12 +104,5 @@ public class ExportCandidateResponsePdfService implements ExportCandidateRespons
                 .findFirst()
                 .map(CandidateFormScore::total)
                 .orElse(null);
-    }
-
-    private String buildFilename(String candidateName) {
-        String slug = candidateName.toLowerCase()
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("^-|-$", "");
-        return slug + "_" + FILENAME_DATE.format(Instant.now()) + ".pdf";
     }
 }
