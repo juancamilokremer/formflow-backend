@@ -4,6 +4,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.AnswerDetailRes
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.CandidateFormExportResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ResponseCategoryScoreResult;
 import com.kodelabs.formflow.shared.export.HtmlToPdfRenderer;
+import com.lowagie.text.pdf.PdfReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -55,5 +56,22 @@ class CandidatePdfRendererTest {
 
         assertThat(pdf).isNotEmpty();
         assertThat(new String(pdf, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+    }
+
+    @Test
+    void startsEachFormAfterTheFirstOnANewPage() throws Exception {
+        CandidateFormExportResult formA = new CandidateFormExportResult(
+                "Form A", 85.0, List.of(),
+                List.of(new AnswerDetailResult(UUID.randomUUID(), "Pregunta A", "single", "opt1", "Respuesta A")));
+        CandidateFormExportResult formB = new CandidateFormExportResult(
+                "Form B", 70.0, List.of(),
+                List.of(new AnswerDetailResult(UUID.randomUUID(), "Pregunta B", "single", "opt1", "Respuesta B")));
+
+        byte[] pdf = renderer.render(new CandidatePdfData(
+                "María Gómez", "maria@test.com", "Analista de RRHH", 78.0, "APTO", List.of(formA, formB)));
+
+        try (PdfReader reader = new PdfReader(pdf)) {
+            assertThat(reader.getNumberOfPages()).isEqualTo(2);
+        }
     }
 }

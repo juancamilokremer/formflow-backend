@@ -15,6 +15,7 @@
         .badge-revisar { background-color: #d97706; }
         .badge-no_apto { background-color: #dc2626; }
         .form-block { page-break-inside: avoid; }
+        .form-block-break { page-break-before: always; }
         .no-answer { color: #9ca3af; font-style: italic; }
         .no-forms { color: #6b7280; font-style: italic; }
     </style>
@@ -35,7 +36,8 @@
 
     <p class="no-forms" th:if="${forms.isEmpty()}">Este candidato todavía no respondió ningún formulario.</p>
 
-    <div class="form-block" th:each="form : ${forms}">
+    <div th:each="form, formStat : ${forms}"
+         th:class="${formStat.first} ? 'form-block' : 'form-block form-block-break'">
         <h2 th:text="${form.formName}">Nombre del formulario</h2>
         <p class="meta" th:if="${form.formScore != null}"
            th:text="'Puntaje: ' + ${#numbers.formatDecimal(form.formScore, 1, 1)}">Puntaje: 40.0</p>
