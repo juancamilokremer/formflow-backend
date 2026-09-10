@@ -1,12 +1,15 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
 import com.kodelabs.formflow.modules.forms.domain.port.in.AddCandidateUseCase;
+import com.kodelabs.formflow.modules.forms.domain.port.in.GetCandidateConvocatoriaResponseUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ImportCandidatesUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.RemoveCandidateUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddCandidateCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetCandidateConvocatoriaResponseQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ImportCandidatesCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.RemoveCandidateCommand;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.AddCandidateRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.CandidateConvocatoriaResponseResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.CandidateResponse;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.ImportResponse;
 import com.kodelabs.formflow.shared.web.ApiResponse;
@@ -20,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,6 +48,7 @@ public class CandidateController {
     private final AddCandidateUseCase addCandidate;
     private final RemoveCandidateUseCase removeCandidate;
     private final ImportCandidatesUseCase importCandidates;
+    private final GetCandidateConvocatoriaResponseUseCase getCandidateConvocatoriaResponse;
 
     @PostMapping("/{convocatoriaId}/candidates")
     @Operation(summary = "Agregar candidato", description = "Agrega un candidato a la convocatoria. No se permite duplicar email.")
@@ -69,6 +74,22 @@ public class CandidateController {
             Authentication auth) {
         removeCandidate.execute(new RemoveCandidateCommand(convocatoriaId, candidateId, tenantId(), userId(auth)));
         return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @GetMapping("/{convocatoriaId}/candidates/{candidateId}/response-detail")
+    @Operation(
+            summary = "Detalle de respuesta de un candidato",
+            description = "Retorna la respuesta completa del candidato agrupada por cada formulario de la " +
+                    "convocatoria que haya respondido: puntaje total, clasificación y, por formulario, su " +
+                    "puntaje por categoría y las respuestas pregunta a pregunta.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Detalle de la respuesta")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Convocatoria o candidato no encontrado", content = @Content)
+    public ResponseEntity<ApiResponse<CandidateConvocatoriaResponseResponse>> getResponseDetail(
+            @PathVariable UUID convocatoriaId,
+            @PathVariable UUID candidateId) {
+        var result = getCandidateConvocatoriaResponse.execute(
+                new GetCandidateConvocatoriaResponseQuery(convocatoriaId, candidateId, tenantId()));
+        return ResponseEntity.ok(ApiResponse.ok(CandidateConvocatoriaResponseResponse.from(result)));
     }
 
     @PostMapping("/{convocatoriaId}/candidates/import")
