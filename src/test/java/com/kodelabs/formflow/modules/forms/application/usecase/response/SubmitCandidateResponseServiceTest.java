@@ -9,6 +9,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateFormScore;
@@ -47,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -242,6 +244,40 @@ class SubmitCandidateResponseServiceTest {
                     assertThat(be.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(be.getMessageKey()).isEqualTo("error.response.required_question_empty");
                 });
+    }
+
+    @Test
+    void doesNotComputeScoringForRegistrationType() {
+        Convocatoria surveyConvocatoria = Convocatoria.builder()
+                .id(convocatoriaId).tenantId(tenantId).status(ConvocatoriaStatus.ACTIVE)
+                .type(FormType.REGISTRATION)
+                .forms(List.of(ConvocatoriaForm.builder()
+                        .convocatoriaId(convocatoriaId).formId(formId).weight(100)
+                        .categoryWeights(List.of())
+                        .build()))
+                .build();
+
+        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId))
+                .thenReturn(Optional.of(surveyConvocatoria));
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
+        when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
+        when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
+        when(responseRepository.save(any())).thenReturn(savedResponse);
+        when(candidateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SubmitCandidateResponseCommand command = new SubmitCandidateResponseCommand(
+                candidateToken, formId, null, List.of(new AnswerItem(questionId, "opt-1")));
+
+        service.execute(command);
+
+        verify(candidateScoringService, never()).compute(any(), any(), any());
+
+        ArgumentCaptor<Candidate> captor = ArgumentCaptor.forClass(Candidate.class);
+        verify(candidateRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(CandidateStatus.RESPONDED);
+        assertThat(captor.getValue().getScores()).isNull();
+        assertThat(captor.getValue().getRespondedAt()).isNotNull();
     }
 
     @Test

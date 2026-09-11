@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.application.service.CandidateClassifier;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateFormScore;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateScores;
@@ -106,6 +107,19 @@ class GetConvocatoriaStatsServiceTest {
         assertThatThrownBy(() -> service.execute(new GetConvocatoriaStatsQuery(convId, tenantId)))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void throwsBadRequestForRegistrationType() {
+        Convocatoria survey = Convocatoria.builder()
+                .id(convId).tenantId(tenantId).name("Encuesta clima")
+                .type(FormType.REGISTRATION)
+                .build();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(survey));
+
+        assertThatThrownBy(() -> service.execute(new GetConvocatoriaStatsQuery(convId, tenantId)))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
     }
 
     private Convocatoria draftConvocatoria() {
