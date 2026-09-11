@@ -11,9 +11,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateConvocat
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
-import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,8 +30,9 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
     @Transactional
     public ConvocatoriaResult execute(CreateConvocatoriaCommand command) {
         formValidator.validateExists(command.formId(), command.tenantId());
-        validateType(command.type());
-        weightValidator.validate(command.categoryWeights());
+        if (command.type() != FormType.REGISTRATION) {
+            weightValidator.validate(command.categoryWeights());
+        }
         Convocatoria saved = convocatoriaRepository.save(buildConvocatoria(command));
         if (command.formId() != null) {
             ConvocatoriaForm form = convocatoriaFormRepository.save(ConvocatoriaForm.builder()
@@ -46,12 +45,6 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
             saved.setForms(List.of(form));
         }
         return ConvocatoriaResult.from(saved, List.of());
-    }
-
-    private void validateType(FormType type) {
-        if (type == FormType.REGISTRATION) {
-            throw new BusinessException("error.convocatoria.invalid_type", HttpStatus.BAD_REQUEST);
-        }
     }
 
     private Convocatoria buildConvocatoria(CreateConvocatoriaCommand command) {

@@ -4,6 +4,7 @@ import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaEmail
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
@@ -164,6 +165,27 @@ class LaunchConvocatoriaServiceTest {
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void launchesRegistrationConvocatoriaWithoutRequiringWeights() {
+        UUID formId = UUID.randomUUID();
+        Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
+                .type(FormType.REGISTRATION)
+                .forms(List.of(ConvocatoriaForm.builder()
+                        .convocatoriaId(convId).formId(formId).weight(100).build()))
+                .name("Encuesta de clima").status(ConvocatoriaStatus.DRAFT).build();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(candidateRepository.countByConvocatoriaId(convId)).thenReturn(1L);
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(activeForm(formId)));
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of());
+
+        var result = service.execute(new LaunchConvocatoriaCommand(convId, tenantId, userId));
+
+        assertThat(result.status()).isEqualTo(ConvocatoriaStatus.ACTIVE.name());
+        verify(weightValidator, never()).validate(any());
+        verify(weightValidator, never()).validateFormWeights(any());
     }
 
     @Test

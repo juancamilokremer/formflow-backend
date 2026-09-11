@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.service;
 
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.TenantInfo;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
@@ -38,6 +39,7 @@ public class ConvocatoriaEmailSender {
         model.put("convocatoriaName", convocatoria.getName());
         model.put("tenantName", tenant.name());
         model.put("surveyUrl", buildSurveyUrl(convocatoria.getId(), candidate.getToken()));
+        model.put("isSurvey", convocatoria.getType() == FormType.REGISTRATION);
         sendEmail.send(EmailType.CANDIDATE_INVITATION, candidate.getEmail(), model);
     }
 
@@ -50,6 +52,7 @@ public class ConvocatoriaEmailSender {
         model.put("surveyUrl", buildSurveyUrl(convocatoria.getId(), candidate.getToken()));
         model.put("endDate", convocatoria.getEndDate() != null
                 ? DATE_FORMAT.format(convocatoria.getEndDate()) : null);
+        model.put("isSurvey", convocatoria.getType() == FormType.REGISTRATION);
         sendEmail.send(EmailType.CANDIDATE_REMINDER, candidate.getEmail(), model);
     }
 
@@ -59,6 +62,7 @@ public class ConvocatoriaEmailSender {
         model.put("candidateName", candidate.getName());
         model.put("convocatoriaName", convocatoria.getName());
         model.put("tenantName", tenant.name());
+        model.put("isSurvey", convocatoria.getType() == FormType.REGISTRATION);
         sendEmail.send(EmailType.CANDIDATE_RESPONSE_CONFIRMATION, candidate.getEmail(), model);
     }
 
