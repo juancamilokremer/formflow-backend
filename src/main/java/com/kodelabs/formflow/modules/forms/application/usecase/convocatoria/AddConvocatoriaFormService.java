@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaFormValidator;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.port.in.AddConvocatoriaFormUseCase;
@@ -31,6 +32,7 @@ public class AddConvocatoriaFormService implements AddConvocatoriaFormUseCase {
         Convocatoria convocatoria = loadDraftConvocatoria(command.convocatoriaId(), command.tenantId());
         formValidator.validateExists(command.formId(), command.tenantId());
         validateNotAlreadyAttached(convocatoria, command.formId());
+        validateSingleFormForRegistration(convocatoria);
 
         int nextPosition = convocatoriaFormRepository.countByConvocatoriaId(convocatoria.getId());
 
@@ -59,6 +61,12 @@ public class AddConvocatoriaFormService implements AddConvocatoriaFormUseCase {
         boolean alreadyAttached = convocatoria.getForms().stream().anyMatch(f -> f.getFormId().equals(formId));
         if (alreadyAttached) {
             throw new BusinessException("error.convocatoria.form_already_attached", HttpStatus.CONFLICT, formId);
+        }
+    }
+
+    private void validateSingleFormForRegistration(Convocatoria convocatoria) {
+        if (convocatoria.getType() == FormType.REGISTRATION && !convocatoria.getForms().isEmpty()) {
+            throw new BusinessException("error.convocatoria.registration_single_form_only", HttpStatus.BAD_REQUEST);
         }
     }
 }

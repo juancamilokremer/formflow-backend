@@ -4,6 +4,7 @@ import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaEmail
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaWeightValidator;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
@@ -36,8 +37,10 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
     public ConvocatoriaResult execute(LaunchConvocatoriaCommand command) {
         Convocatoria convocatoria = loadDraftConvocatoria(command);
         validateHasForm(convocatoria);
-        convocatoria.getForms().forEach(f -> weightValidator.validate(f.getCategoryWeights()));
-        weightValidator.validateFormWeights(convocatoria.getForms());
+        if (convocatoria.getType() != FormType.REGISTRATION) {
+            convocatoria.getForms().forEach(f -> weightValidator.validate(f.getCategoryWeights()));
+            weightValidator.validateFormWeights(convocatoria.getForms());
+        }
         validateHasCandidates(convocatoria);
         publishFormsIfNeeded(convocatoria, command);
         convocatoria.launch();

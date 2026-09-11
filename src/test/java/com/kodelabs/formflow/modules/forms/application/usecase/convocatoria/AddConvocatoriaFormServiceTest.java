@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaFormValidator;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
@@ -74,6 +75,21 @@ class AddConvocatoriaFormServiceTest {
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    @Test
+    void throwsBadRequestWhenRegistrationAlreadyHasOneForm() {
+        UUID otherFormId = UUID.randomUUID();
+        Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
+                .type(FormType.REGISTRATION)
+                .forms(List.of(ConvocatoriaForm.builder().formId(formId).weight(100).build()))
+                .name("Encuesta de clima").status(ConvocatoriaStatus.DRAFT).build();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+
+        var command = new AddConvocatoriaFormCommand(convId, tenantId, userId, otherFormId, 100, List.of(), null);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
     }
 
     @Test

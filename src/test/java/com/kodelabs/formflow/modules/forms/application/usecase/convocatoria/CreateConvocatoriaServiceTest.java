@@ -95,13 +95,28 @@ class CreateConvocatoriaServiceTest {
     }
 
     @Test
-    void throwsBadRequestWhenTypeIsRegistration() {
-        CreateConvocatoriaCommand command = new CreateConvocatoriaCommand(
-                tenantId, userId, formId, "Test", FormType.REGISTRATION, List.of(), null);
+    void createsConvocatoriaWithRegistrationType() {
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThatThrownBy(() -> service.execute(command))
-                .isInstanceOf(BusinessException.class)
-                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+        CreateConvocatoriaCommand command = new CreateConvocatoriaCommand(
+                tenantId, userId, formId, "Encuesta de clima", FormType.REGISTRATION, List.of(), null);
+
+        ConvocatoriaResult result = service.execute(command);
+
+        assertThat(result.type()).isEqualTo(FormType.REGISTRATION);
+        assertThat(result.status()).isEqualTo(ConvocatoriaStatus.DRAFT.name());
+    }
+
+    @Test
+    void doesNotRequireCategoryWeightsForRegistration() {
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CreateConvocatoriaCommand command = new CreateConvocatoriaCommand(
+                tenantId, userId, formId, "Encuesta de clima", FormType.REGISTRATION, null, null);
+
+        service.execute(command);
+
+        verify(weightValidator, org.mockito.Mockito.never()).validate(any());
     }
 
     @Test
