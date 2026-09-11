@@ -1,16 +1,22 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.application.service.ResponseDetailAssembler;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ExportConvocatoriaRankingUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetRankingUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ExportConvocatoriaRankingQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetRankingQuery;
+import com.kodelabs.formflow.modules.forms.domain.port.in.result.AnswerDetailResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ExportConvocatoriaRankingResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.RankingEntryResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.RankingFormScoreResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import com.kodelabs.formflow.shared.export.ExcelRowWriter;
+import com.kodelabs.formflow.shared.export.ExcelSheet;
+import com.kodelabs.formflow.shared.export.ExcelSheetNames;
 import com.kodelabs.formflow.shared.export.ExportFilenames;
 import com.kodelabs.formflow.shared.i18n.Messages;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +42,8 @@ public class ExportConvocatoriaRankingExcelService implements ExportConvocatoria
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final GetRankingUseCase getRanking;
+    private final FormResponseRepositoryPort responseRepository;
+    private final ResponseDetailAssembler responseDetailAssembler;
     private final Messages messages;
     private final ExcelRowWriter excelRowWriter;
 
@@ -49,14 +59,85 @@ public class ExportConvocatoriaRankingExcelService implements ExportConvocatoria
 
         List<RankingEntryResult> selectedEntries = filterBySelection(allEntries, query.candidateIds());
 
-        List<List<String>> rows = new ArrayList<>();
-        rows.add(buildHeaderRow(categoryColumns, formColumns));
+        List<List<String>> resumenRows = new ArrayList<>();
+        resumenRows.add(buildHeaderRow(categoryColumns, formColumns));
         for (RankingEntryResult entry : selectedEntries) {
-            rows.add(buildDataRow(entry, categoryColumns, formColumns));
+            resumenRows.add(buildDataRow(entry, categoryColumns, formColumns));
         }
 
-        byte[] content = excelRowWriter.write(messages.get("export.excel.ranking_sheet_name"), rows);
+        String resumenSheetName = messages.get("export.excel.ranking_sheet_name");
+        List<ExcelSheet> sheets = new ArrayList<>();
+        sheets.add(new ExcelSheet(resumenSheetName, resumenRows));
+        sheets.addAll(buildFormDetailSheets(query, selectedEntries, formColumns, resumenSheetName));
+
+        byte[] content = excelRowWriter.write(sheets);
         return new ExportConvocatoriaRankingResult(content, ExportFilenames.build(convocatoria.getName(), "xlsx"));
+    }
+
+    private List<ExcelSheet> buildFormDetailSheets(
+            ExportConvocatoriaRankingQuery query,
+            List<RankingEntryResult> selectedEntries,
+            Map<UUID, String> formColumns,
+            String resumenSheetName) {
+        Set<UUID> selectedCandidateIds = selectedEntries.stream()
+                .map(RankingEntryResult::candidateId).collect(Collectors.toSet());
+
+        List<FormResponse> allResponses = responseRepository.findAllByConvocatoriaIdAndTenantId(
+                query.convocatoriaId(), query.tenantId(), null, null);
+        Map<UUID, List<FormResponse>> responsesByFormId = allResponses.stream()
+                .filter(response -> selectedCandidateIds.contains(response.getCandidateId()))
+                .collect(Collectors.groupingBy(FormResponse::getFormId));
+
+        Map<UUID, RankingEntryResult> entryByCandidateId = selectedEntries.stream()
+                .collect(Collectors.toMap(RankingEntryResult::candidateId, entry -> entry));
+
+        Set<String> usedSheetNames = new HashSet<>();
+        usedSheetNames.add(resumenSheetName);
+
+        List<ExcelSheet> sheets = new ArrayList<>();
+        for (Map.Entry<UUID, String> form : formColumns.entrySet()) {
+            List<FormResponse> formResponses = responsesByFormId.getOrDefault(form.getKey(), List.of());
+            // Order rows by ranking position rather than however the bulk query returned them.
+            List<FormResponse> orderedResponses = selectedEntries.stream()
+                    .flatMap(entry -> formResponses.stream()
+                            .filter(response -> response.getCandidateId().equals(entry.candidateId())))
+                    .toList();
+
+            String sheetName = ExcelSheetNames.uniqueName(form.getValue(), usedSheetNames);
+            usedSheetNames.add(sheetName);
+            sheets.add(new ExcelSheet(sheetName, buildFormDetailRows(orderedResponses, entryByCandidateId)));
+        }
+        return sheets;
+    }
+
+    /** Every candidate answers the same frozen form snapshot — taking the first response's questions is enough. */
+    private List<List<String>> buildFormDetailRows(
+            List<FormResponse> responses, Map<UUID, RankingEntryResult> entryByCandidateId) {
+        List<List<String>> rows = new ArrayList<>();
+        if (responses.isEmpty()) {
+            rows.add(List.of(messages.get("export.ranking.header.name"), messages.get("export.ranking.header.email")));
+            return rows;
+        }
+
+        List<AnswerDetailResult> questionColumns = responseDetailAssembler.buildOrderedAnswers(responses.get(0));
+
+        List<String> header = new ArrayList<>(List.of(
+                messages.get("export.ranking.header.name"), messages.get("export.ranking.header.email")));
+        questionColumns.forEach(question -> header.add(question.questionTitle()));
+        rows.add(header);
+
+        for (FormResponse response : responses) {
+            RankingEntryResult entry = entryByCandidateId.get(response.getCandidateId());
+            Map<UUID, String> displayValuesByQuestionId = responseDetailAssembler.buildOrderedAnswers(response).stream()
+                    .collect(Collectors.toMap(AnswerDetailResult::questionId,
+                            answer -> answer.displayValue() != null ? answer.displayValue() : ""));
+
+            List<String> row = new ArrayList<>(List.of(entry.name(), entry.email()));
+            questionColumns.forEach(question ->
+                    row.add(displayValuesByQuestionId.getOrDefault(question.questionId(), "")));
+            rows.add(row);
+        }
+        return rows;
     }
 
     private Convocatoria loadConvocatoria(UUID convocatoriaId, UUID tenantId) {

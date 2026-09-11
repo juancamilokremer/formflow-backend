@@ -14,7 +14,7 @@ import java.io.UncheckedIOException;
 import java.util.List;
 
 /**
- * Generic Excel engine: writes a matrix of strings (row 0 = header, bolded) to a single-sheet
+ * Generic Excel engine: writes a matrix of strings (row 0 = header, bolded) per sheet to a
  * .xlsx workbook. Has no knowledge of what the rows represent — every Excel export in the app
  * should go through this instead of writing POI cells again.
  */
@@ -22,8 +22,14 @@ import java.util.List;
 public class ExcelRowWriter {
 
     public byte[] write(String sheetName, List<List<String>> rows) {
+        return write(List.of(new ExcelSheet(sheetName, rows)));
+    }
+
+    public byte[] write(List<ExcelSheet> sheets) {
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
-            writeRows(workbook, sheetName, rows);
+            for (ExcelSheet sheet : sheets) {
+                writeRows(workbook, sheet.name(), sheet.rows());
+            }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             workbook.write(out);
