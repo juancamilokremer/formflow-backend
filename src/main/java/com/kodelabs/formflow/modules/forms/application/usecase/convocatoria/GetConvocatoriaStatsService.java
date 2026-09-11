@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.application.service.CandidateClassifier;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateClassification;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
@@ -30,6 +31,9 @@ public class GetConvocatoriaStatsService implements GetConvocatoriaStatsUseCase 
     @Transactional(readOnly = true)
     public ConvocatoriaStatsResult execute(GetConvocatoriaStatsQuery query) {
         Convocatoria convocatoria = loadConvocatoria(query);
+        if (convocatoria.getType() == FormType.REGISTRATION) {
+            throw new BusinessException("error.convocatoria.stats_not_applicable", HttpStatus.BAD_REQUEST);
+        }
         List<Candidate> candidates = candidateRepository.findAllByConvocatoriaId(query.convocatoriaId());
         return computeStats(convocatoria, candidates);
     }

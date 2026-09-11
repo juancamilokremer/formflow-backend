@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
 import com.kodelabs.formflow.modules.forms.application.service.CandidateClassifier;
 import com.kodelabs.formflow.modules.forms.domain.model.Category;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateClassification;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateFormScore;
@@ -43,6 +44,9 @@ public class GetRankingService implements GetRankingUseCase {
     @Transactional(readOnly = true)
     public List<RankingEntryResult> execute(GetRankingQuery query) {
         Convocatoria convocatoria = loadConvocatoria(query);
+        if (convocatoria.getType() == FormType.REGISTRATION) {
+            throw new BusinessException("error.convocatoria.ranking_not_applicable", HttpStatus.BAD_REQUEST);
+        }
         List<Candidate> candidates = candidateRepository.findAllByConvocatoriaId(query.convocatoriaId());
         Map<UUID, String> categoryNames = loadCategoryNames(convocatoria, query.tenantId());
         Map<UUID, String> formNames = loadFormNames(convocatoria, query.tenantId());

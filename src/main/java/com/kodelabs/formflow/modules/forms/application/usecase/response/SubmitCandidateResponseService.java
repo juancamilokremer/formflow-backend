@@ -9,6 +9,7 @@ import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateFormScore;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
@@ -72,7 +73,9 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
         Form form = loadFormWithQuestions(targetForm.getFormId());
         Map<UUID, Object> answerMap = buildAnswerMap(command.answers());
         validateRequiredQuestions(form, answerMap);
-        ScoringResult scoring = computeScoring(form, targetForm.getCategoryWeights(), answerMap);
+        ScoringResult scoring = convocatoria.getType() == FormType.REGISTRATION
+                ? null
+                : computeScoring(form, targetForm.getCategoryWeights(), answerMap);
         FormResponse response = persistResponse(form, convocatoria, candidate, command);
         recordCandidateResponse(candidate, convocatoria, targetForm, response, scoring);
         eventPublisher.publishEvent(new CandidateResponseSubmittedEvent(
@@ -135,6 +138,14 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
 
     private void recordCandidateResponse(Candidate candidate, Convocatoria convocatoria, ConvocatoriaForm targetForm,
                                           FormResponse response, ScoringResult scoring) {
+        if (scoring == null) {
+            candidate.setStatus(CandidateStatus.RESPONDED);
+            candidate.setResponseId(response.getId());
+            candidate.setScores(null);
+            candidate.setRespondedAt(Instant.now());
+            candidateRepository.save(candidate);
+            return;
+        }
         Map<UUID, Double> byCategory = scoring.scoresByCategory().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().contribution()));
         CandidateFormScore formScore = new CandidateFormScore(
