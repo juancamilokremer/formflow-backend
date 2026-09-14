@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
@@ -34,10 +35,10 @@ class ListConvocatoriasServiceTest {
         UUID conv2Id = UUID.randomUUID();
         Convocatoria c1 = Convocatoria.builder().id(conv1Id).tenantId(tenantId)
                 .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
-                .name("Proceso A").status(ConvocatoriaStatus.ACTIVE).build();
+                .name("Proceso A").type(FormType.CANDIDATES).status(ConvocatoriaStatus.ACTIVE).build();
         Convocatoria c2 = Convocatoria.builder().id(conv2Id).tenantId(tenantId)
                 .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
-                .name("Proceso B").status(ConvocatoriaStatus.DRAFT).build();
+                .name("Proceso B").type(FormType.DIAGNOSTIC).status(ConvocatoriaStatus.DRAFT).build();
         when(convocatoriaRepository.findActiveByTenantId(tenantId)).thenReturn(List.of(c1, c2));
         when(candidateRepository.countByConvocatoriaId(conv1Id)).thenReturn(5L);
         when(candidateRepository.countByConvocatoriaId(conv2Id)).thenReturn(0L);
@@ -48,6 +49,8 @@ class ListConvocatoriasServiceTest {
 
         assertThat(results).hasSize(2);
         assertThat(results.get(0).name()).isEqualTo("Proceso A");
+        assertThat(results.get(0).type()).isEqualTo(FormType.CANDIDATES);
+        assertThat(results.get(1).type()).isEqualTo(FormType.DIAGNOSTIC);
         assertThat(results.get(0).candidateCount()).isEqualTo(5L);
         assertThat(results.get(0).respondedCount()).isEqualTo(3L);
         assertThat(results.get(1).candidateCount()).isZero();

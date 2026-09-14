@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response;
 
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaSummaryResult;
 
 import java.time.Instant;
@@ -8,6 +9,7 @@ import java.util.UUID;
 public record ConvocatoriaSummaryResponse(
         UUID id,
         String name,
+        FormType type,
         String status,
         long candidateCount,
         long respondedCount,
@@ -17,7 +19,7 @@ public record ConvocatoriaSummaryResponse(
 ) {
     public static ConvocatoriaSummaryResponse from(ConvocatoriaSummaryResult r) {
         return new ConvocatoriaSummaryResponse(
-                r.id(), r.name(), r.status(), r.candidateCount(), r.respondedCount(),
+                r.id(), r.name(), r.type(), r.status(), r.candidateCount(), r.respondedCount(),
                 r.startDate(), r.endDate(), r.createdAt()
         );
     }
