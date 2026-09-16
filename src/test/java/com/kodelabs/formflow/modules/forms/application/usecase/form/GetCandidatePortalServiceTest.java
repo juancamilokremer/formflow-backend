@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.form;
 
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
@@ -67,6 +68,7 @@ class GetCandidatePortalServiceTest {
     void returnsFormsWithCompletionStatusOrderedByPosition() {
         Convocatoria convocatoria = Convocatoria.builder()
                 .id(convocatoriaId).tenantId(tenantId).name("Analista RRHH")
+                .type(FormType.CANDIDATES)
                 .status(ConvocatoriaStatus.ACTIVE)
                 .forms(List.of(
                         ConvocatoriaForm.builder().formId(formId1).weight(60).position(0).build(),
@@ -87,6 +89,7 @@ class GetCandidatePortalServiceTest {
 
         assertThat(result.candidateName()).isEqualTo("María García");
         assertThat(result.convocatoriaName()).isEqualTo("Analista RRHH");
+        assertThat(result.convocatoriaType()).isEqualTo(FormType.CANDIDATES);
         assertThat(result.allCompleted()).isFalse();
         assertThat(result.forms()).hasSize(2);
         assertThat(result.forms().get(0).name()).isEqualTo("Prueba técnica");
