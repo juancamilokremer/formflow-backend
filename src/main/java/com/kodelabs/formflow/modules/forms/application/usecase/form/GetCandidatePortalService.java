@@ -54,6 +54,7 @@ public class GetCandidatePortalService implements GetCandidatePortalUseCase {
         return new CandidatePortalResult(
                 candidate.getName(),
                 convocatoria.getName(),
+                convocatoria.getType(),
                 convocatoria.getEndDate(),
                 candidate.getStatus() == CandidateStatus.RESPONDED,
                 forms);
