@@ -37,6 +37,7 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
     public ConvocatoriaResult execute(LaunchConvocatoriaCommand command) {
         Convocatoria convocatoria = loadDraftConvocatoria(command);
         validateHasForm(convocatoria);
+        validateAllFormsReady(convocatoria);
         if (convocatoria.getType() != FormType.REGISTRATION) {
             convocatoria.getForms().forEach(f -> weightValidator.validate(f.getCategoryWeights()));
             weightValidator.validateFormWeights(convocatoria.getForms());
@@ -64,6 +65,13 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
     private void validateHasForm(Convocatoria convocatoria) {
         if (convocatoria.getForms().isEmpty()) {
             throw new BusinessException("error.convocatoria.no_form", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validateAllFormsReady(Convocatoria convocatoria) {
+        boolean allReady = convocatoria.getForms().stream().allMatch(ConvocatoriaForm::isReadyToLaunch);
+        if (!allReady) {
+            throw new BusinessException("error.convocatoria.forms_not_ready", HttpStatus.BAD_REQUEST);
         }
     }
 

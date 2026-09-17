@@ -142,6 +142,20 @@ class LaunchConvocatoriaServiceTest {
     }
 
     @Test
+    void throwsBadRequestWhenAFormIsNotReadyToLaunch() {
+        Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
+                .forms(List.of(ConvocatoriaForm.builder()
+                        .convocatoriaId(convId).formId(UUID.randomUUID()).weight(100).readyToLaunch(false).build()))
+                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+
+        var command = new LaunchConvocatoriaCommand(convId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
     void throwsBadRequestWhenNoFormAttached() {
         Convocatoria draft = draftConvocatoriaWithoutForm();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
@@ -173,7 +187,7 @@ class LaunchConvocatoriaServiceTest {
         Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
                 .type(FormType.REGISTRATION)
                 .forms(List.of(ConvocatoriaForm.builder()
-                        .convocatoriaId(convId).formId(formId).weight(100).build()))
+                        .convocatoriaId(convId).formId(formId).weight(100).readyToLaunch(true).build()))
                 .name("Encuesta de clima").status(ConvocatoriaStatus.DRAFT).build();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
         when(candidateRepository.countByConvocatoriaId(convId)).thenReturn(1L);
@@ -194,8 +208,8 @@ class LaunchConvocatoriaServiceTest {
         UUID formId2 = UUID.randomUUID();
         Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
                 .forms(List.of(
-                        ConvocatoriaForm.builder().convocatoriaId(convId).formId(formId1).weight(60).build(),
-                        ConvocatoriaForm.builder().convocatoriaId(convId).formId(formId2).weight(40).build()))
+                        ConvocatoriaForm.builder().convocatoriaId(convId).formId(formId1).weight(60).readyToLaunch(true).build(),
+                        ConvocatoriaForm.builder().convocatoriaId(convId).formId(formId2).weight(40).readyToLaunch(true).build()))
                 .name("Test").status(ConvocatoriaStatus.DRAFT).build();
         Form draftForm1 = Form.builder().id(formId1).tenantId(tenantId).status(FormStatus.DRAFT).build();
         Form draftForm2 = Form.builder().id(formId2).tenantId(tenantId).status(FormStatus.DRAFT).build();
@@ -224,7 +238,7 @@ class LaunchConvocatoriaServiceTest {
     private Convocatoria draftConvocatoria() {
         return Convocatoria.builder().id(convId).tenantId(tenantId)
                 .forms(List.of(ConvocatoriaForm.builder()
-                        .convocatoriaId(convId).formId(UUID.randomUUID()).weight(100).build()))
+                        .convocatoriaId(convId).formId(UUID.randomUUID()).weight(100).readyToLaunch(true).build()))
                 .name("Test").status(ConvocatoriaStatus.DRAFT).build();
     }
 

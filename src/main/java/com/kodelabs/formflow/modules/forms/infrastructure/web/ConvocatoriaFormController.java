@@ -82,7 +82,7 @@ public class ConvocatoriaFormController {
             @Valid @RequestBody UpdateConvocatoriaFormRequest request, Authentication auth) {
         var result = updateConvocatoriaForm.execute(new UpdateConvocatoriaFormCommand(
                 convocatoriaFormId, convocatoriaId, tenantId(), userId(auth), request.weight(),
-                toWeightsDomain(request.categoryWeights()), request.minScore()));
+                toWeightsDomain(request.categoryWeights()), request.minScore(), request.readyToLaunch()));
         return ResponseEntity.ok(ApiResponse.ok(ConvocatoriaFormResponse.from(result)));
     }
 

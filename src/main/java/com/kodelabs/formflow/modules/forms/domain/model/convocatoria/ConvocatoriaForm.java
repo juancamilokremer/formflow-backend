@@ -33,6 +33,9 @@ public class ConvocatoriaForm {
     @Builder.Default
     private int position = 0;
 
+    @Builder.Default
+    private boolean readyToLaunch = false;
+
     private Instant createdAt;
     private Instant updatedAt;
 }

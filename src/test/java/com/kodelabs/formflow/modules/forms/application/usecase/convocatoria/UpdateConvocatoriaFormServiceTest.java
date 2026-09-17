@@ -46,7 +46,7 @@ class UpdateConvocatoriaFormServiceTest {
         when(convocatoriaFormRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<CategoryWeight> weights = List.of(new CategoryWeight(UUID.randomUUID(), 100));
-        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, weights, 40);
+        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, weights, 40, false);
 
         ConvocatoriaFormResult result = service.execute(command);
 
@@ -56,11 +56,44 @@ class UpdateConvocatoriaFormServiceTest {
     }
 
     @Test
+    void marksReadyToLaunchWhenNothingElseChanged() {
+        List<CategoryWeight> weights = List.of(new CategoryWeight(UUID.randomUUID(), 100));
+        ConvocatoriaForm existing = ConvocatoriaForm.builder()
+                .id(convFormId).convocatoriaId(convId).formId(UUID.randomUUID())
+                .weight(70).categoryWeights(weights).minScore(40).build();
+        Convocatoria draft = draftConvocatoria(List.of(existing));
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(convocatoriaFormRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, weights, 40, true);
+
+        ConvocatoriaFormResult result = service.execute(command);
+
+        assertThat(result.readyToLaunch()).isTrue();
+    }
+
+    @Test
+    void unsetsReadyToLaunchWhenWeightChanges() {
+        ConvocatoriaForm existing = ConvocatoriaForm.builder()
+                .id(convFormId).convocatoriaId(convId).formId(UUID.randomUUID())
+                .weight(100).readyToLaunch(true).build();
+        Convocatoria draft = draftConvocatoria(List.of(existing));
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(convocatoriaFormRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, List.of(), null, true);
+
+        ConvocatoriaFormResult result = service.execute(command);
+
+        assertThat(result.readyToLaunch()).isFalse();
+    }
+
+    @Test
     void throwsNotFoundWhenConvocatoriaFormDoesNotBelongToConvocatoria() {
         Convocatoria draft = draftConvocatoria(List.of());
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
 
-        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, List.of(), null);
+        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, List.of(), null, false);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
@@ -72,7 +105,7 @@ class UpdateConvocatoriaFormServiceTest {
         active.launch();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(active));
 
-        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, List.of(), null);
+        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, List.of(), null, false);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.CONFLICT));
@@ -82,7 +115,7 @@ class UpdateConvocatoriaFormServiceTest {
     void throwsNotFoundWhenConvocatoriaDoesNotExist() {
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.empty());
 
-        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, List.of(), null);
+        var command = new UpdateConvocatoriaFormCommand(convFormId, convId, tenantId, userId, 70, List.of(), null, false);
         assertThatThrownBy(() -> service.execute(command))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));

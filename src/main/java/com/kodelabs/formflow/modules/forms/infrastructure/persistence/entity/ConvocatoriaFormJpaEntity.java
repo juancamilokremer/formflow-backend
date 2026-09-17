@@ -51,6 +51,9 @@ public class ConvocatoriaFormJpaEntity {
     @Column(name = "position", nullable = false)
     private int position;
 
+    @Column(name = "ready_to_launch", nullable = false)
+    private boolean readyToLaunch;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

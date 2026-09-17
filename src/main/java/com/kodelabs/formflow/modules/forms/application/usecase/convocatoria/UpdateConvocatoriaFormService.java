@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateConvocatoriaFormUseCase;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -33,9 +35,17 @@ public class UpdateConvocatoriaFormService implements UpdateConvocatoriaFormUseC
                 .orElseThrow(() -> new BusinessException(
                         "error.convocatoria.form_not_found", HttpStatus.NOT_FOUND, command.convocatoriaFormId()));
 
+        List<CategoryWeight> newCategoryWeights = command.categoryWeights() != null ? command.categoryWeights() : List.of();
+        boolean configChanged = form.getWeight() != command.weight()
+                || !Objects.equals(form.getMinScore(), command.minScore())
+                || !form.getCategoryWeights().equals(newCategoryWeights);
+
         form.setWeight(command.weight());
-        form.setCategoryWeights(command.categoryWeights() != null ? command.categoryWeights() : List.of());
+        form.setCategoryWeights(newCategoryWeights);
         form.setMinScore(command.minScore());
+        // Editing the config after marking a form "ready to launch" would leave a stale
+        // confirmation in place — force a fresh explicit re-check whenever it actually changed.
+        form.setReadyToLaunch(configChanged ? false : command.readyToLaunch());
 
         return ConvocatoriaFormResult.from(convocatoriaFormRepository.save(form));
     }
