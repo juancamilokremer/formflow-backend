@@ -49,10 +49,12 @@ class ConvocatoriaEmailSenderTest {
         emailSender.sendInvitation(candidate, convocatoria);
         emailSender.sendReminder(candidate, convocatoria);
         emailSender.sendResponseConfirmation(candidate, convocatoria);
+        emailSender.sendAdminNotification(candidate, convocatoria);
 
         assertIsSurveyFlag(EmailType.CANDIDATE_INVITATION, true);
         assertIsSurveyFlag(EmailType.CANDIDATE_REMINDER, true);
         assertIsSurveyFlag(EmailType.CANDIDATE_RESPONSE_CONFIRMATION, true);
+        assertIsSurveyFlag(EmailType.ADMIN_CANDIDATE_RESPONDED, true);
     }
 
     @Test
@@ -63,17 +65,47 @@ class ConvocatoriaEmailSenderTest {
         emailSender.sendInvitation(candidate, convocatoria);
         emailSender.sendReminder(candidate, convocatoria);
         emailSender.sendResponseConfirmation(candidate, convocatoria);
+        emailSender.sendAdminNotification(candidate, convocatoria);
 
         assertIsSurveyFlag(EmailType.CANDIDATE_INVITATION, false);
         assertIsSurveyFlag(EmailType.CANDIDATE_REMINDER, false);
         assertIsSurveyFlag(EmailType.CANDIDATE_RESPONSE_CONFIRMATION, false);
+        assertIsSurveyFlag(EmailType.ADMIN_CANDIDATE_RESPONDED, false);
+    }
+
+    @Test
+    void adminNotificationLinksToTheEncuestaDetailPageForRegistrationType() {
+        Convocatoria convocatoria = convocatoria(FormType.REGISTRATION);
+        Candidate candidate = candidate(convocatoria.getId());
+
+        emailSender.sendAdminNotification(candidate, convocatoria);
+
+        assertThat((String) modelFor(EmailType.ADMIN_CANDIDATE_RESPONDED).get("detailUrl"))
+                .contains("/encuestas/" + convocatoria.getId())
+                .doesNotContain("ranking");
+    }
+
+    @Test
+    void adminNotificationLinksToTheRankingTabForCandidatesType() {
+        Convocatoria convocatoria = convocatoria(FormType.CANDIDATES);
+        Candidate candidate = candidate(convocatoria.getId());
+
+        emailSender.sendAdminNotification(candidate, convocatoria);
+
+        assertThat((String) modelFor(EmailType.ADMIN_CANDIDATE_RESPONDED).get("detailUrl"))
+                .contains("/convocatorias/" + convocatoria.getId() + "?tab=ranking");
+    }
+
+    private void assertIsSurveyFlag(EmailType type, boolean expected) {
+        assertThat(modelFor(type).get("isSurvey")).isEqualTo(expected);
     }
 
     @SuppressWarnings("unchecked")
-    private void assertIsSurveyFlag(EmailType type, boolean expected) {
+    private Map<String, Object> modelFor(EmailType type) {
         ArgumentCaptor<Map<String, Object>> modelCaptor = ArgumentCaptor.forClass(Map.class);
-        org.mockito.Mockito.verify(sendEmail).send(eq(type), any(), modelCaptor.capture());
-        assertThat(modelCaptor.getValue().get("isSurvey")).isEqualTo(expected);
+        org.mockito.Mockito.verify(sendEmail, org.mockito.Mockito.atLeastOnce())
+                .send(eq(type), any(), modelCaptor.capture());
+        return modelCaptor.getValue();
     }
 
     private Convocatoria convocatoria(FormType type) {

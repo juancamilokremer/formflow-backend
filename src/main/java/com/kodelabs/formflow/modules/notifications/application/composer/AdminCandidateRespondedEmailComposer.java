@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 /**
- * Expected model: candidateName, candidateEmail, convocatoriaName, rankingUrl.
+ * Expected model: candidateName, candidateEmail, convocatoriaName, detailUrl, isSurvey.
  */
 @Component
 @RequiredArgsConstructor
@@ -26,8 +26,9 @@ public class AdminCandidateRespondedEmailComposer implements EmailComposer {
 
     @Override
     public EmailMessage compose(String to, Map<String, Object> model) {
-        String subject = messages.get("email.admin.candidate_responded.subject",
-                model.get("convocatoriaName"));
+        boolean isSurvey = Boolean.TRUE.equals(model.get("isSurvey"));
+        String subjectKey = isSurvey ? "email.admin.survey_responded.subject" : "email.admin.candidate_responded.subject";
+        String subject = messages.get(subjectKey, model.get("convocatoriaName"));
         return new EmailMessage(to, subject,
                 templateRenderer.render("admin-candidate-responded", model));
     }
