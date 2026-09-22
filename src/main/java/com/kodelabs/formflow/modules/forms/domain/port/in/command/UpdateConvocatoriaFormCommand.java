@@ -12,5 +12,6 @@ public record UpdateConvocatoriaFormCommand(
         UUID userId,
         int weight,
         List<CategoryWeight> categoryWeights,
-        Integer minScore
+        Integer minScore,
+        boolean readyToLaunch
 ) {}

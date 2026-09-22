@@ -12,10 +12,11 @@ public record ConvocatoriaFormResponse(
         int weight,
         List<CategoryWeight> categoryWeights,
         Integer minScore,
-        int position
+        int position,
+        boolean readyToLaunch
 ) {
     public static ConvocatoriaFormResponse from(ConvocatoriaFormResult r) {
         return new ConvocatoriaFormResponse(
-                r.id(), r.formId(), r.weight(), r.categoryWeights(), r.minScore(), r.position());
+                r.id(), r.formId(), r.weight(), r.categoryWeights(), r.minScore(), r.position(), r.readyToLaunch());
     }
 }

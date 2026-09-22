@@ -29,6 +29,7 @@ public class ConvocatoriaFormPersistenceMapper {
                 .categoryWeights(weights)
                 .minScore(entity.getMinScore())
                 .position(entity.getPosition())
+                .readyToLaunch(entity.isReadyToLaunch())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -44,6 +45,7 @@ public class ConvocatoriaFormPersistenceMapper {
                 .categoryWeights(objectMapper.writeValueAsString(domain.getCategoryWeights()))
                 .minScore(domain.getMinScore())
                 .position(domain.getPosition())
+                .readyToLaunch(domain.isReadyToLaunch())
                 .build();
     }
 }

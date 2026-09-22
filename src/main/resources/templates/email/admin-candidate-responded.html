@@ -1,16 +1,23 @@
 <!DOCTYPE html>
-<!-- Variables: candidateName, candidateEmail, convocatoriaName, rankingUrl -->
+<!-- Variables: candidateName, candidateEmail, convocatoriaName, detailUrl, isSurvey -->
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <body>
 <div th:replace="~{email/base-styles :: layout(~{::content})}">
     <th:block th:fragment="content">
-        <h1 style="color:#111827; font-size:22px; margin:0 0 16px;" th:text="#{email.admin.candidate_responded.title}">Nuevo candidato respondió</h1>
+        <h1 style="color:#111827; font-size:22px; margin:0 0 16px;" th:if="${isSurvey}" th:text="#{email.admin.survey_responded.title}">Nuevo destinatario respondió</h1>
+        <h1 style="color:#111827; font-size:22px; margin:0 0 16px;" th:unless="${isSurvey}" th:text="#{email.admin.candidate_responded.title}">Nuevo candidato respondió</h1>
         <p style="color:#374151; font-size:15px; line-height:1.6; margin:0 0 8px;"
-           th:text="#{email.admin.candidate_responded.body(${candidateName}, ${candidateEmail}, ${convocatoriaName})}">Un candidato respondió.</p>
-        <a th:href="${rankingUrl}"
+           th:if="${isSurvey}" th:text="#{email.admin.survey_responded.body(${candidateName}, ${candidateEmail}, ${convocatoriaName})}">Un destinatario respondió.</p>
+        <p style="color:#374151; font-size:15px; line-height:1.6; margin:0 0 8px;"
+           th:unless="${isSurvey}" th:text="#{email.admin.candidate_responded.body(${candidateName}, ${candidateEmail}, ${convocatoriaName})}">Un candidato respondió.</p>
+        <a th:href="${detailUrl}"
            style="display:inline-block; background-color:#3B82F6; color:#ffffff; text-decoration:none;
                   padding:12px 28px; border-radius:6px; font-size:15px; font-weight:bold;"
-           th:text="#{email.admin.candidate_responded.cta}">Ver ranking</a>
+           th:if="${isSurvey}" th:text="#{email.admin.survey_responded.cta}">Ver respuesta</a>
+        <a th:href="${detailUrl}"
+           style="display:inline-block; background-color:#3B82F6; color:#ffffff; text-decoration:none;
+                  padding:12px 28px; border-radius:6px; font-size:15px; font-weight:bold;"
+           th:unless="${isSurvey}" th:text="#{email.admin.candidate_responded.cta}">Ver ranking actualizado</a>
     </th:block>
 </div>
 </body>

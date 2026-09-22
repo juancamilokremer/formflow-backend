@@ -72,11 +72,17 @@ public class ConvocatoriaEmailSender {
             log.warn("No admin email found for tenant {}, skipping admin notification", convocatoria.getTenantId());
             return;
         }
+        boolean isSurvey = convocatoria.getType() == FormType.REGISTRATION;
         Map<String, Object> model = new HashMap<>();
         model.put("candidateName", candidate.getName());
         model.put("candidateEmail", candidate.getEmail());
         model.put("convocatoriaName", convocatoria.getName());
-        model.put("rankingUrl", frontendBaseUrl + "/convocatorias/" + convocatoria.getId() + "/ranking");
+        model.put("isSurvey", isSurvey);
+        // Encuestas have no ranking tab — link straight to the detail page instead, which
+        // defaults to the Respuestas tab.
+        model.put("detailUrl", isSurvey
+                ? frontendBaseUrl + "/encuestas/" + convocatoria.getId()
+                : frontendBaseUrl + "/convocatorias/" + convocatoria.getId() + "?tab=ranking");
         sendEmail.send(EmailType.ADMIN_CANDIDATE_RESPONDED, tenant.adminEmail(), model);
     }
 
