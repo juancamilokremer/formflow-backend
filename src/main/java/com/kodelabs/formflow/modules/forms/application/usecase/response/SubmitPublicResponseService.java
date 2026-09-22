@@ -8,11 +8,14 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.port.in.SubmitPublicResponseUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitPublicResponseCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitPublicResponseResult;
 import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,6 +37,8 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
     private final FormResponseRepositoryPort responseRepository;
     private final FormSnapshotBuilder snapshotBuilder;
     private final ConditionalLogicEvaluator conditionalLogicEvaluator;
+    private final ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
+    private final ConvocatoriaRepositoryPort convocatoriaRepository;
 
     @Override
     @Transactional
@@ -40,8 +46,28 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
         Form form = loadActiveForm(command.formId());
         Map<UUID, Object> answerMap = buildAnswerMap(command.answers());
         validateRequiredQuestions(form, answerMap);
-        UUID respondentToken = persistResponse(form, command);
+        UUID convocatoriaId = resolveAnonymousEncuestaConvocatoriaId(form);
+        UUID respondentToken = persistResponse(form, command, convocatoriaId);
         return new SubmitPublicResponseResult(respondentToken);
+    }
+
+    /** An anonymous submission still counts toward an encuesta's stats/response list when the
+     *  form happens to be attached to one — candidateId stays null, it's genuinely anonymous.
+     *  Restricted to REGISTRATION: a scored candidatura response with no candidate to rank makes
+     *  no sense for CANDIDATES/DIAGNOSTIC convocatorias. */
+    private UUID resolveAnonymousEncuestaConvocatoriaId(Form form) {
+        return convocatoriaFormRepository.findAllByFormId(form.getId()).stream()
+                .map(cf -> convocatoriaRepository.findByIdAndTenantId(cf.getConvocatoriaId(), form.getTenantId()))
+                .flatMap(Optional::stream)
+                .filter(c -> c.getType() == FormType.REGISTRATION)
+                .findFirst()
+                .map(convocatoria -> {
+                    if (convocatoria.isClosed()) {
+                        throw new BusinessException("error.convocatoria.closed", HttpStatus.CONFLICT);
+                    }
+                    return convocatoria.getId();
+                })
+                .orElse(null);
     }
 
     private Form loadActiveForm(UUID formId) {
@@ -52,7 +78,7 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
         return form;
     }
 
-    private UUID persistResponse(Form form, SubmitPublicResponseCommand command) {
+    private UUID persistResponse(Form form, SubmitPublicResponseCommand command, UUID convocatoriaId) {
         var snapshot = snapshotBuilder.buildFromForm(form);
         List<AnswerValue> answers = command.answers().stream()
                 .map(this::toAnswerValue)
@@ -61,6 +87,7 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
         responseRepository.save(FormResponse.builder()
                 .formId(form.getId())
                 .tenantId(form.getTenantId())
+                .convocatoriaId(convocatoriaId)
                 .respondentToken(respondentToken)
                 .formSnapshot(snapshot)
                 .answers(answers)

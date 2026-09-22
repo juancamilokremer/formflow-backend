@@ -16,6 +16,8 @@ public interface ConvocatoriaFormJpaRepository extends Repository<ConvocatoriaFo
 
     List<ConvocatoriaFormJpaEntity> findAllByConvocatoriaIdOrderByPositionAsc(UUID convocatoriaId);
 
+    List<ConvocatoriaFormJpaEntity> findAllByFormId(UUID formId);
+
     List<ConvocatoriaFormJpaEntity> findAllByConvocatoriaIdInOrderByPositionAsc(List<UUID> convocatoriaIds);
 
     int countByConvocatoriaId(UUID convocatoriaId);
