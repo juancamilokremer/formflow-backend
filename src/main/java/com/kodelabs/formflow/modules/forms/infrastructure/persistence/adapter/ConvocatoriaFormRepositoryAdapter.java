@@ -35,6 +35,12 @@ public class ConvocatoriaFormRepositoryAdapter implements ConvocatoriaFormReposi
     }
 
     @Override
+    public List<ConvocatoriaForm> findAllByFormId(UUID formId) {
+        return jpaRepository.findAllByFormId(formId)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public int countByConvocatoriaId(UUID convocatoriaId) {
         return jpaRepository.countByConvocatoriaId(convocatoriaId);
     }

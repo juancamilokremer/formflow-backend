@@ -1,6 +1,8 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaEmailSender;
 import com.kodelabs.formflow.modules.forms.application.service.CsvParserService;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
@@ -24,6 +26,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +37,7 @@ class ImportCandidatesServiceTest {
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
     @Mock private CsvParserService csvParser;
+    @Mock private ConvocatoriaEmailSender emailSender;
 
     @InjectMocks private ImportCandidatesService service;
 
@@ -56,6 +62,24 @@ class ImportCandidatesServiceTest {
         assertThat(result.imported()).isEqualTo(1);
         assertThat(result.skipped()).isEqualTo(1);
         assertThat(result.errors()).hasSize(1);
+        verify(emailSender, never()).sendInvitation(any(), any());
+    }
+
+    @Test
+    void sendsInvitationToEachImportedCandidateWhenConvocatoriaIsAlreadyActive() {
+        Convocatoria active = draftConvocatoria();
+        active.launch();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(active));
+        when(csvParser.parse(any())).thenReturn(List.of(
+                new CsvParserService.CsvCandidate("María G.", "maria@test.com"),
+                new CsvParserService.CsvCandidate("Carlos R.", "carlos@test.com")));
+        when(candidateRepository.existsByConvocatoriaIdAndEmail(any(), any())).thenReturn(false);
+        when(candidateRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.execute(new ImportCandidatesCommand(
+                convId, tenantId, userId, "data".getBytes(StandardCharsets.UTF_8)));
+
+        verify(emailSender, times(2)).sendInvitation(any(Candidate.class), org.mockito.ArgumentMatchers.eq(active));
     }
 
     @Test

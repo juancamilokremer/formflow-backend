@@ -8,12 +8,18 @@ import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
+import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AnswerItem;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.SubmitPublicResponseCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SubmitPublicResponseResult;
 import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +49,8 @@ class SubmitPublicResponseServiceTest {
     @Mock private FormResponseRepositoryPort responseRepository;
     @Mock private FormSnapshotBuilder snapshotBuilder;
     @Mock private ConditionalLogicEvaluator conditionalLogicEvaluator;
+    @Mock private ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
+    @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @InjectMocks private SubmitPublicResponseService service;
 
     private UUID formId;
@@ -131,5 +140,74 @@ class SubmitPublicResponseServiceTest {
         SubmitPublicResponseResult result = service.execute(command);
 
         assertThat(result.respondentToken()).isNotNull();
+    }
+
+    @Test
+    void anonymousResponseToActiveEncuestaFormTagsConvocatoriaId() {
+        UUID convocatoriaId = UUID.randomUUID();
+        UUID convocatoriaFormId = UUID.randomUUID();
+        Convocatoria encuesta = Convocatoria.builder().id(convocatoriaId).tenantId(tenantId)
+                .type(FormType.REGISTRATION).status(ConvocatoriaStatus.ACTIVE).build();
+
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
+        when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
+        when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
+        when(responseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(convocatoriaFormRepository.findAllByFormId(formId)).thenReturn(List.of(
+                ConvocatoriaForm.builder().id(convocatoriaFormId).convocatoriaId(convocatoriaId).formId(formId).build()));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId)).thenReturn(Optional.of(encuesta));
+
+        var command = new SubmitPublicResponseCommand(formId, null, List.of(new AnswerItem(questionId, "3 - 5 años")));
+        service.execute(command);
+
+        ArgumentCaptor<FormResponse> captor = ArgumentCaptor.forClass(FormResponse.class);
+        org.mockito.Mockito.verify(responseRepository).save(captor.capture());
+        assertThat(captor.getValue().getConvocatoriaId()).isEqualTo(convocatoriaId);
+        assertThat(captor.getValue().getCandidateId()).isNull();
+    }
+
+    @Test
+    void anonymousResponseToClosedEncuestaIsRejected() {
+        UUID convocatoriaId = UUID.randomUUID();
+        Convocatoria closedEncuesta = Convocatoria.builder().id(convocatoriaId).tenantId(tenantId)
+                .type(FormType.REGISTRATION).status(ConvocatoriaStatus.CLOSED).build();
+
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
+        when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
+        when(convocatoriaFormRepository.findAllByFormId(formId)).thenReturn(List.of(
+                ConvocatoriaForm.builder().convocatoriaId(convocatoriaId).formId(formId).build()));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId)).thenReturn(Optional.of(closedEncuesta));
+
+        var command = new SubmitPublicResponseCommand(formId, null, List.of(new AnswerItem(questionId, "3 - 5 años")));
+
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> {
+                    BusinessException be = (BusinessException) ex;
+                    assertThat(be.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+                    assertThat(be.getMessageKey()).isEqualTo("error.convocatoria.closed");
+                });
+    }
+
+    @Test
+    void anonymousResponseToActiveCandidatesConvocatoriaDoesNotTagConvocatoriaId() {
+        UUID convocatoriaId = UUID.randomUUID();
+        Convocatoria convocatoria = Convocatoria.builder().id(convocatoriaId).tenantId(tenantId)
+                .type(FormType.CANDIDATES).status(ConvocatoriaStatus.ACTIVE).build();
+
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
+        when(snapshotBuilder.buildFromForm(activeForm)).thenReturn(snapshot);
+        when(conditionalLogicEvaluator.isVisible(any(), any(Map.class))).thenReturn(true);
+        when(responseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(convocatoriaFormRepository.findAllByFormId(formId)).thenReturn(List.of(
+                ConvocatoriaForm.builder().convocatoriaId(convocatoriaId).formId(formId).build()));
+        when(convocatoriaRepository.findByIdAndTenantId(convocatoriaId, tenantId)).thenReturn(Optional.of(convocatoria));
+
+        var command = new SubmitPublicResponseCommand(formId, null, List.of(new AnswerItem(questionId, "3 - 5 años")));
+        service.execute(command);
+
+        ArgumentCaptor<FormResponse> captor = ArgumentCaptor.forClass(FormResponse.class);
+        org.mockito.Mockito.verify(responseRepository).save(captor.capture());
+        assertThat(captor.getValue().getConvocatoriaId()).isNull();
     }
 }

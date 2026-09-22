@@ -13,6 +13,8 @@ public interface ConvocatoriaFormRepositoryPort {
 
     List<ConvocatoriaForm> findAllByConvocatoriaId(UUID convocatoriaId);
 
+    List<ConvocatoriaForm> findAllByFormId(UUID formId);
+
     int countByConvocatoriaId(UUID convocatoriaId);
 
     void deleteById(UUID id);
