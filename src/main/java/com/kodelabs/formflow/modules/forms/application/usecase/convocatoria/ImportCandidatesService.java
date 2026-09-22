@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaEmailSender;
 import com.kodelabs.formflow.modules.forms.application.service.CsvParserService;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
@@ -25,6 +26,7 @@ public class ImportCandidatesService implements ImportCandidatesUseCase {
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final CandidateRepositoryPort candidateRepository;
     private final CsvParserService csvParser;
+    private final ConvocatoriaEmailSender emailSender;
 
     @Override
     @Transactional
@@ -57,7 +59,15 @@ public class ImportCandidatesService implements ImportCandidatesUseCase {
                 toSave.add(buildCandidate(row, convocatoria));
             }
         }
-        if (!toSave.isEmpty()) candidateRepository.saveAll(toSave);
+        if (!toSave.isEmpty()) {
+            List<Candidate> saved = candidateRepository.saveAll(toSave);
+            // Same reasoning as AddCandidateService: bulk invitations only go out at launch
+            // time for candidates that existed then — importing into an already-active
+            // convocatoria has already missed that moment.
+            if (convocatoria.isActive()) {
+                saved.forEach(candidate -> emailSender.sendInvitation(candidate, convocatoria));
+            }
+        }
         return new ImportResult(toSave.size(), skipped, errors);
     }
 

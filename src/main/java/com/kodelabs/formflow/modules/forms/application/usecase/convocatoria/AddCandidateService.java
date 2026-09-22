@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaEmailSender;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
 import com.kodelabs.formflow.modules.forms.domain.port.in.AddCandidateUseCase;
@@ -21,6 +22,7 @@ public class AddCandidateService implements AddCandidateUseCase {
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final CandidateRepositoryPort candidateRepository;
+    private final ConvocatoriaEmailSender emailSender;
 
     @Override
     @Transactional
@@ -28,6 +30,12 @@ public class AddCandidateService implements AddCandidateUseCase {
         Convocatoria convocatoria = loadOpenConvocatoria(command);
         validateNoDuplicate(convocatoria.getId(), command.email());
         Candidate saved = candidateRepository.save(buildCandidate(command, convocatoria.getId()));
+        // Candidates added while still DRAFT get invited in bulk at launch time
+        // (LaunchConvocatoriaService); one added after launch has already missed that
+        // moment, so it needs its own invitation right away.
+        if (convocatoria.isActive()) {
+            emailSender.sendInvitation(saved, convocatoria);
+        }
         return CandidateResult.from(saved);
     }
 

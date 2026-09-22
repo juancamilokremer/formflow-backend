@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.convocatoria;
 
+import com.kodelabs.formflow.modules.forms.application.service.ConvocatoriaEmailSender;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Candidate;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CandidateStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.Convocatoria;
@@ -23,6 +24,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +33,7 @@ class AddCandidateServiceTest {
 
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
+    @Mock private ConvocatoriaEmailSender emailSender;
 
     @InjectMocks private AddCandidateService service;
 
@@ -51,6 +55,33 @@ class AddCandidateServiceTest {
 
         assertThat(result.name()).isEqualTo("María G.");
         assertThat(result.status()).isEqualTo(CandidateStatus.INVITED.name());
+    }
+
+    @Test
+    void sendsInvitationWhenConvocatoriaIsAlreadyActive() {
+        Convocatoria active = activeConvocatoria();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(active));
+        when(candidateRepository.existsByConvocatoriaIdAndEmail(convId, "maria@test.com")).thenReturn(false);
+        Candidate saved = Candidate.builder().id(UUID.randomUUID()).convocatoriaId(convId)
+                .tenantId(tenantId).name("María G.").email("maria@test.com")
+                .status(CandidateStatus.INVITED).token(UUID.randomUUID()).build();
+        when(candidateRepository.save(any())).thenReturn(saved);
+
+        service.execute(new AddCandidateCommand(convId, tenantId, userId, "María G.", "maria@test.com"));
+
+        verify(emailSender).sendInvitation(saved, active);
+    }
+
+    @Test
+    void doesNotSendInvitationWhenConvocatoriaIsStillDraft() {
+        Convocatoria draft = draftConvocatoria();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(candidateRepository.existsByConvocatoriaIdAndEmail(convId, "maria@test.com")).thenReturn(false);
+        when(candidateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.execute(new AddCandidateCommand(convId, tenantId, userId, "María G.", "maria@test.com"));
+
+        verify(emailSender, never()).sendInvitation(any(), any());
     }
 
     @Test
@@ -78,10 +109,14 @@ class AddCandidateServiceTest {
     }
 
     private Convocatoria activeConvocatoria() {
-        Convocatoria c = Convocatoria.builder().id(convId).tenantId(tenantId)
-                .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
-                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
+        Convocatoria c = draftConvocatoria();
         c.launch();
         return c;
+    }
+
+    private Convocatoria draftConvocatoria() {
+        return Convocatoria.builder().id(convId).tenantId(tenantId)
+                .forms(List.of(ConvocatoriaForm.builder().formId(UUID.randomUUID()).weight(100).build()))
+                .name("Test").status(ConvocatoriaStatus.DRAFT).build();
     }
 }
