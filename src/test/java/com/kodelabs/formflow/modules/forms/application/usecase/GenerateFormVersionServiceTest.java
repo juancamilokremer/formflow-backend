@@ -6,8 +6,10 @@ import com.kodelabs.formflow.modules.forms.application.usecase.form.GenerateForm
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
+import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.ConvocatoriaForm;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GenerateFormVersionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormSummaryResult;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +38,7 @@ class GenerateFormVersionServiceTest {
 
     @Mock private FormLoader formLoader;
     @Mock private FormRepositoryPort formRepository;
+    @Mock private ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
     @Mock private FormCloner formCloner;
     @InjectMocks private GenerateFormVersionService service;
 
@@ -134,5 +137,50 @@ class GenerateFormVersionServiceTest {
         assertThat(first.version()).isEqualTo(2);
         assertThat(second.version()).isEqualTo(3);
         assertThat(first.id()).isNotEqualTo(second.id());
+    }
+
+    @Test
+    void repointsEveryContainerToTheNewVersion() {
+        Form origin = Form.builder().id(formId).tenantId(tenantId)
+                .type(FormType.CANDIDATES).status(FormStatus.ARCHIVED).version(1).sections(List.of()).build();
+        Form cloned = Form.builder().id(UUID.randomUUID()).tenantId(tenantId)
+                .type(FormType.CANDIDATES).status(FormStatus.DRAFT).version(2).build();
+        when(formLoader.loadWithSectionsOrThrow(formId, tenantId)).thenReturn(origin);
+        when(formRepository.findMaxVersionInFamily(formId, tenantId)).thenReturn(1);
+        when(formCloner.clone(eq(origin), eq(userId), eq(formId), eq(formId), eq(2))).thenReturn(cloned);
+
+        // The same form can sit in several convocatorias since V17 — all of them must follow.
+        ConvocatoriaForm first = ConvocatoriaForm.builder().id(UUID.randomUUID())
+                .convocatoriaId(UUID.randomUUID()).formId(formId).weight(60).minScore(50).position(0).build();
+        ConvocatoriaForm second = ConvocatoriaForm.builder().id(UUID.randomUUID())
+                .convocatoriaId(UUID.randomUUID()).formId(formId).weight(40).position(2).build();
+        when(convocatoriaFormRepository.findAllByFormId(formId)).thenReturn(List.of(first, second));
+
+        service.execute(new GenerateFormVersionCommand(formId, tenantId, userId));
+
+        ArgumentCaptor<List<ConvocatoriaForm>> captor = ArgumentCaptor.forClass(List.class);
+        verify(convocatoriaFormRepository).saveAll(captor.capture());
+        assertThat(captor.getValue()).allSatisfy(link ->
+                assertThat(link.getFormId()).isEqualTo(cloned.getId()));
+        // The scoring setup of each link survives the repoint.
+        assertThat(captor.getValue()).extracting(ConvocatoriaForm::getWeight).containsExactly(60, 40);
+        assertThat(captor.getValue()).extracting(ConvocatoriaForm::getMinScore).containsExactly(50, null);
+        assertThat(captor.getValue()).extracting(ConvocatoriaForm::getPosition).containsExactly(0, 2);
+    }
+
+    @Test
+    void doesNotTouchContainersWhenTheFormBelongsToNone() {
+        Form origin = Form.builder().id(formId).tenantId(tenantId)
+                .type(FormType.CANDIDATES).status(FormStatus.ARCHIVED).version(1).sections(List.of()).build();
+        when(formLoader.loadWithSectionsOrThrow(formId, tenantId)).thenReturn(origin);
+        when(formRepository.findMaxVersionInFamily(formId, tenantId)).thenReturn(1);
+        when(formCloner.clone(any(), any(), any(), any(), anyInt())).thenReturn(
+                Form.builder().id(UUID.randomUUID()).tenantId(tenantId).type(FormType.CANDIDATES)
+                        .status(FormStatus.DRAFT).version(2).build());
+        when(convocatoriaFormRepository.findAllByFormId(formId)).thenReturn(List.of());
+
+        service.execute(new GenerateFormVersionCommand(formId, tenantId, userId));
+
+        verify(convocatoriaFormRepository, never()).saveAll(any());
     }
 }

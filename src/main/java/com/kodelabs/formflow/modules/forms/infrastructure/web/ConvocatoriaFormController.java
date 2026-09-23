@@ -1,15 +1,15 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
 import com.kodelabs.formflow.modules.forms.domain.model.convocatoria.CategoryWeight;
-import com.kodelabs.formflow.modules.forms.domain.port.in.AddConvocatoriaFormUseCase;
+import com.kodelabs.formflow.modules.forms.domain.port.in.CreateConvocatoriaFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.RemoveConvocatoriaFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ReorderConvocatoriaFormsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateConvocatoriaFormUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddConvocatoriaFormCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateConvocatoriaFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.RemoveConvocatoriaFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ReorderConvocatoriaFormsCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateConvocatoriaFormCommand;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.AddConvocatoriaFormRequest;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.CreateConvocatoriaFormRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.CategoryWeightRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.ReorderConvocatoriaFormsRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateConvocatoriaFormRequest;
@@ -45,26 +45,28 @@ import static com.kodelabs.formflow.shared.web.ControllerUtils.userId;
 @SecurityRequirement(name = "Bearer Auth")
 public class ConvocatoriaFormController {
 
-    private final AddConvocatoriaFormUseCase addConvocatoriaForm;
+    private final CreateConvocatoriaFormUseCase createConvocatoriaForm;
     private final UpdateConvocatoriaFormUseCase updateConvocatoriaForm;
     private final RemoveConvocatoriaFormUseCase removeConvocatoriaForm;
     private final ReorderConvocatoriaFormsUseCase reorderConvocatoriaForms;
 
     @PostMapping
     @Operation(
-            summary = "Agregar un formulario a la convocatoria",
-            description = "La convocatoria debe estar en estado DRAFT. El peso no se valida contra el resto " +
-                    "de formularios en este momento — la suma a 100 se valida recién al lanzar.")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Formulario agregado")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content)
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Convocatoria o formulario no encontrado", content = @Content)
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado DRAFT, o el formulario ya está adjunto", content = @Content)
-    public ResponseEntity<ApiResponse<ConvocatoriaFormResponse>> add(
+            summary = "Crear un formulario dentro de la convocatoria",
+            description = "Crea el formulario y lo adjunta en una sola transacción: un formulario nunca existe " +
+                    "suelto. Se envía 'name' para crear uno en blanco, o 'duplicateFromId' para copiar uno " +
+                    "existente, pero no ambos. La convocatoria debe estar en estado DRAFT. El peso no se valida " +
+                    "contra el resto de formularios en este momento — la suma a 100 se valida recién al lanzar.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Formulario creado y adjunto")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos, o no se indicó exactamente una fuente", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Convocatoria o formulario a duplicar no encontrado", content = @Content)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "No está en estado DRAFT", content = @Content)
+    public ResponseEntity<ApiResponse<ConvocatoriaFormResponse>> create(
             @PathVariable UUID convocatoriaId,
-            @Valid @RequestBody AddConvocatoriaFormRequest request, Authentication auth) {
-        var result = addConvocatoriaForm.execute(new AddConvocatoriaFormCommand(
-                convocatoriaId, tenantId(), userId(auth), request.formId(), request.weight(),
-                toWeightsDomain(request.categoryWeights()), request.minScore()));
+            @Valid @RequestBody CreateConvocatoriaFormRequest request, Authentication auth) {
+        var result = createConvocatoriaForm.execute(new CreateConvocatoriaFormCommand(
+                convocatoriaId, tenantId(), userId(auth), request.name(), request.type(), request.duplicateFromId(),
+                request.weight(), toWeightsDomain(request.categoryWeights()), request.minScore()));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(ConvocatoriaFormResponse.from(result)));
     }
 
