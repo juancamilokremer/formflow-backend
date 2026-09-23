@@ -35,7 +35,10 @@ public class AnswerValueJpaEntity {
     @Column(name = "question_id", nullable = false)
     private UUID questionId;
 
+    // Backticks ask Hibernate for a quoted identifier using each dialect's own quote character:
+    // "value" is a reserved word in H2 (the test profile), while in PostgreSQL the quoted lowercase
+    // name resolves to exactly the same column the migration created.
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "value", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "`value`", columnDefinition = "jsonb", nullable = false)
     private String value;
 }

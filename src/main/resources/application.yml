@@ -30,7 +30,9 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # No explicit dialect: Hibernate picks it from the JDBC connection (PostgreSQLDialect in
+        # prod/dev, H2Dialect under the test profile). Forcing PostgreSQLDialect made Hibernate
+        # match H2's version against PostgreSQL's minimum and log a bogus HHH000511 warning.
         format_sql: true
 
   # Flyway
