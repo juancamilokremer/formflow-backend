@@ -27,6 +27,7 @@ public class AddSectionService implements AddSectionUseCase {
                 .findByIdAndTenantId(command.formId(), command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND,
                         command.formId().toString()));
+        form.assertEditable();
 
         int nextPosition = sectionRepository.countActiveByFormId(form.getId());
 

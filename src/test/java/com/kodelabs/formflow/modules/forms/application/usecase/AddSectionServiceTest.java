@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase;
 import com.kodelabs.formflow.modules.forms.application.usecase.section.AddSectionService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
+import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddSectionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.SectionResult;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -102,5 +104,35 @@ class AddSectionServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.form.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void throwsBadRequestWhenFormIsLocked() {
+        Form lockedForm = Form.builder().id(formId).tenantId(tenantId).name("F")
+                .type(FormType.CANDIDATES).status(FormStatus.ACTIVE).version(2).build();
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(lockedForm));
+
+        var command = new AddSectionCommand(formId, tenantId, userId, "S", null, null);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.question.form_locked")
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+
+        verify(sectionRepository, never()).save(any());
+        verify(formRepository, never()).save(any());
+    }
+
+    @Test
+    void allowsAddingSectionWhenActiveFormIsRegistrationType() {
+        Form registrationForm = Form.builder().id(formId).tenantId(tenantId).name("F")
+                .type(FormType.REGISTRATION).status(FormStatus.ACTIVE).version(2).build();
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(registrationForm));
+        when(sectionRepository.countActiveByFormId(formId)).thenReturn(0);
+        when(sectionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SectionResult result = service.execute(new AddSectionCommand(formId, tenantId, userId, "Nueva", null, null));
+
+        assertThat(result.title()).isEqualTo("Nueva");
     }
 }
