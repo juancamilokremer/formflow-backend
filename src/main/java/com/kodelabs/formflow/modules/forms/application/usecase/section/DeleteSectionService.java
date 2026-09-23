@@ -22,6 +22,12 @@ public class DeleteSectionService implements DeleteSectionUseCase {
     @Override
     @Transactional
     public void execute(DeleteSectionCommand command) {
+        Form form = formRepository
+                .findByIdAndTenantId(command.formId(), command.tenantId())
+                .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND,
+                        command.formId().toString()));
+        form.assertEditable();
+
         FormSection section = sectionRepository
                 .findByIdAndFormIdAndTenantId(command.sectionId(), command.formId(), command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.section.not_found", HttpStatus.NOT_FOUND,
@@ -29,11 +35,6 @@ public class DeleteSectionService implements DeleteSectionUseCase {
 
         section.softDelete();
         sectionRepository.save(section);
-
-        Form form = formRepository
-                .findByIdAndTenantId(command.formId(), command.tenantId())
-                .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND,
-                        command.formId().toString()));
 
         form.incrementVersion();
         form.setUpdatedBy(command.userId());

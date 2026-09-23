@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase;
 import com.kodelabs.formflow.modules.forms.application.usecase.section.DeleteSectionService;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
+import com.kodelabs.formflow.modules.forms.domain.model.FormStatus;
 import com.kodelabs.formflow.modules.forms.domain.model.FormType;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteSectionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
@@ -72,6 +73,7 @@ class DeleteSectionServiceTest {
 
     @Test
     void throwsNotFoundWhenSectionDoesNotExist() {
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.empty());
 
@@ -81,6 +83,36 @@ class DeleteSectionServiceTest {
                 .hasMessage("error.section.not_found")
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
 
-        verify(formRepository, never()).findByIdAndTenantId(any(), any());
+        verify(sectionRepository, never()).save(any());
+        verify(formRepository, never()).save(any());
+    }
+
+    @Test
+    void throwsNotFoundWhenFormDoesNotBelongToTenant() {
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
+
+        var command = new DeleteSectionCommand(sectionId, formId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.form.not_found")
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verify(sectionRepository, never()).findByIdAndFormIdAndTenantId(any(), any(), any());
+    }
+
+    @Test
+    void throwsBadRequestWhenFormIsLocked() {
+        Form lockedForm = Form.builder().id(formId).tenantId(tenantId).name("F")
+                .type(FormType.CANDIDATES).status(FormStatus.ACTIVE).version(2).build();
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(lockedForm));
+
+        var command = new DeleteSectionCommand(sectionId, formId, tenantId, userId);
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.question.form_locked")
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+
+        verify(sectionRepository, never()).save(any());
+        verify(formRepository, never()).save(any());
     }
 }
