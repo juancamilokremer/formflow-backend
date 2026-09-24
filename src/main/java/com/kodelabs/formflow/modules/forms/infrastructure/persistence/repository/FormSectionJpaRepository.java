@@ -11,7 +11,9 @@ import java.util.UUID;
 
 public interface FormSectionJpaRepository extends Repository<FormSectionJpaEntity, UUID> {
 
-    FormSectionJpaEntity save(FormSectionJpaEntity section);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the INSERT
+     *  runs, and callers map the result to a DTO right away. See #122. */
+    FormSectionJpaEntity saveAndFlush(FormSectionJpaEntity section);
 
     List<FormSectionJpaEntity> saveAll(Iterable<FormSectionJpaEntity> sections);
 

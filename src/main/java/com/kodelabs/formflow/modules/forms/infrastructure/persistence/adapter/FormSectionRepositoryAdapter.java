@@ -22,7 +22,7 @@ public class FormSectionRepositoryAdapter implements FormSectionRepositoryPort {
 
     @Override
     public FormSection save(FormSection section) {
-        return sectionMapper.toDomain(sectionJpa.save(sectionMapper.toEntity(section)));
+        return sectionMapper.toDomain(sectionJpa.saveAndFlush(sectionMapper.toEntity(section)));
     }
 
     @Override
