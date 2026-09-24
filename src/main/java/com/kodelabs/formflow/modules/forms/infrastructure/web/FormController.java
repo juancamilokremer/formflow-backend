@@ -1,24 +1,19 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
-import com.kodelabs.formflow.modules.forms.domain.port.in.CreateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.DeleteFormUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.DuplicateFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GenerateFormVersionUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormVersionHistoryUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.ListFormsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormStatusUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UpdateFormUseCase;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DeleteFormCommand;
-import com.kodelabs.formflow.modules.forms.domain.port.in.command.DuplicateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GenerateFormVersionCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormVersionHistoryQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.ListFormsQuery;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateFormStatusCommand;
-import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.CreateFormRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.request.UpdateFormStatusRequest;
 import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.FormDetailResponse;
@@ -57,36 +52,13 @@ import static com.kodelabs.formflow.shared.web.ControllerUtils.userId;
 @SecurityRequirement(name = "Bearer Auth")
 public class FormController {
 
-    private final CreateFormUseCase createForm;
     private final ListFormsUseCase listForms;
     private final GetFormUseCase getForm;
     private final UpdateFormUseCase updateForm;
     private final UpdateFormStatusUseCase updateFormStatus;
     private final DeleteFormUseCase deleteForm;
     private final GenerateFormVersionUseCase generateFormVersion;
-    private final DuplicateFormUseCase duplicateForm;
     private final GetFormVersionHistoryUseCase getFormVersionHistory;
-
-    @PostMapping
-    @Operation(
-            summary = "Crear un nuevo formulario",
-            description = "Crea un formulario vacio (sin secciones) para el tenant activo. " +
-                    "El tipo determina si el formulario soporta scoring (CANDIDATES, DIAGNOSTIC) " +
-                    "o es solo recoleccion de datos (REGISTRATION).")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201", description = "Formulario creado")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", description = "Datos de entrada invalidos", content = @Content)
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content)
-    public ResponseEntity<ApiResponse<FormSummaryResponse>> create(
-            @Valid @RequestBody CreateFormRequest request, Authentication auth) {
-        var result = createForm.execute(new CreateFormCommand(
-                tenantId(), userId(auth), request.name(), request.description(),
-                request.type(), request.timeLimitSeconds()));
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(FormSummaryResponse.from(result)));
-    }
 
     @GetMapping
     @Operation(
@@ -193,24 +165,6 @@ public class FormController {
             @PathVariable UUID id, Authentication auth) {
         var result = generateFormVersion.execute(
                 new GenerateFormVersionCommand(id, tenantId(), userId(auth)));
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(FormSummaryResponse.from(result)));
-    }
-
-    @PostMapping("/{id}/duplicate")
-    @Operation(
-            summary = "Duplicar un formulario",
-            description = "Clona la estructura completa del formulario en uno nuevo, totalmente " +
-                    "independiente (sin linaje de versión), disponible sin importar el estado del original. " +
-                    "El nombre se sugiere como \"{nombre original} (copia)\", editable después.")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201", description = "Formulario duplicado")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401", description = "No autenticado", content = @Content)
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404", description = "Formulario no encontrado o no pertenece al tenant", content = @Content)
-    public ResponseEntity<ApiResponse<FormSummaryResponse>> duplicate(
-            @PathVariable UUID id, Authentication auth) {
-        var result = duplicateForm.execute(new DuplicateFormCommand(id, tenantId(), userId(auth)));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(FormSummaryResponse.from(result)));
     }
 
