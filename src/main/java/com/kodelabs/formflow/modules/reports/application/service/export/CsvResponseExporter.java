@@ -12,7 +12,15 @@ import java.util.stream.Collectors;
 @Component
 public class CsvResponseExporter implements ResponseExporter {
 
-    private static final String CONTENT_TYPE = "text/csv";
+    private static final String CONTENT_TYPE = "text/csv; charset=UTF-8";
+
+    /**
+     * Excel on Windows opens a .csv with the system ANSI codepage unless the file starts with
+     * a BOM, which turns every accented character into mojibake ("envío" reads as "envÃ­o").
+     * Since these exports are opened in Excel far more often than piped into a parser, the
+     * BOM goes in; modern readers strip it.
+     */
+    private static final byte[] UTF8_BOM = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
 
     @Override
     public ExportFormat format() {
@@ -24,7 +32,11 @@ public class CsvResponseExporter implements ResponseExporter {
         String csv = rows.stream()
                 .map(this::toCsvLine)
                 .collect(Collectors.joining("\r\n"));
-        byte[] content = csv.getBytes(StandardCharsets.UTF_8);
+        byte[] body = csv.getBytes(StandardCharsets.UTF_8);
+        byte[] content = new byte[UTF8_BOM.length + body.length];
+        System.arraycopy(UTF8_BOM, 0, content, 0, UTF8_BOM.length);
+        System.arraycopy(body, 0, content, UTF8_BOM.length, body.length);
+
         return new ExportResult(content, ExportFilenames.build(formName, "csv"), CONTENT_TYPE);
     }
 
