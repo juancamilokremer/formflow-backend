@@ -20,7 +20,7 @@ public class CategoryRepositoryAdapter implements CategoryRepositoryPort {
 
     @Override
     public Category save(Category category) {
-        return categoryMapper.toDomain(categoryJpa.save(categoryMapper.toEntity(category)));
+        return categoryMapper.toDomain(categoryJpa.saveAndFlush(categoryMapper.toEntity(category)));
     }
 
     @Override

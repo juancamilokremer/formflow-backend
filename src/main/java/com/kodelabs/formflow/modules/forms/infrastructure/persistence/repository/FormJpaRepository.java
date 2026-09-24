@@ -11,7 +11,9 @@ import java.util.UUID;
 
 public interface FormJpaRepository extends Repository<FormJpaEntity, UUID> {
 
-    FormJpaEntity save(FormJpaEntity form);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the INSERT
+     *  runs, and callers map the result to a DTO right away. See #122. */
+    FormJpaEntity saveAndFlush(FormJpaEntity form);
 
     @Query("SELECT f FROM FormJpaEntity f WHERE f.id = :id AND f.tenantId = :tenantId AND f.deletedAt IS NULL")
     Optional<FormJpaEntity> findActiveByIdAndTenantId(@Param("id") UUID id, @Param("tenantId") UUID tenantId);

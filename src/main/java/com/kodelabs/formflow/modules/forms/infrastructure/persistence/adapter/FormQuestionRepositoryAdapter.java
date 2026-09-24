@@ -22,7 +22,7 @@ public class FormQuestionRepositoryAdapter implements FormQuestionRepositoryPort
 
     @Override
     public FormQuestion save(FormQuestion question) {
-        return questionMapper.toDomain(questionJpa.save(questionMapper.toEntity(question)));
+        return questionMapper.toDomain(questionJpa.saveAndFlush(questionMapper.toEntity(question)));
     }
 
     @Override

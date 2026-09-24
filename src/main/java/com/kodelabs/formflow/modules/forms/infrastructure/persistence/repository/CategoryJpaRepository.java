@@ -11,7 +11,9 @@ import java.util.UUID;
 
 public interface CategoryJpaRepository extends Repository<CategoryJpaEntity, UUID> {
 
-    CategoryJpaEntity save(CategoryJpaEntity category);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the INSERT
+     *  runs, and callers map the result to a DTO right away. See #122. */
+    CategoryJpaEntity saveAndFlush(CategoryJpaEntity category);
 
     void deleteById(UUID id);
 

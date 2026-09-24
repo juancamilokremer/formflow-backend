@@ -27,7 +27,7 @@ public class FormRepositoryAdapter implements FormRepositoryPort {
 
     @Override
     public Form save(Form form) {
-        return formMapper.toDomain(formJpa.save(formMapper.toEntity(form)));
+        return formMapper.toDomain(formJpa.saveAndFlush(formMapper.toEntity(form)));
     }
 
     @Override
