@@ -34,7 +34,7 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
     @Override
     @Transactional
     public FormResponse save(FormResponse response) {
-        FormResponseJpaEntity savedResponse = responseJpa.save(responseMapper.toEntity(response));
+        FormResponseJpaEntity savedResponse = responseJpa.saveAndFlush(responseMapper.toEntity(response));
 
         if (response.getAnswers() != null && !response.getAnswers().isEmpty()) {
             answerJpa.deleteAllByResponseId(savedResponse.getId());

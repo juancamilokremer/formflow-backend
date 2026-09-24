@@ -13,7 +13,9 @@ import java.util.UUID;
 
 public interface EmailTokenJpaRepository extends Repository<EmailTokenJpaEntity, UUID> {
 
-    EmailTokenJpaEntity save(EmailTokenJpaEntity emailToken);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the
+     *  INSERT runs, and callers map the result to a DTO right away. See #122. */
+    EmailTokenJpaEntity saveAndFlush(EmailTokenJpaEntity emailToken);
 
     Optional<EmailTokenJpaEntity> findByTokenHashAndType(String tokenHash, EmailTokenType type);
 

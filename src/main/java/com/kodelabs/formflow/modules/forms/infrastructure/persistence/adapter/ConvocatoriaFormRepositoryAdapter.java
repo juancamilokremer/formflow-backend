@@ -19,7 +19,7 @@ public class ConvocatoriaFormRepositoryAdapter implements ConvocatoriaFormReposi
 
     @Override
     public ConvocatoriaForm save(ConvocatoriaForm form) {
-        return mapper.toDomain(jpaRepository.save(mapper.toEntity(form)));
+        return mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(form)));
     }
 
     @Override

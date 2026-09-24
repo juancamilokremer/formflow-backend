@@ -8,7 +8,9 @@ import java.util.UUID;
 
 public interface ConvocatoriaFormJpaRepository extends Repository<ConvocatoriaFormJpaEntity, UUID> {
 
-    ConvocatoriaFormJpaEntity save(ConvocatoriaFormJpaEntity form);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the
+     *  INSERT runs, and callers map the result to a DTO right away. See #122. */
+    ConvocatoriaFormJpaEntity saveAndFlush(ConvocatoriaFormJpaEntity form);
 
     List<ConvocatoriaFormJpaEntity> saveAll(Iterable<ConvocatoriaFormJpaEntity> forms);
 

@@ -9,7 +9,9 @@ import java.util.UUID;
 
 public interface UserJpaRepository extends Repository<UserJpaEntity, UUID> {
 
-    UserJpaEntity save(UserJpaEntity user);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the
+     *  INSERT runs, and callers map the result to a DTO right away. See #122. */
+    UserJpaEntity saveAndFlush(UserJpaEntity user);
 
     Optional<UserJpaEntity> findByEmailAndTenantId(String email, UUID tenantId);
 

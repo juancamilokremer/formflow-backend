@@ -20,7 +20,7 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
 
     @Override
     public Candidate save(Candidate candidate) {
-        return mapper.toDomain(jpaRepository.save(mapper.toEntity(candidate)));
+        return mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(candidate)));
     }
 
     @Override

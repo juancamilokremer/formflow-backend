@@ -9,7 +9,9 @@ import java.util.UUID;
 
 public interface CandidateJpaRepository extends Repository<CandidateJpaEntity, UUID> {
 
-    CandidateJpaEntity save(CandidateJpaEntity candidate);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the
+     *  INSERT runs, and callers map the result to a DTO right away. See #122. */
+    CandidateJpaEntity saveAndFlush(CandidateJpaEntity candidate);
 
     List<CandidateJpaEntity> saveAll(Iterable<CandidateJpaEntity> candidates);
 

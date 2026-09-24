@@ -22,7 +22,7 @@ public class TenantRepositoryAdapter implements TenantRepositoryPort {
 
     @Override
     public Tenant save(Tenant tenant) {
-        return mapper.toDomain(jpaRepository.save(mapper.toEntity(tenant)));
+        return mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(tenant)));
     }
 
     @Override

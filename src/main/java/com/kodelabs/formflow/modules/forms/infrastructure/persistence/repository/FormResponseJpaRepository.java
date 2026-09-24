@@ -14,7 +14,9 @@ import java.util.UUID;
 
 public interface FormResponseJpaRepository extends Repository<FormResponseJpaEntity, UUID> {
 
-    FormResponseJpaEntity save(FormResponseJpaEntity response);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the
+     *  INSERT runs, and callers map the result to a DTO right away. See #122. */
+    FormResponseJpaEntity saveAndFlush(FormResponseJpaEntity response);
 
     Optional<FormResponseJpaEntity> findByIdAndTenantId(UUID id, UUID tenantId);
 

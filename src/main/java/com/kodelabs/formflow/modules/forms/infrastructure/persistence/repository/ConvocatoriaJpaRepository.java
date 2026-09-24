@@ -13,7 +13,9 @@ import java.util.UUID;
 
 public interface ConvocatoriaJpaRepository extends Repository<ConvocatoriaJpaEntity, UUID> {
 
-    ConvocatoriaJpaEntity save(ConvocatoriaJpaEntity convocatoria);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the
+     *  INSERT runs, and callers map the result to a DTO right away. See #122. */
+    ConvocatoriaJpaEntity saveAndFlush(ConvocatoriaJpaEntity convocatoria);
 
     Optional<ConvocatoriaJpaEntity> findByIdAndTenantId(UUID id, UUID tenantId);
 
