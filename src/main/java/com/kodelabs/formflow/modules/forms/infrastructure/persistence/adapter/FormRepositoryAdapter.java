@@ -36,6 +36,11 @@ public class FormRepositoryAdapter implements FormRepositoryPort {
     }
 
     @Override
+    public Optional<Form> findByIdAndTenantIdForUpdate(UUID id, UUID tenantId) {
+        return formJpa.findActiveByIdAndTenantIdForUpdate(id, tenantId).map(formMapper::toDomain);
+    }
+
+    @Override
     public Optional<Form> findByIdAndTenantIdWithSections(UUID id, UUID tenantId) {
         return formJpa.findActiveByIdAndTenantId(id, tenantId).map(entity -> {
             Form form = formMapper.toDomain(entity);

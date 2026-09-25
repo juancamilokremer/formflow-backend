@@ -40,6 +40,11 @@ public class ConvocatoriaRepositoryAdapter implements ConvocatoriaRepositoryPort
     }
 
     @Override
+    public Optional<Convocatoria> findByIdAndTenantIdForUpdate(UUID id, UUID tenantId) {
+        return jpaRepository.findByIdAndTenantIdForUpdate(id, tenantId).map(this::hydrate);
+    }
+
+    @Override
     public List<Convocatoria> findActiveByTenantId(UUID tenantId) {
         List<ConvocatoriaJpaEntity> entities = jpaRepository.findByTenantIdAndDeletedAtIsNull(tenantId);
         List<UUID> ids = entities.stream().map(ConvocatoriaJpaEntity::getId).toList();

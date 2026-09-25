@@ -78,7 +78,9 @@ public class CreateConvocatoriaFormService implements CreateConvocatoriaFormUseC
     }
 
     private Convocatoria loadDraftConvocatoria(UUID id, UUID tenantId) {
-        Convocatoria convocatoria = convocatoriaRepository.findByIdAndTenantId(id, tenantId)
+        // Locks the convocatoria row so a concurrent create-form on the same convocatoria
+        // serializes instead of racing on the count()-then-insert position below (backend#162).
+        Convocatoria convocatoria = convocatoriaRepository.findByIdAndTenantIdForUpdate(id, tenantId)
                 .orElseThrow(() -> new BusinessException("error.convocatoria.not_found", HttpStatus.NOT_FOUND, id));
         if (!convocatoria.isDraft()) {
             throw new BusinessException("error.convocatoria.not_draft", HttpStatus.CONFLICT);

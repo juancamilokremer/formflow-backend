@@ -54,7 +54,7 @@ class CreateConvocatoriaFormServiceTest {
 
     @Test
     void createsBlankFormAlreadyAttachedAtNextPosition() {
-        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId))
+        when(convocatoriaRepository.findByIdAndTenantIdForUpdate(convId, tenantId))
                 .thenReturn(Optional.of(draftConvocatoria(List.of())));
         when(formRepository.save(any())).thenAnswer(inv -> withId(inv.getArgument(0)));
         when(convocatoriaFormRepository.countByConvocatoriaId(convId)).thenReturn(1);
@@ -82,7 +82,7 @@ class CreateConvocatoriaFormServiceTest {
 
     @Test
     void fallsBackToTheConvocatoriaTypeWhenNoneIsGiven() {
-        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId))
+        when(convocatoriaRepository.findByIdAndTenantIdForUpdate(convId, tenantId))
                 .thenReturn(Optional.of(draftConvocatoria(List.of())));
         when(formRepository.save(any())).thenAnswer(inv -> withId(inv.getArgument(0)));
         when(convocatoriaFormRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -103,7 +103,7 @@ class CreateConvocatoriaFormServiceTest {
         Form copy = Form.builder().id(UUID.randomUUID()).tenantId(tenantId).name("Original (copia)")
                 .type(FormType.CANDIDATES).build();
 
-        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId))
+        when(convocatoriaRepository.findByIdAndTenantIdForUpdate(convId, tenantId))
                 .thenReturn(Optional.of(draftConvocatoria(List.of())));
         when(formLoader.loadWithSectionsOrThrow(originId, tenantId)).thenReturn(origin);
         when(messages.get("form.duplicate_name_suffix", "Original")).thenReturn("Original (copia)");
@@ -125,7 +125,7 @@ class CreateConvocatoriaFormServiceTest {
                 .type(FormType.REGISTRATION)
                 .forms(List.of(ConvocatoriaForm.builder().formId(formId).weight(100).build()))
                 .name("Encuesta de clima").status(ConvocatoriaStatus.DRAFT).build();
-        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(encuesta));
+        when(convocatoriaRepository.findByIdAndTenantIdForUpdate(convId, tenantId)).thenReturn(Optional.of(encuesta));
 
         var command = new CreateConvocatoriaFormCommand(
                 convId, tenantId, userId, "Otro", null, null, 100, List.of(), null);
@@ -141,7 +141,7 @@ class CreateConvocatoriaFormServiceTest {
     void throwsConflictWhenConvocatoriaIsNotDraft() {
         Convocatoria active = draftConvocatoria(List.of());
         active.launch();
-        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(active));
+        when(convocatoriaRepository.findByIdAndTenantIdForUpdate(convId, tenantId)).thenReturn(Optional.of(active));
 
         var command = new CreateConvocatoriaFormCommand(
                 convId, tenantId, userId, "Nuevo", null, null, 60, List.of(), null);
@@ -157,7 +157,7 @@ class CreateConvocatoriaFormServiceTest {
 
     @Test
     void throwsNotFoundWhenConvocatoriaDoesNotExist() {
-        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.empty());
+        when(convocatoriaRepository.findByIdAndTenantIdForUpdate(convId, tenantId)).thenReturn(Optional.empty());
 
         var command = new CreateConvocatoriaFormCommand(
                 convId, tenantId, userId, "Nuevo", null, null, 60, List.of(), null);

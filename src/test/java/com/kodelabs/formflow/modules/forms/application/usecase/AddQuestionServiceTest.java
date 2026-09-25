@@ -74,7 +74,7 @@ class AddQuestionServiceTest {
         FormQuestion saved = FormQuestion.builder().id(UUID.randomUUID()).sectionId(sectionId)
                 .formId(formId).title("Q").type(QuestionType.TEXT).position(3).build();
         when(questionRepository.save(any())).thenReturn(saved);
-        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
+        when(formLoader.loadForUpdateOrThrow(formId, tenantId)).thenReturn(form);
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         QuestionResult result = service.execute(new AddQuestionCommand(
@@ -90,7 +90,7 @@ class AddQuestionServiceTest {
 
     @Test
     void throwsBadRequestWhenCategoryAssignedToNonScoreableType() {
-        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
+        when(formLoader.loadForUpdateOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.of(section));
 
@@ -116,7 +116,7 @@ class AddQuestionServiceTest {
         FormQuestion saved = FormQuestion.builder().id(UUID.randomUUID()).sectionId(sectionId)
                 .formId(formId).title("Q").type(QuestionType.SINGLE).position(0).build();
         when(questionRepository.save(any())).thenReturn(saved);
-        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
+        when(formLoader.loadForUpdateOrThrow(formId, tenantId)).thenReturn(form);
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var command = new AddQuestionCommand(
@@ -129,7 +129,7 @@ class AddQuestionServiceTest {
 
     @Test
     void throwsNotFoundWhenSectionDoesNotExist() {
-        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(form);
+        when(formLoader.loadForUpdateOrThrow(formId, tenantId)).thenReturn(form);
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.empty());
 
@@ -148,7 +148,7 @@ class AddQuestionServiceTest {
         Form lockedForm = Form.builder().id(formId).tenantId(tenantId).name("F")
                 .type(FormType.CANDIDATES).status(FormStatus.ACTIVE)
                 .version(1).build();
-        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(lockedForm);
+        when(formLoader.loadForUpdateOrThrow(formId, tenantId)).thenReturn(lockedForm);
 
         var command = new AddQuestionCommand(
                 formId, sectionId, tenantId, userId, "Q", null,
@@ -169,7 +169,7 @@ class AddQuestionServiceTest {
         Form registrationForm = Form.builder().id(formId).tenantId(tenantId).name("F")
                 .type(FormType.REGISTRATION).status(FormStatus.ARCHIVED)
                 .version(1).build();
-        when(formLoader.loadOrThrow(formId, tenantId)).thenReturn(registrationForm);
+        when(formLoader.loadForUpdateOrThrow(formId, tenantId)).thenReturn(registrationForm);
         when(sectionRepository.findByIdAndFormIdAndTenantId(sectionId, formId, tenantId))
                 .thenReturn(Optional.of(section));
         when(questionRepository.countActiveBySectionId(sectionId)).thenReturn(0);

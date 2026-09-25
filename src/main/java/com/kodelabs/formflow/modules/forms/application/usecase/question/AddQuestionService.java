@@ -32,7 +32,9 @@ public class AddQuestionService implements AddQuestionUseCase {
     @Override
     @Transactional
     public QuestionResult execute(AddQuestionCommand command) {
-        Form form = formLoader.loadOrThrow(command.formId(), command.tenantId());
+        // Locks the form row so a concurrent addQuestion on the same form serializes instead of
+        // racing on the count()-then-insert position calculation below (see backend#162).
+        Form form = formLoader.loadForUpdateOrThrow(command.formId(), command.tenantId());
         form.assertEditable();
 
         FormSection section = sectionRepository
