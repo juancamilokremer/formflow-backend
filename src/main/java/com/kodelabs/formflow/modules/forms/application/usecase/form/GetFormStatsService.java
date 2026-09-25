@@ -3,6 +3,7 @@ package com.kodelabs.formflow.modules.forms.application.usecase.form;
 import com.kodelabs.formflow.modules.forms.application.service.QuestionStatsComputer;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormResponse;
+import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
 import com.kodelabs.formflow.modules.forms.domain.model.snapshot.FormSnapshot;
 import com.kodelabs.formflow.modules.forms.domain.port.in.GetFormStatsUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.GetFormStatsQuery;
@@ -68,11 +69,15 @@ public class GetFormStatsService implements GetFormStatsUseCase {
         return totalRate / responses.size();
     }
 
+    /** Los bloques "info" son texto informativo, nunca aceptan respuesta — no cuentan
+     *  para el total de preguntas o el completionRate nunca llegaria al 100%. */
     private int countQuestionsInSnapshot(FormSnapshot snapshot) {
         if (snapshot == null || snapshot.sections() == null) return 0;
         return snapshot.sections().stream()
                 .filter(s -> s.questions() != null)
-                .mapToInt(s -> s.questions().size())
+                .flatMap(s -> s.questions().stream())
+                .filter(q -> !QuestionType.INFO.code().equals(q.type()))
+                .mapToInt(q -> 1)
                 .sum();
     }
 
