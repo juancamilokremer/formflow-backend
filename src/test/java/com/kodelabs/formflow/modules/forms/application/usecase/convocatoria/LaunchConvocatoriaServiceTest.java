@@ -190,7 +190,6 @@ class LaunchConvocatoriaServiceTest {
                         .convocatoriaId(convId).formId(formId).weight(100).readyToLaunch(true).build()))
                 .name("Encuesta de clima").status(ConvocatoriaStatus.DRAFT).build();
         when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
-        when(candidateRepository.countByConvocatoriaId(convId)).thenReturn(1L);
         when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(activeForm(formId)));
         when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of());
@@ -200,6 +199,25 @@ class LaunchConvocatoriaServiceTest {
         assertThat(result.status()).isEqualTo(ConvocatoriaStatus.ACTIVE.name());
         verify(weightValidator, never()).validate(any());
         verify(weightValidator, never()).validateFormWeights(any());
+    }
+
+    @Test
+    void launchesRegistrationConvocatoriaWithZeroCandidates() {
+        UUID formId = UUID.randomUUID();
+        Convocatoria draft = Convocatoria.builder().id(convId).tenantId(tenantId)
+                .type(FormType.REGISTRATION)
+                .forms(List.of(ConvocatoriaForm.builder()
+                        .convocatoriaId(convId).formId(formId).weight(100).readyToLaunch(true).build()))
+                .name("Encuesta 100% anonima").status(ConvocatoriaStatus.DRAFT).build();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(activeForm(formId)));
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of());
+
+        var result = service.execute(new LaunchConvocatoriaCommand(convId, tenantId, userId));
+
+        assertThat(result.status()).isEqualTo(ConvocatoriaStatus.ACTIVE.name());
+        verify(candidateRepository, never()).countByConvocatoriaId(any());
     }
 
     @Test

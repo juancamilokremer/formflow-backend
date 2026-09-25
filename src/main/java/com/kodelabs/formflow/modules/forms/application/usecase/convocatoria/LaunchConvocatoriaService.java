@@ -41,8 +41,8 @@ public class LaunchConvocatoriaService implements LaunchConvocatoriaUseCase {
         if (convocatoria.getType() != FormType.REGISTRATION) {
             convocatoria.getForms().forEach(f -> weightValidator.validate(f.getCategoryWeights()));
             weightValidator.validateFormWeights(convocatoria.getForms());
+            validateHasCandidates(convocatoria);
         }
-        validateHasCandidates(convocatoria);
         publishFormsIfNeeded(convocatoria, command);
         convocatoria.launch();
         Convocatoria saved = convocatoriaRepository.save(convocatoria);
