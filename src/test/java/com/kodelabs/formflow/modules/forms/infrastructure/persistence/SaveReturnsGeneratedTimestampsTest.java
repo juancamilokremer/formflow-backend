@@ -214,6 +214,127 @@ class SaveReturnsGeneratedTimestampsTest {
         assertThat(saved.getCreatedAt()).isNotNull();
     }
 
+    // --- Update-path regression: a second QA-pass finding, sibling to the insert-path bug
+    // above. @CreationTimestamp only fires on INSERT; Hibernate leaves it untouched on UPDATE.
+    // toEntity() must carry the domain object's createdAt through, or a save() on an
+    // already-persisted row silently echoes createdAt back as null in the response — even
+    // though the database itself is never touched (confirmed by hand against Postgres while
+    // investigating: the DB row kept its real value, only the API response was wrong). Found
+    // launching a real convocatoria during the QA pass: the launch response's createdAt came
+    // back null despite the row being three hours old.
+
+    @Test
+    void convocatoriaCreatedAtSurvivesAnUpdate() {
+        Convocatoria saved = convocatoriaRepository.save(Convocatoria.builder()
+                .tenantId(tenantId).name("Convocatoria").type(FormType.CANDIDATES)
+                .build());
+        Instant original = saved.getCreatedAt();
+
+        saved.setName("Convocatoria renombrada");
+        Convocatoria updated = convocatoriaRepository.save(saved);
+
+        assertThat(updated.getCreatedAt()).isEqualTo(original);
+    }
+
+    @Test
+    void candidateCreatedAtSurvivesAnUpdate() {
+        Convocatoria convocatoria = convocatoriaRepository.save(Convocatoria.builder()
+                .tenantId(tenantId).name("Convocatoria").type(FormType.CANDIDATES)
+                .build());
+        Candidate saved = candidateRepository.save(Candidate.builder()
+                .convocatoriaId(convocatoria.getId()).tenantId(tenantId)
+                .name("Candidato").email("candidato" + UUID.randomUUID() + "@example.com")
+                .build());
+        Instant original = saved.getCreatedAt();
+
+        saved.setName("Candidato renombrado");
+        Candidate updated = candidateRepository.save(saved);
+
+        assertThat(updated.getCreatedAt()).isEqualTo(original);
+    }
+
+    @Test
+    void categoryCreatedAtSurvivesAnUpdate() {
+        Category saved = categoryRepository.save(Category.builder()
+                .tenantId(tenantId).name("Técnicas").color("#4F46E5")
+                .build());
+        Instant original = saved.getCreatedAt();
+
+        saved.setName("Técnicas renombrada");
+        Category updated = categoryRepository.save(saved);
+
+        assertThat(updated.getCreatedAt()).isEqualTo(original);
+    }
+
+    @Test
+    void convocatoriaFormCreatedAtSurvivesAnUpdate() {
+        Convocatoria convocatoria = convocatoriaRepository.save(Convocatoria.builder()
+                .tenantId(tenantId).name("Convocatoria").type(FormType.CANDIDATES)
+                .build());
+        Form form = formRepository.save(Form.builder()
+                .tenantId(tenantId).name("Form").type(FormType.CANDIDATES).status(FormStatus.DRAFT).version(1)
+                .build());
+        ConvocatoriaForm saved = convocatoriaFormRepository.save(ConvocatoriaForm.builder()
+                .convocatoriaId(convocatoria.getId()).formId(form.getId())
+                .build());
+        Instant original = saved.getCreatedAt();
+
+        saved.setWeight(50);
+        ConvocatoriaForm updated = convocatoriaFormRepository.save(saved);
+
+        assertThat(updated.getCreatedAt()).isEqualTo(original);
+    }
+
+    @Test
+    void formCreatedAtSurvivesAnUpdate() {
+        Form saved = formRepository.save(Form.builder()
+                .tenantId(tenantId).name("Form").type(FormType.CANDIDATES).status(FormStatus.DRAFT).version(1)
+                .build());
+        Instant original = saved.getCreatedAt();
+
+        saved.setName("Form renombrado");
+        Form updated = formRepository.save(saved);
+
+        assertThat(updated.getCreatedAt()).isEqualTo(original);
+    }
+
+    @Test
+    void sectionCreatedAtSurvivesAnUpdate() {
+        Form form = formRepository.save(Form.builder()
+                .tenantId(tenantId).name("Form").type(FormType.CANDIDATES).status(FormStatus.DRAFT).version(1)
+                .build());
+        FormSection saved = sectionRepository.save(FormSection.builder()
+                .formId(form.getId()).tenantId(tenantId).title("Sección").position(0)
+                .build());
+        Instant original = saved.getCreatedAt();
+
+        saved.setTitle("Sección renombrada");
+        FormSection updated = sectionRepository.save(saved);
+
+        assertThat(updated.getCreatedAt()).isEqualTo(original);
+    }
+
+    @Test
+    void questionCreatedAtSurvivesAnUpdate() {
+        Form form = formRepository.save(Form.builder()
+                .tenantId(tenantId).name("Form").type(FormType.CANDIDATES).status(FormStatus.DRAFT).version(1)
+                .build());
+        FormSection section = sectionRepository.save(FormSection.builder()
+                .formId(form.getId()).tenantId(tenantId).title("Sección").position(0)
+                .build());
+        FormQuestion saved = questionRepository.save(FormQuestion.builder()
+                .formId(form.getId()).sectionId(section.getId()).tenantId(tenantId)
+                .title("Pregunta").type(QuestionType.TEXT).position(0).required(false)
+                .config(TextConfig.builder().build())
+                .build());
+        Instant original = saved.getCreatedAt();
+
+        saved.setTitle("Pregunta renombrada");
+        FormQuestion updated = questionRepository.save(saved);
+
+        assertThat(updated.getCreatedAt()).isEqualTo(original);
+    }
+
     @Test
     void formResponseComesBackWithTimestamps() {
         Form form = formRepository.save(Form.builder()

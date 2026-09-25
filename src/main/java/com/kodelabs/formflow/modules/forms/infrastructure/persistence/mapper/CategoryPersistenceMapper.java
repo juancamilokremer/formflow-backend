@@ -26,6 +26,9 @@ public class CategoryPersistenceMapper {
                 .name(c.getName())
                 .color(c.getColor())
                 .description(c.getDescription())
+                // See CandidatePersistenceMapper#toEntity: @CreationTimestamp only fires on
+                // INSERT, so the domain value must be carried through for UPDATE paths.
+                .createdAt(c.getCreatedAt())
                 .build();
     }
 }

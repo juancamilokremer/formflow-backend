@@ -65,6 +65,9 @@ public class FormQuestionPersistenceMapper {
                         ? null
                         : objectMapper.writeValueAsString(domain.getConditionalLogic()))
                 .deletedAt(domain.getDeletedAt())
+                // See CandidatePersistenceMapper#toEntity: @CreationTimestamp only fires on
+                // INSERT, so the domain value must be carried through for UPDATE paths.
+                .createdAt(domain.getCreatedAt())
                 .build();
     }
 }

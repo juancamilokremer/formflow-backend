@@ -53,6 +53,10 @@ public class CandidatePersistenceMapper {
                 .scores(scores)
                 .invitedAt(domain.getInvitedAt())
                 .respondedAt(domain.getRespondedAt())
+                // @CreationTimestamp only fires on INSERT — on UPDATE it's left untouched by
+                // Hibernate, so the domain value must be carried through or a save() on an
+                // already-persisted candidate silently echoes createdAt back as null.
+                .createdAt(domain.getCreatedAt())
                 .build();
     }
 }
