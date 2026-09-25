@@ -168,6 +168,30 @@ class GetFormStatsServiceTest {
     }
 
     @Test
+    void completionRate_excludesInfoQuestionsFromTheDenominator() {
+        UUID infoId = UUID.randomUUID();
+        UUID answerableId = UUID.randomUUID();
+        List<QuestionSnapshot> questions = List.of(
+                new QuestionSnapshot(infoId, "Antes de continuar", null, "info", 0, false, null, null, null),
+                new QuestionSnapshot(answerableId, "Q", null, "single", 1, true, null, null, null));
+        SectionSnapshot section = new SectionSnapshot(UUID.randomUUID(), "Sección", null, 0, null, questions);
+        FormSnapshot snapshot = new FormSnapshot(formId, "Evaluación", "candidates", 1, Instant.now(), List.of(section));
+
+        FormResponse answeredEverythingAnswerable = FormResponse.builder().id(UUID.randomUUID()).formId(formId)
+                .formSnapshot(snapshot)
+                .answers(List.of(AnswerValue.builder().questionId(answerableId).value("a").build()))
+                .build();
+
+        when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
+        when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null))
+                .thenReturn(List.of(answeredEverythingAnswerable));
+
+        FormStatsResult result = service.execute(new GetFormStatsQuery(formId, tenantId, null, null));
+
+        assertThat(result.completionRate()).isEqualTo(1.0);
+    }
+
+    @Test
     void completionRate_isNullWhenThereAreNoResponses() {
         when(formRepository.findByIdAndTenantIdWithSections(formId, tenantId)).thenReturn(Optional.of(form));
         when(responseRepository.findAllByFormIdAndTenantId(formId, tenantId, null, null)).thenReturn(List.of());

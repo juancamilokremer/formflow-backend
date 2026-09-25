@@ -13,6 +13,11 @@ public interface FormRepositoryPort {
     /** Returns the form without sections (summary use). */
     Optional<Form> findByIdAndTenantId(UUID id, UUID tenantId);
 
+    /** Same as findByIdAndTenantId, but locks the row for the rest of the transaction.
+     *  Use before a read-then-write on the form (position counters, version increments)
+     *  that would otherwise race under concurrent requests. */
+    Optional<Form> findByIdAndTenantIdForUpdate(UUID id, UUID tenantId);
+
     /** Returns the form with its active sections populated (detail use). */
     Optional<Form> findByIdAndTenantIdWithSections(UUID id, UUID tenantId);
 

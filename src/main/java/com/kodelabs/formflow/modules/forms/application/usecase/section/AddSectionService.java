@@ -23,8 +23,10 @@ public class AddSectionService implements AddSectionUseCase {
     @Override
     @Transactional
     public SectionResult execute(AddSectionCommand command) {
+        // Locks the form row so a concurrent addSection on the same form serializes instead of
+        // racing on the count()-then-insert position calculation below (see backend#162).
         Form form = formRepository
-                .findByIdAndTenantId(command.formId(), command.tenantId())
+                .findByIdAndTenantIdForUpdate(command.formId(), command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND,
                         command.formId().toString()));
         form.assertEditable();

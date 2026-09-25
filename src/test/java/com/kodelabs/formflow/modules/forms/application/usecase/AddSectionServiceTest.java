@@ -51,7 +51,7 @@ class AddSectionServiceTest {
 
     @Test
     void appendsSectionAtNextPositionAndIncrementsFormVersion() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formRepository.findByIdAndTenantIdForUpdate(formId, tenantId)).thenReturn(Optional.of(form));
         when(sectionRepository.countActiveByFormId(formId)).thenReturn(2);
         FormSection saved = FormSection.builder().id(UUID.randomUUID()).formId(formId).title("S3").position(2).build();
         when(sectionRepository.save(any())).thenReturn(saved);
@@ -69,7 +69,7 @@ class AddSectionServiceTest {
 
     @Test
     void savesSectionWithCorrectPositionWhenFormIsEmpty() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formRepository.findByIdAndTenantIdForUpdate(formId, tenantId)).thenReturn(Optional.of(form));
         when(sectionRepository.countActiveByFormId(formId)).thenReturn(0);
         when(sectionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -83,7 +83,7 @@ class AddSectionServiceTest {
 
     @Test
     void propagatesTimeLimitSecondsToPersistedSection() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(form));
+        when(formRepository.findByIdAndTenantIdForUpdate(formId, tenantId)).thenReturn(Optional.of(form));
         when(sectionRepository.countActiveByFormId(formId)).thenReturn(0);
         when(sectionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -97,7 +97,7 @@ class AddSectionServiceTest {
 
     @Test
     void throwsNotFoundWhenFormDoesNotBelongToTenant() {
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.empty());
+        when(formRepository.findByIdAndTenantIdForUpdate(formId, tenantId)).thenReturn(Optional.empty());
 
         var command = new AddSectionCommand(formId, tenantId, userId, "S", null, null);
         assertThatThrownBy(() -> service.execute(command))
@@ -110,7 +110,7 @@ class AddSectionServiceTest {
     void throwsBadRequestWhenFormIsLocked() {
         Form lockedForm = Form.builder().id(formId).tenantId(tenantId).name("F")
                 .type(FormType.CANDIDATES).status(FormStatus.ACTIVE).version(2).build();
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(lockedForm));
+        when(formRepository.findByIdAndTenantIdForUpdate(formId, tenantId)).thenReturn(Optional.of(lockedForm));
 
         var command = new AddSectionCommand(formId, tenantId, userId, "S", null, null);
         assertThatThrownBy(() -> service.execute(command))
@@ -126,7 +126,7 @@ class AddSectionServiceTest {
     void allowsAddingSectionWhenActiveFormIsRegistrationType() {
         Form registrationForm = Form.builder().id(formId).tenantId(tenantId).name("F")
                 .type(FormType.REGISTRATION).status(FormStatus.ACTIVE).version(2).build();
-        when(formRepository.findByIdAndTenantId(formId, tenantId)).thenReturn(Optional.of(registrationForm));
+        when(formRepository.findByIdAndTenantIdForUpdate(formId, tenantId)).thenReturn(Optional.of(registrationForm));
         when(sectionRepository.countActiveByFormId(formId)).thenReturn(0);
         when(sectionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
