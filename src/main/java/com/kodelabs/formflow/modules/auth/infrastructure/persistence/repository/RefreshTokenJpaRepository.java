@@ -12,7 +12,9 @@ import java.util.UUID;
 
 public interface RefreshTokenJpaRepository extends Repository<RefreshTokenJpaEntity, UUID> {
 
-    RefreshTokenJpaEntity save(RefreshTokenJpaEntity refreshToken);
+    /** Flushed: @CreationTimestamp/@UpdateTimestamp only populate the entity when the
+     *  INSERT runs, and callers map the result to a DTO right away. See #122. */
+    RefreshTokenJpaEntity saveAndFlush(RefreshTokenJpaEntity refreshToken);
 
     Optional<RefreshTokenJpaEntity> findByTokenHash(String tokenHash);
 

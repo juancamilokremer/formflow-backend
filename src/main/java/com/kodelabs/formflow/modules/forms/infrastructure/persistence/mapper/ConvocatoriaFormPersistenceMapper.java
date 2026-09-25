@@ -46,6 +46,9 @@ public class ConvocatoriaFormPersistenceMapper {
                 .minScore(domain.getMinScore())
                 .position(domain.getPosition())
                 .readyToLaunch(domain.isReadyToLaunch())
+                // See CandidatePersistenceMapper#toEntity: @CreationTimestamp only fires on
+                // INSERT, so the domain value must be carried through for UPDATE paths.
+                .createdAt(domain.getCreatedAt())
                 .build();
     }
 }

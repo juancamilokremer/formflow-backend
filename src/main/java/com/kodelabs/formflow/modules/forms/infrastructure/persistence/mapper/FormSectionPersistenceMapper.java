@@ -32,6 +32,9 @@ public class FormSectionPersistenceMapper {
                 .position(s.getPosition())
                 .timeLimitSeconds(s.getTimeLimitSeconds())
                 .deletedAt(s.getDeletedAt())
+                // See CandidatePersistenceMapper#toEntity: @CreationTimestamp only fires on
+                // INSERT, so the domain value must be carried through for UPDATE paths.
+                .createdAt(s.getCreatedAt())
                 .build();
     }
 }

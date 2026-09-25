@@ -44,6 +44,9 @@ public class FormPersistenceMapper {
                 .deletedAt(f.getDeletedAt())
                 .createdBy(f.getCreatedBy())
                 .updatedBy(f.getUpdatedBy())
+                // See CandidatePersistenceMapper#toEntity: @CreationTimestamp only fires on
+                // INSERT, so the domain value must be carried through for UPDATE paths.
+                .createdAt(f.getCreatedAt())
                 .build();
     }
 }

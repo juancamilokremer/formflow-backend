@@ -25,7 +25,7 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepositoryPort
 
     @Override
     public RefreshToken save(RefreshToken refreshToken) {
-        return mapper.toDomain(jpaRepository.save(mapper.toEntity(refreshToken)));
+        return mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(refreshToken)));
     }
 
     @Override

@@ -25,7 +25,7 @@ public class EmailTokenRepositoryAdapter implements EmailTokenRepositoryPort {
 
     @Override
     public EmailToken save(EmailToken emailToken) {
-        return mapper.toDomain(jpaRepository.save(mapper.toEntity(emailToken)));
+        return mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(emailToken)));
     }
 
     @Override

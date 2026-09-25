@@ -22,7 +22,7 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
 
     @Override
     public User save(User user) {
-        return mapper.toDomain(jpaRepository.save(mapper.toEntity(user)));
+        return mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(user)));
     }
 
     @Override

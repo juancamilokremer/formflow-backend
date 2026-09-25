@@ -29,7 +29,7 @@ public class ConvocatoriaRepositoryAdapter implements ConvocatoriaRepositoryPort
 
     @Override
     public Convocatoria save(Convocatoria convocatoria) {
-        Convocatoria saved = mapper.toDomain(jpaRepository.save(mapper.toEntity(convocatoria)));
+        Convocatoria saved = mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(convocatoria)));
         saved.setForms(convocatoria.getForms());
         return saved;
     }
