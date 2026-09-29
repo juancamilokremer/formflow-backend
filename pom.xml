@@ -165,6 +165,16 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
+        <!-- JSR-107 (JCache) wrapper around Caffeine — bucket4j-spring-boot-starter 0.10.x only
+             wires its rate-limit bucket cache through a javax.cache.CacheManager (JCache), not
+             Spring's own cache abstraction. Plain spring.cache.type=caffeine produces a Spring
+             CacheManager, a different interface, so the rate limiter silently never activates
+             without this. See backend#165. -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>jcache</artifactId>
+            <version>3.1.8</version>
+        </dependency>
 
         <!-- ===== UTILIDADES ===== -->
         <dependency>
