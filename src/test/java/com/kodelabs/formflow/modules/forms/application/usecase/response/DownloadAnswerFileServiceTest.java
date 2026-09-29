@@ -2,9 +2,9 @@ package com.kodelabs.formflow.modules.forms.application.usecase.response;
 
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.DownloadAnswerFileCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.DownloadAnswerFileResult;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FileStoragePort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.StoredFile;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.storage.FileStoragePort;
+import com.kodelabs.formflow.shared.storage.StoredFile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
