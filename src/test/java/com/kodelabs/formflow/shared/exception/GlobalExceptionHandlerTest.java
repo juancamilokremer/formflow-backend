@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.io.InputStream;
@@ -24,6 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -89,9 +91,23 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void noneOfTheseFourGenerateASupportErrorId() {
+    void malformedPathParameterReturns400NotAServerError() {
+        when(messages.get("error.invalid_parameter", "formId")).thenReturn("El parámetro \"formId\" tiene un formato inválido");
+        var ex = mock(MethodArgumentTypeMismatchException.class);
+        when(ex.getName()).thenReturn("formId");
+        when(ex.getValue()).thenReturn("no-es-un-uuid");
+
+        ResponseEntity<ApiResponse<Void>> response = handler.handleTypeMismatch(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).contains("formId");
+    }
+
+    @Test
+    void noneOfTheseFiveGenerateASupportErrorId() {
         when(messages.get(anyString(), any(), any())).thenReturn("x");
         when(messages.get(anyString())).thenReturn("x");
+        when(messages.get(anyString(), any())).thenReturn("x");
 
         String methodMsg = handler.handleMethodNotAllowed(
                 new HttpRequestMethodNotSupportedException("POST", List.of("GET"))).getBody().getMessage();
@@ -103,6 +119,9 @@ class GlobalExceptionHandlerTest {
         String bodyMsg = handler.handleMalformedRequest(
                 new HttpMessageNotReadableException("bad", EMPTY_BODY))
                 .getBody().getMessage();
+        var typeMismatch = mock(MethodArgumentTypeMismatchException.class);
+        when(typeMismatch.getName()).thenReturn("formId");
+        String typeMismatchMsg = handler.handleTypeMismatch(typeMismatch).getBody().getMessage();
 
         // A support errorId is an 8-char hex-ish token wrapped in parentheses — none of these
         // client errors should carry one, that format is reserved for handleGenericException.
@@ -110,5 +129,6 @@ class GlobalExceptionHandlerTest {
         assertThat(routeMsg).doesNotContain("código de soporte");
         assertThat(mediaMsg).doesNotContain("código de soporte");
         assertThat(bodyMsg).doesNotContain("código de soporte");
+        assertThat(typeMismatchMsg).doesNotContain("código de soporte");
     }
 }
