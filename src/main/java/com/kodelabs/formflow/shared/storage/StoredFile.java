@@ -1,3 +1,3 @@
-package com.kodelabs.formflow.modules.forms.domain.port.out;
+package com.kodelabs.formflow.shared.storage;
 
 public record StoredFile(String filename, String contentType, byte[] content) {}

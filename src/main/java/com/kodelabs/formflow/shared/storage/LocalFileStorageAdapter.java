@@ -1,7 +1,5 @@
-package com.kodelabs.formflow.modules.forms.infrastructure.storage;
+package com.kodelabs.formflow.shared.storage;
 
-import com.kodelabs.formflow.modules.forms.domain.port.out.FileStoragePort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.StoredFile;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaTypeFactory;
