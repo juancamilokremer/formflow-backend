@@ -33,3 +33,6 @@ Thumbs.db
 ### Logs
 *.log
 logs/
+
+### Uploaded files (local filesystem storage, app.uploads.dir — see backend#158)
+/uploads/
