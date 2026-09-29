@@ -10,14 +10,18 @@ import com.kodelabs.formflow.modules.forms.domain.model.config.FileConfig;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.UploadedFileResponse;
+import com.kodelabs.formflow.shared.web.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -76,11 +80,12 @@ class PublicFileControllerTest {
         });
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        ResponseEntity<UploadResponse> uploadResponse = restTemplate.postForEntity(
-                uploadUrl, new HttpEntity<>(body, headers), UploadResponse.class);
+        ResponseEntity<ApiResponse<UploadedFileResponse>> uploadResponse = restTemplate.exchange(
+                uploadUrl, HttpMethod.POST, new HttpEntity<>(body, headers),
+                new ParameterizedTypeReference<>() {});
 
         assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        String downloadUrl = uploadResponse.getBody().data().url();
+        String downloadUrl = uploadResponse.getBody().getData().url();
         assertThat(downloadUrl).contains("/api/v1/public/files/");
 
         ResponseEntity<byte[]> downloadResponse = restTemplate.getForEntity(downloadUrl, byte[].class);
@@ -120,7 +125,4 @@ class PublicFileControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
-
-    private record UploadResponse(UploadData data) {}
-    private record UploadData(String url) {}
 }

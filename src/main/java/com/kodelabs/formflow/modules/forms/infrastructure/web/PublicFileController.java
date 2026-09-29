@@ -1,11 +1,12 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.web;
 
+import com.kodelabs.formflow.modules.forms.domain.port.in.DownloadAnswerFileUseCase;
 import com.kodelabs.formflow.modules.forms.domain.port.in.UploadAnswerFileUseCase;
+import com.kodelabs.formflow.modules.forms.domain.port.in.command.DownloadAnswerFileCommand;
 import com.kodelabs.formflow.modules.forms.domain.port.in.command.UploadAnswerFileCommand;
+import com.kodelabs.formflow.modules.forms.domain.port.in.result.DownloadAnswerFileResult;
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.UploadAnswerFileResult;
-import com.kodelabs.formflow.modules.forms.domain.port.out.FileStoragePort;
-import com.kodelabs.formflow.modules.forms.domain.port.out.StoredFile;
-import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.modules.forms.infrastructure.web.dto.response.UploadedFileResponse;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,7 +35,7 @@ import java.util.UUID;
 public class PublicFileController {
 
     private final UploadAnswerFileUseCase uploadAnswerFile;
-    private final FileStoragePort fileStorage;
+    private final DownloadAnswerFileUseCase downloadAnswerFile;
 
     @PostMapping("/forms/{formId}/questions/{questionId}/files")
     @Operation(
@@ -66,14 +67,11 @@ public class PublicFileController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Archivo encontrado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Archivo no encontrado", content = @Content)
     public ResponseEntity<byte[]> download(@PathVariable UUID fileId) {
-        StoredFile file = fileStorage.load(fileId)
-                .orElseThrow(() -> new BusinessException("error.file.not_found", HttpStatus.NOT_FOUND));
+        DownloadAnswerFileResult file = downloadAnswerFile.execute(new DownloadAnswerFileCommand(fileId));
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.filename() + "\"")
                 .body(file.content());
     }
-
-    private record UploadedFileResponse(String url) {}
 }

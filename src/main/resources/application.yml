@@ -105,9 +105,9 @@ app:
   pagination:
     default-page: ${PAGINATION_DEFAULT_PAGE:0}
     default-size: ${PAGINATION_DEFAULT_SIZE:20}
-  # Almacenamiento de archivos subidos como respuesta (preguntas tipo 'file') — filesystem
-  # local para el MVP de instancia única, sin credenciales externas. Migrar a Cloudflare R2
-  # más adelante implica un nuevo FileStoragePort adapter, sin tocar el use case ni el
-  # controller. Ver backend#158.
+  # Storage for files uploaded as answers ('file'-type questions) — local filesystem for the
+  # single-instance MVP, no external credentials needed. Migrating to Cloudflare R2 later only
+  # means a new FileStoragePort adapter, no changes to the use case or the controller. See
+  # backend#158.
   uploads:
     dir: ${UPLOADS_DIR:./uploads}
