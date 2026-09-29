@@ -7,15 +7,6 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
-  # Caffeine in-memory cache — backing store for Bucket4j rate limiter.
-  # Swap to redis for multi-instance deployments without touching Java code.
-  cache:
-    type: caffeine
-    caffeine:
-      spec: maximumSize=100000,expireAfterAccess=3600s
-    cache-names:
-      - rate-limit-buckets
-
   # SMTP: Mailpit en dev (sin auth), SendGrid en prod via variables de entorno
   mail:
     host: ${SMTP_HOST:localhost}
@@ -70,6 +61,13 @@ springdoc:
 # Deshabilitar en entornos de prueba con RATE_LIMIT_ENABLED=false.
 bucket4j:
   enabled: ${RATE_LIMIT_ENABLED:true}
+  # RateLimitCacheConfig provides the javax.cache.CacheManager (Caffeine's JCache provider,
+  # in-memory) this starter version requires — see backend#165.
+  cache-to-use: jcache
+  # Off by default only when the property is absent (its own matchIfMissing=true), not when
+  # actually unset in the properties object — needs a second, separate cache ("filterConfigCache")
+  # we never created. We don't need runtime-reconfigurable limits, so disable it explicitly.
+  filter-config-caching-enabled: false
   filters:
     - cache-name: rate-limit-buckets
       url: /api/v1/public/forms/[^/]+/responses
