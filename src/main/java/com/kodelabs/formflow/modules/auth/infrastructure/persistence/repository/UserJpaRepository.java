@@ -20,4 +20,6 @@ public interface UserJpaRepository extends Repository<UserJpaEntity, UUID> {
     boolean existsByEmailAndTenantId(String email, UUID tenantId);
 
     Optional<UserJpaEntity> findFirstByTenantIdAndRole(UUID tenantId, UserRole role);
+
+    long countByTenantIdAndActiveTrue(UUID tenantId);
 }

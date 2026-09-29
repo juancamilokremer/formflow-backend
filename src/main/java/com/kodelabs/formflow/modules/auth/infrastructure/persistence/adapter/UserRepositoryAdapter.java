@@ -39,4 +39,9 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     public boolean existsByEmailAndTenantId(String email, UUID tenantId) {
         return jpaRepository.existsByEmailAndTenantId(email, tenantId);
     }
+
+    @Override
+    public long countByTenantIdAndActiveTrue(UUID tenantId) {
+        return jpaRepository.countByTenantIdAndActiveTrue(tenantId);
+    }
 }

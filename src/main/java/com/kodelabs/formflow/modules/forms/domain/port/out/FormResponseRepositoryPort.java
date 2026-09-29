@@ -35,6 +35,12 @@ public interface FormResponseRepositoryPort {
 
     long countByFormIdAndTenantId(UUID formId, UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo);
 
+    /** Tenant-wide count across all of its forms (backend#5 usage endpoint). */
+    long countByTenantId(UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo);
+
+    /** Global count across every tenant (backend#5 admin stats). */
+    long countAllSince(Instant submittedAtFrom, Instant submittedAtTo);
+
     Map<UUID, Integer> countByFormIds(List<UUID> formIds);
 
     Map<UUID, Instant> lastResponseAtByFormIds(List<UUID> formIds);

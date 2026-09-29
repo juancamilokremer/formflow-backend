@@ -70,6 +70,19 @@ public interface FormResponseJpaRepository extends Repository<FormResponseJpaEnt
             @Param("formId") UUID formId, @Param("tenantId") UUID tenantId,
             @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo);
 
+    @Query("SELECT COUNT(r) FROM FormResponseJpaEntity r WHERE r.tenantId = :tenantId "
+            + "AND r.submittedAt >= COALESCE(:submittedAtFrom, r.submittedAt) "
+            + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt)")
+    long countByTenantId(
+            @Param("tenantId") UUID tenantId,
+            @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo);
+
+    @Query("SELECT COUNT(r) FROM FormResponseJpaEntity r WHERE "
+            + "r.submittedAt >= COALESCE(:submittedAtFrom, r.submittedAt) "
+            + "AND r.submittedAt <= COALESCE(:submittedAtTo, r.submittedAt)")
+    long countAllSince(
+            @Param("submittedAtFrom") Instant submittedAtFrom, @Param("submittedAtTo") Instant submittedAtTo);
+
     @Query("SELECT r.formId, COUNT(r.id) FROM FormResponseJpaEntity r WHERE r.formId IN :formIds GROUP BY r.formId")
     List<Object[]> countGroupedByFormIds(@Param("formIds") List<UUID> formIds);
 

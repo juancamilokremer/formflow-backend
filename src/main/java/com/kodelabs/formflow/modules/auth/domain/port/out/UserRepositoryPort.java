@@ -18,4 +18,6 @@ public interface UserRepositoryPort {
     Optional<User> findByIdAndTenantId(UUID id, UUID tenantId);
 
     boolean existsByEmailAndTenantId(String email, UUID tenantId);
+
+    long countByTenantIdAndActiveTrue(UUID tenantId);
 }
