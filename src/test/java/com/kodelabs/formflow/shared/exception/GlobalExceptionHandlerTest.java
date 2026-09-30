@@ -17,6 +17,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.io.InputStream;
@@ -101,6 +102,16 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody().getMessage()).contains("formId");
+    }
+
+    @Test
+    void multipartOverLimitReturns400NotAServerError() {
+        when(messages.get("error.upload.too_large")).thenReturn("El archivo supera el tamaño máximo permitido");
+        var ex = new MaxUploadSizeExceededException(5 * 1024 * 1024);
+
+        ResponseEntity<ApiResponse<Void>> response = handler.handleUploadTooLarge(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test

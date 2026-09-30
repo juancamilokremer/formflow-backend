@@ -17,4 +17,6 @@ public interface FileStoragePort {
     void store(UUID fileId, String filename, byte[] content);
 
     Optional<StoredFile> load(UUID fileId);
+
+    void delete(UUID fileId);
 }

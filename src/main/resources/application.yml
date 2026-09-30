@@ -32,6 +32,13 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  # Default is 1MB — too low for branding logos (2MB, backend#7) and already too low for
+  # some 'file'-type question answers (#158). 5MB covers both with headroom.
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
 # Logging — el MDC (requestId, tenantId, userId) lo puebla RequestLoggingFilter + JwtAuthenticationFilter
 logging:
   pattern:
