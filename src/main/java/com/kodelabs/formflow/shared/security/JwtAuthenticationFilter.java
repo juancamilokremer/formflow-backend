@@ -25,6 +25,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -82,7 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Tenant tenant = tenantRepository.findById(UUID.fromString(tenantId)).orElse(null);
         if (tenant == null || !tenant.isActive()) {
             log.warn("Request rejected: tenant '{}' is {}", tenantId, tenant == null ? "unknown" : tenant.getStatus());
-            writeForbidden(response);
+            writeForbidden(request, response);
             return false;
         }
 
@@ -100,11 +101,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return true;
     }
 
-    private void writeForbidden(HttpServletResponse response) throws IOException {
+    private void writeForbidden(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(objectMapper.writeValueAsString(
-                ApiResponse.error(messages.get("error.tenant.suspended"))));
+                ApiResponse.error(messages.getForLocale("error.tenant.suspended", localeFor(request)))));
+    }
+
+    /**
+     * This filter runs before DispatcherServlet ever resolves the request locale, so
+     * messages.get() (LocaleContextHolder-based) isn't usable here. HttpServletRequest#getLocale()
+     * isn't a safe substitute either: without an Accept-Language header it falls back to the
+     * JVM/OS default locale, which differs between machines/CI runners (this is exactly what
+     * broke this filter's own tests — Spanish locally, English on the Linux CI runner) instead
+     * of respecting I18nConfig's stated default of Spanish.
+     */
+    private Locale localeFor(HttpServletRequest request) {
+        String header = request.getHeader("Accept-Language");
+        return (header == null || header.isBlank()) ? Locale.forLanguageTag("es") : request.getLocale();
     }
 }
