@@ -22,6 +22,8 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepos
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitExceededException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +53,7 @@ class SubmitPublicResponseServiceTest {
     @Mock private ConditionalLogicEvaluator conditionalLogicEvaluator;
     @Mock private ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
+    @Mock private PlanLimitService planLimitService;
     @InjectMocks private SubmitPublicResponseService service;
 
     private UUID formId;
@@ -209,5 +212,19 @@ class SubmitPublicResponseServiceTest {
         ArgumentCaptor<FormResponse> captor = ArgumentCaptor.forClass(FormResponse.class);
         org.mockito.Mockito.verify(responseRepository).save(captor.capture());
         assertThat(captor.getValue().getConvocatoriaId()).isNull();
+    }
+
+    @Test
+    void rejectsWithPaymentRequiredWhenTheMonthlyResponseLimitIsReached() {
+        when(formLoader.loadPublicOrThrow(formId)).thenReturn(activeForm);
+        org.mockito.Mockito.doThrow(new PlanLimitExceededException("error.plan_limit.responses", 50,
+                        com.kodelabs.formflow.modules.auth.domain.model.TenantPlan.FREE,
+                        com.kodelabs.formflow.modules.auth.domain.model.TenantPlan.STARTER))
+                .when(planLimitService).checkMonthlyResponseLimit(tenantId);
+
+        var command = new SubmitPublicResponseCommand(formId, null, List.of(new AnswerItem(questionId, "3 - 5 años")));
+
+        assertThatThrownBy(() -> service.execute(command)).isInstanceOf(PlanLimitExceededException.class);
+        org.mockito.Mockito.verify(responseRepository, org.mockito.Mockito.never()).save(any());
     }
 }

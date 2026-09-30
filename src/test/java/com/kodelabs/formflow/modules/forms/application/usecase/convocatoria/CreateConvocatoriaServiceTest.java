@@ -12,6 +12,8 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaRes
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitExceededException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +42,7 @@ class CreateConvocatoriaServiceTest {
     @Mock private ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
     @Mock private ConvocatoriaFormValidator formValidator;
     @Spy  private ConvocatoriaWeightValidator weightValidator = new ConvocatoriaWeightValidator();
+    @Mock private PlanLimitService planLimitService;
 
     @InjectMocks private CreateConvocatoriaService service;
 
@@ -159,5 +162,19 @@ class CreateConvocatoriaServiceTest {
 
         assertThat(captor.getValue().getScoringConfig().aptoMin()).isEqualTo(70);
         assertThat(captor.getValue().getScoringConfig().revisarMin()).isEqualTo(50);
+    }
+
+    @Test
+    void propagatesThePlanLimitExceptionBeforeValidatingTheForm() {
+        doThrow(new PlanLimitExceededException("error.plan_limit.convocatorias", 0,
+                        com.kodelabs.formflow.modules.auth.domain.model.TenantPlan.FREE,
+                        com.kodelabs.formflow.modules.auth.domain.model.TenantPlan.STARTER))
+                .when(planLimitService).checkConvocatoriaLimit(tenantId);
+
+        CreateConvocatoriaCommand command = new CreateConvocatoriaCommand(
+                tenantId, userId, formId, "Test", FormType.CANDIDATES, List.of(), null);
+
+        assertThatThrownBy(() -> service.execute(command)).isInstanceOf(PlanLimitExceededException.class);
+        verify(formValidator, org.mockito.Mockito.never()).validateExists(any(), any());
     }
 }

@@ -19,6 +19,7 @@ import com.kodelabs.formflow.shared.export.ExcelSheet;
 import com.kodelabs.formflow.shared.export.ExcelSheetNames;
 import com.kodelabs.formflow.shared.export.ExportFilenames;
 import com.kodelabs.formflow.shared.i18n.Messages;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -46,10 +47,14 @@ public class ExportConvocatoriaRankingExcelService implements ExportConvocatoria
     private final ResponseDetailAssembler responseDetailAssembler;
     private final Messages messages;
     private final ExcelRowWriter excelRowWriter;
+    private final PlanLimitService planLimitService;
 
     @Override
     @Transactional(readOnly = true)
     public ExportConvocatoriaRankingResult execute(ExportConvocatoriaRankingQuery query) {
+        if (!planLimitService.canExportExcel(query.tenantId())) {
+            throw new BusinessException("error.plan_limit.export_excel", HttpStatus.PAYMENT_REQUIRED);
+        }
         Convocatoria convocatoria = loadConvocatoria(query.convocatoriaId(), query.tenantId());
         List<RankingEntryResult> allEntries = getRanking.execute(
                 new GetRankingQuery(query.convocatoriaId(), query.tenantId()));

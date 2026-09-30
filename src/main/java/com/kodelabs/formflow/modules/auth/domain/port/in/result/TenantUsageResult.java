@@ -9,5 +9,6 @@ public record TenantUsageResult(
         long responsesThisMonth,
         int responsesLimit,
         long usersCount,
-        int usersLimit
+        int usersLimit,
+        boolean canExportExcel
 ) {}

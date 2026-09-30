@@ -11,6 +11,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateConvocat
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +26,12 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
     private final ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
     private final ConvocatoriaFormValidator formValidator;
     private final ConvocatoriaWeightValidator weightValidator;
+    private final PlanLimitService planLimitService;
 
     @Override
     @Transactional
     public ConvocatoriaResult execute(CreateConvocatoriaCommand command) {
+        planLimitService.checkConvocatoriaLimit(command.tenantId());
         formValidator.validateExists(command.formId(), command.tenantId());
         if (command.type() != FormType.REGISTRATION) {
             weightValidator.validate(command.categoryWeights());

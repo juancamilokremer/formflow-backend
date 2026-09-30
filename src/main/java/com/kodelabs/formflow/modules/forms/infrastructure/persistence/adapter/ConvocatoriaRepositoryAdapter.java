@@ -59,6 +59,11 @@ public class ConvocatoriaRepositoryAdapter implements ConvocatoriaRepositoryPort
     }
 
     @Override
+    public long countActiveByTenantId(UUID tenantId) {
+        return jpaRepository.countByTenantIdAndDeletedAtIsNull(tenantId);
+    }
+
+    @Override
     public boolean existsByIdAndTenantId(UUID id, UUID tenantId) {
         return jpaRepository.existsByIdAndTenantId(id, tenantId);
     }

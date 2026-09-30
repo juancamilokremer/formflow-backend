@@ -19,6 +19,9 @@ public interface ConvocatoriaRepositoryPort {
 
     List<Convocatoria> findActiveByTenantId(UUID tenantId);
 
+    /** Lightweight COUNT — unlike findActiveByTenantId, does not load forms/candidates. */
+    long countActiveByTenantId(UUID tenantId);
+
     boolean existsByIdAndTenantId(UUID id, UUID tenantId);
 
     void softDeleteById(UUID id);

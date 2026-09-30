@@ -18,6 +18,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepos
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -39,11 +40,13 @@ public class SubmitPublicResponseService implements SubmitPublicResponseUseCase 
     private final ConditionalLogicEvaluator conditionalLogicEvaluator;
     private final ConvocatoriaFormRepositoryPort convocatoriaFormRepository;
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
+    private final PlanLimitService planLimitService;
 
     @Override
     @Transactional
     public SubmitPublicResponseResult execute(SubmitPublicResponseCommand command) {
         Form form = loadActiveForm(command.formId());
+        planLimitService.checkMonthlyResponseLimit(form.getTenantId());
         Map<UUID, Object> answerMap = buildAnswerMap(command.answers());
         validateRequiredQuestions(form, answerMap);
         UUID convocatoriaId = resolveAnonymousEncuestaConvocatoriaId(form);
