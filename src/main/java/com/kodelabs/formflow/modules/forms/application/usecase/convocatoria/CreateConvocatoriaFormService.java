@@ -14,6 +14,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositor
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import com.kodelabs.formflow.shared.i18n.Messages;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -39,10 +40,12 @@ public class CreateConvocatoriaFormService implements CreateConvocatoriaFormUseC
     private final FormLoader formLoader;
     private final FormCloner formCloner;
     private final Messages messages;
+    private final PlanLimitService planLimitService;
 
     @Override
     @Transactional
     public ConvocatoriaFormResult execute(CreateConvocatoriaFormCommand command) {
+        planLimitService.checkFormLimit(command.tenantId());
         Convocatoria convocatoria = loadDraftConvocatoria(command.convocatoriaId(), command.tenantId());
         validateSingleFormForRegistration(convocatoria);
 

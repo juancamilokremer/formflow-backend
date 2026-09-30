@@ -15,4 +15,6 @@ public interface TenantUsagePort {
     long countResponsesThisMonth(UUID tenantId, Instant from, Instant to);
 
     long countAllResponsesThisMonth(Instant from, Instant to);
+
+    long countConvocatorias(UUID tenantId);
 }

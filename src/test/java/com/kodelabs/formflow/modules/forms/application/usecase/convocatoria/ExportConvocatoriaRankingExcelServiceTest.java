@@ -18,9 +18,11 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositor
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import com.kodelabs.formflow.shared.export.ExcelRowWriter;
 import com.kodelabs.formflow.shared.i18n.Messages;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -51,11 +53,17 @@ class ExportConvocatoriaRankingExcelServiceTest {
     @Mock private ResponseDetailAssembler responseDetailAssembler;
     @Mock private Messages messages;
     @Spy private ExcelRowWriter excelRowWriter = new ExcelRowWriter();
+    @Mock private PlanLimitService planLimitService;
     @InjectMocks private ExportConvocatoriaRankingExcelService service;
 
     private final UUID convId = UUID.randomUUID();
     private final UUID tenantId = UUID.randomUUID();
     private final UUID formId = UUID.randomUUID();
+
+    @BeforeEach
+    void allowExcelExportByDefault() {
+        when(planLimitService.canExportExcel(tenantId)).thenReturn(true);
+    }
 
     private void stubMessages() {
         lenient().when(messages.get("export.excel.ranking_sheet_name")).thenReturn("Candidatos");
@@ -339,6 +347,15 @@ class ExportConvocatoriaRankingExcelServiceTest {
         assertThatThrownBy(() -> service.execute(new ExportConvocatoriaRankingQuery(convId, tenantId, null)))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void rejectsWithPaymentRequiredWhenThePlanDoesNotAllowExcelExport() {
+        when(planLimitService.canExportExcel(tenantId)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.execute(new ExportConvocatoriaRankingQuery(convId, tenantId, null)))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.PAYMENT_REQUIRED));
     }
 
     private Convocatoria draftConvocatoria() {

@@ -28,6 +28,8 @@ import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitExceededException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,6 +65,7 @@ class SubmitCandidateResponseServiceTest {
     @Mock private ConditionalLogicEvaluator conditionalLogicEvaluator;
     @Mock private CandidateScoringService candidateScoringService;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private PlanLimitService planLimitService;
     @InjectMocks private SubmitCandidateResponseService service;
 
     private UUID candidateToken;
@@ -364,5 +367,20 @@ class SubmitCandidateResponseServiceTest {
         assertThat(captor.getValue().getScores().perForm()).hasSize(2);
         assertThat(captor.getValue().getScores().total()).isEqualTo(90.0 * 0.6 + 70.0 * 0.4);
         assertThat(captor.getValue().getRespondedAt()).isNotNull();
+    }
+
+    @Test
+    void rejectsWithPaymentRequiredWhenTheMonthlyResponseLimitIsReached() {
+        when(candidateRepository.findByToken(candidateToken)).thenReturn(Optional.of(invitedCandidate));
+        org.mockito.Mockito.doThrow(new PlanLimitExceededException("error.plan_limit.responses", 50,
+                        com.kodelabs.formflow.modules.auth.domain.model.TenantPlan.FREE,
+                        com.kodelabs.formflow.modules.auth.domain.model.TenantPlan.STARTER))
+                .when(planLimitService).checkMonthlyResponseLimit(tenantId);
+
+        SubmitCandidateResponseCommand command = new SubmitCandidateResponseCommand(
+                candidateToken, formId, null, List.of(new AnswerItem(questionId, "opt-1")));
+
+        assertThatThrownBy(() -> service.execute(command)).isInstanceOf(PlanLimitExceededException.class);
+        verify(responseRepository, never()).save(any());
     }
 }

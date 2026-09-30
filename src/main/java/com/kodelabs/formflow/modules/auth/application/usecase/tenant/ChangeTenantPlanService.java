@@ -6,6 +6,7 @@ import com.kodelabs.formflow.modules.auth.domain.port.in.command.ChangeTenantPla
 import com.kodelabs.formflow.modules.auth.domain.port.in.result.TenantResult;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChangeTenantPlanService implements ChangeTenantPlanUseCase {
 
     private final TenantRepositoryPort tenantRepository;
+    private final PlanLimitService planLimitService;
 
     @Override
     @Transactional
@@ -23,6 +25,10 @@ public class ChangeTenantPlanService implements ChangeTenantPlanUseCase {
         Tenant tenant = tenantRepository.findById(command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.tenant.not_found", HttpStatus.NOT_FOUND));
         tenant.setPlan(command.plan());
-        return TenantResult.from(tenantRepository.save(tenant));
+        Tenant saved = tenantRepository.save(tenant);
+        // New limits apply immediately, not after the 1-minute PlanLimitService cache TTL —
+        // both are acceptance criteria of backend#6, this is how they coexist.
+        planLimitService.invalidate(tenant.getId());
+        return TenantResult.from(saved);
     }
 }

@@ -40,6 +40,7 @@ public class GetTenantUsageService implements GetTenantUsageUseCase {
 
         return new TenantUsageResult(
                 tenant.getPlan(), formsUsed, limits.formsLimit(),
-                responsesThisMonth, limits.responsesLimit(), usersCount, limits.usersLimit());
+                responsesThisMonth, limits.responsesLimit(), usersCount, limits.usersLimit(),
+                limits.canExportExcel());
     }
 }

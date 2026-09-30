@@ -27,6 +27,7 @@ import com.kodelabs.formflow.modules.forms.application.service.FormLoader;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
@@ -55,6 +56,7 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
     private final FormSnapshotBuilder snapshotBuilder;
     private final ConditionalLogicEvaluator conditionalLogicEvaluator;
     private final CandidateScoringService candidateScoringService;
+    private final PlanLimitService planLimitService;
 
     private ApplicationEventPublisher eventPublisher;
 
@@ -67,6 +69,7 @@ public class SubmitCandidateResponseService implements SubmitCandidateResponseUs
     @Transactional
     public SubmitCandidateResponseResult execute(SubmitCandidateResponseCommand command) {
         Candidate candidate = loadCandidate(command.candidateToken());
+        planLimitService.checkMonthlyResponseLimit(candidate.getTenantId());
         Convocatoria convocatoria = loadActiveConvocatoria(candidate.getConvocatoriaId(), candidate.getTenantId());
         ConvocatoriaForm targetForm = resolveConvocatoriaForm(convocatoria, command.formId());
         guardNotAlreadyResponded(candidate.getId(), targetForm.getFormId());

@@ -11,13 +11,14 @@ public record TenantUsageResponse(
         long responsesThisMonth,
         Integer responsesLimit,
         long usersCount,
-        Integer usersLimit
+        Integer usersLimit,
+        boolean canExportExcel
 ) {
     public static TenantUsageResponse from(TenantUsageResult r) {
         return new TenantUsageResponse(
                 r.plan(), r.formsUsed(), limitOrNull(r.formsLimit()),
                 r.responsesThisMonth(), limitOrNull(r.responsesLimit()),
-                r.usersCount(), limitOrNull(r.usersLimit()));
+                r.usersCount(), limitOrNull(r.usersLimit()), r.canExportExcel());
     }
 
     private static Integer limitOrNull(int limit) {

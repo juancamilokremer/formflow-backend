@@ -30,6 +30,8 @@ public interface ConvocatoriaJpaRepository extends Repository<ConvocatoriaJpaEnt
 
     List<ConvocatoriaJpaEntity> findByTenantIdAndDeletedAtIsNull(UUID tenantId);
 
+    long countByTenantIdAndDeletedAtIsNull(UUID tenantId);
+
     boolean existsByIdAndTenantId(UUID id, UUID tenantId);
 
     @Modifying

@@ -10,6 +10,7 @@ import com.kodelabs.formflow.modules.reports.domain.port.in.command.ExportFormRe
 import com.kodelabs.formflow.modules.reports.domain.port.in.result.ExportResult;
 import com.kodelabs.formflow.modules.reports.domain.port.out.FormResponseDataPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,7 @@ class ExportFormResponsesServiceTest {
     @Mock private ExportRowBuilder rowBuilder;
     @Mock private ResponseExporterRegistry exporterRegistry;
     @Mock private ResponseExporter excelExporter;
+    @Mock private PlanLimitService planLimitService;
     @InjectMocks private ExportFormResponsesService service;
 
     private UUID formId;
@@ -54,6 +56,7 @@ class ExportFormResponsesServiceTest {
         List<List<String>> rows = List.of(List.of("Fecha de envío"));
         ExportResult expected = new ExportResult(new byte[]{1, 2}, "encuesta.xlsx", "application/vnd.ms-excel");
 
+        when(planLimitService.canExportExcel(tenantId)).thenReturn(true);
         when(dataPort.load(formId, tenantId, null, null)).thenReturn(data);
         when(rowBuilder.build(data, ZoneOffset.UTC)).thenReturn(rows);
         when(exporterRegistry.find(ExportFormat.EXCEL)).thenReturn(Optional.of(excelExporter));
@@ -63,6 +66,32 @@ class ExportFormResponsesServiceTest {
                 new ExportFormResponsesQuery(formId, tenantId, ExportFormat.EXCEL, null, null, ZoneOffset.UTC));
 
         assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    void rejectsExcelExportWithPaymentRequiredWhenThePlanDoesNotAllowIt() {
+        when(planLimitService.canExportExcel(tenantId)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.execute(
+                new ExportFormResponsesQuery(formId, tenantId, ExportFormat.EXCEL, null, null, ZoneOffset.UTC)))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.PAYMENT_REQUIRED));
+    }
+
+    @Test
+    void csvExportIsNeverGatedByThePlan() {
+        List<List<String>> rows = List.of();
+        ExportResult expected = new ExportResult(new byte[0], "encuesta.csv", "text/csv");
+        when(dataPort.load(formId, tenantId, null, null)).thenReturn(data);
+        when(rowBuilder.build(data, ZoneOffset.UTC)).thenReturn(rows);
+        when(exporterRegistry.find(ExportFormat.CSV)).thenReturn(Optional.of(excelExporter));
+        when(excelExporter.export("Encuesta", rows)).thenReturn(expected);
+
+        ExportResult result = service.execute(
+                new ExportFormResponsesQuery(formId, tenantId, ExportFormat.CSV, null, null, ZoneOffset.UTC));
+
+        assertThat(result).isEqualTo(expected);
+        org.mockito.Mockito.verifyNoInteractions(planLimitService);
     }
 
     @Test

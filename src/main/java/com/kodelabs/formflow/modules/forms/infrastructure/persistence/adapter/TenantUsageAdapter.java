@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.forms.infrastructure.persistence.adapter;
 
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantUsagePort;
+import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormResponseRepositoryPort;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ public class TenantUsageAdapter implements TenantUsagePort {
 
     private final FormRepositoryPort formRepository;
     private final FormResponseRepositoryPort responseRepository;
+    private final ConvocatoriaRepositoryPort convocatoriaRepository;
 
     @Override
     public long countForms(UUID tenantId) {
@@ -29,5 +31,10 @@ public class TenantUsageAdapter implements TenantUsagePort {
     @Override
     public long countAllResponsesThisMonth(Instant from, Instant to) {
         return responseRepository.countAllSince(from, to);
+    }
+
+    @Override
+    public long countConvocatorias(UUID tenantId) {
+        return convocatoriaRepository.countActiveByTenantId(tenantId);
     }
 }

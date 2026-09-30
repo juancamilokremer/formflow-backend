@@ -13,8 +13,11 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaFor
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.model.TenantPlan;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import com.kodelabs.formflow.shared.i18n.Messages;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitExceededException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -32,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,6 +49,7 @@ class CreateConvocatoriaFormServiceTest {
     @Mock private FormLoader formLoader;
     @Mock private FormCloner formCloner;
     @Mock private Messages messages;
+    @Mock private PlanLimitService planLimitService;
     @InjectMocks private CreateConvocatoriaFormService service;
 
     private final UUID tenantId = UUID.randomUUID();
@@ -167,6 +172,20 @@ class CreateConvocatoriaFormServiceTest {
                 .satisfies(ex -> assertThat(((BusinessException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
 
         verify(formRepository, never()).save(any());
+    }
+
+    @Test
+    void propagatesThePlanLimitExceptionBeforeLoadingTheConvocatoria() {
+        doThrow(new PlanLimitExceededException("error.plan_limit.forms", 2, TenantPlan.FREE, TenantPlan.STARTER))
+                .when(planLimitService).checkFormLimit(tenantId);
+
+        var command = new CreateConvocatoriaFormCommand(
+                convId, tenantId, userId, "Nuevo", FormType.CANDIDATES, null, 60, List.of(), null);
+
+        assertThatThrownBy(() -> service.execute(command))
+                .isInstanceOf(PlanLimitExceededException.class);
+
+        verify(convocatoriaRepository, never()).findByIdAndTenantIdForUpdate(any(), any());
     }
 
     private Convocatoria draftConvocatoria(List<ConvocatoriaForm> forms) {
