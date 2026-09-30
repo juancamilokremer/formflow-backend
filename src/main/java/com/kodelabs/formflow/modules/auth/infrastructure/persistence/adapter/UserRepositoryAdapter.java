@@ -1,12 +1,14 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.persistence.adapter;
 
 import com.kodelabs.formflow.modules.auth.domain.model.User;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.mapper.UserPersistenceMapper;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.repository.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,5 +45,15 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public long countByTenantIdAndActiveTrue(UUID tenantId) {
         return jpaRepository.countByTenantIdAndActiveTrue(tenantId);
+    }
+
+    @Override
+    public List<User> findAllByTenantIdAndActiveTrue(UUID tenantId) {
+        return jpaRepository.findAllByTenantIdAndActiveTrue(tenantId).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public long countByTenantIdAndRoleAndActiveTrue(UUID tenantId, UserRole role) {
+        return jpaRepository.countByTenantIdAndRoleAndActiveTrue(tenantId, role);
     }
 }

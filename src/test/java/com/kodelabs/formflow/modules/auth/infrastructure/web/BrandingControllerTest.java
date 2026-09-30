@@ -1,7 +1,10 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.web;
 
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
+import com.kodelabs.formflow.modules.auth.domain.model.User;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response.BrandingResponse;
 import com.kodelabs.formflow.shared.security.JwtService;
 import com.kodelabs.formflow.shared.web.ApiResponse;
@@ -47,11 +50,14 @@ class BrandingControllerTest {
     @Autowired
     private TenantRepositoryPort tenantRepository;
 
+    @Autowired
+    private UserRepositoryPort userRepository;
+
     @Test
     void uploadingALogoIsImmediatelyVisibleOnThePublicEndpoint() throws Exception {
         Tenant tenant = tenantRepository.save(Tenant.builder()
                 .slug("branding-test-" + UUID.randomUUID()).name("Empresa Branding").build());
-        String token = jwtService.generateAccessToken(UUID.randomUUID(), tenant.getId(), "admin@test.com", "TENANT_ADMIN");
+        String token = jwtService.generateAccessToken(adminUserId(tenant), tenant.getId(), "admin@test.com", "TENANT_ADMIN");
 
         byte[] png = pngOf(100, 50);
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -93,7 +99,7 @@ class BrandingControllerTest {
     void invalidHexColorReturns400() {
         Tenant tenant = tenantRepository.save(Tenant.builder()
                 .slug("branding-test-" + UUID.randomUUID()).name("Empresa").build());
-        String token = jwtService.generateAccessToken(UUID.randomUUID(), tenant.getId(), "admin@test.com", "TENANT_ADMIN");
+        String token = jwtService.generateAccessToken(adminUserId(tenant), tenant.getId(), "admin@test.com", "TENANT_ADMIN");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -105,6 +111,12 @@ class BrandingControllerTest {
                 new HttpEntity<>(payload, headers), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    private UUID adminUserId(Tenant tenant) {
+        return userRepository.save(User.builder()
+                .tenantId(tenant.getId()).email("admin@test.com").passwordHash("x")
+                .firstName("Admin").lastName("Test").role(UserRole.TENANT_ADMIN).build()).getId();
     }
 
     private byte[] pngOf(int width, int height) throws Exception {
