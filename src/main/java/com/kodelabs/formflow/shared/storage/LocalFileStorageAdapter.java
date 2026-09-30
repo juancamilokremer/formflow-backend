@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,6 +45,22 @@ public class LocalFileStorageAdapter implements FileStoragePort {
         } catch (IOException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    @SneakyThrows
+    public void delete(UUID fileId) {
+        Path dir = uploadsDir.resolve(fileId.toString());
+        if (!Files.isDirectory(dir)) return;
+
+        try (var entries = Files.walk(dir)) {
+            entries.sorted(Comparator.reverseOrder()).forEach(this::deleteQuietly);
+        }
+    }
+
+    @SneakyThrows
+    private void deleteQuietly(Path path) {
+        Files.deleteIfExists(path);
     }
 
     @SneakyThrows

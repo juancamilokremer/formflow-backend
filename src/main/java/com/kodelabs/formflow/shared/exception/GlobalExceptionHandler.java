@@ -16,6 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
@@ -106,6 +107,17 @@ public class GlobalExceptionHandler {
         log.warn("Invalid value for parameter '{}': {}", ex.getName(), ex.getValue());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(messages.get("error.invalid_parameter", ex.getName())));
+    }
+
+    // Spring rejects an over-limit multipart request before any controller runs (the servlet
+    // container enforces spring.servlet.multipart.max-file-size) — a client mistake, not a
+    // server failure, so no support errorId. Used to fall through to handleGenericException
+    // as a 500. See backend#7.
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        log.warn("Upload rejected: exceeds max-file-size/max-request-size");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(messages.get("error.upload.too_large")));
     }
 
     @ExceptionHandler(Exception.class)
