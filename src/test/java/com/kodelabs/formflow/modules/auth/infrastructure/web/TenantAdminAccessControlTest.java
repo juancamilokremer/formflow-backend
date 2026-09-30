@@ -1,7 +1,10 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.web;
 
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
+import com.kodelabs.formflow.modules.auth.domain.model.User;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,12 +44,18 @@ class TenantAdminAccessControlTest {
     @Autowired
     private TenantRepositoryPort tenantRepository;
 
+    @Autowired
+    private UserRepositoryPort userRepository;
+
     @Test
     void tenantAdminCannotReachTheAdminPanel() {
         Tenant tenant = tenantRepository.save(Tenant.builder()
                 .slug("access-control-test-" + UUID.randomUUID()).name("Empresa").build());
+        User user = userRepository.save(User.builder()
+                .tenantId(tenant.getId()).email("admin@test.com").passwordHash("x")
+                .firstName("Admin").lastName("Test").role(UserRole.TENANT_ADMIN).build());
         String token = jwtService.generateAccessToken(
-                UUID.randomUUID(), tenant.getId(), "admin@test.com", "TENANT_ADMIN");
+                user.getId(), tenant.getId(), "admin@test.com", "TENANT_ADMIN");
 
         ResponseEntity<String> response = exchange("/api/v1/admin/tenants", token);
 
@@ -57,8 +66,11 @@ class TenantAdminAccessControlTest {
     void superAdminCannotReachTenantSelfService() {
         Tenant tenant = tenantRepository.save(Tenant.builder()
                 .slug("access-control-test-" + UUID.randomUUID()).name("Empresa").build());
+        User user = userRepository.save(User.builder()
+                .tenantId(tenant.getId()).email("root@kodelabs.com").passwordHash("x")
+                .firstName("Root").lastName("Admin").role(UserRole.SUPER_ADMIN).build());
         String token = jwtService.generateAccessToken(
-                UUID.randomUUID(), tenant.getId(), "root@kodelabs.com", "SUPER_ADMIN");
+                user.getId(), tenant.getId(), "root@kodelabs.com", "SUPER_ADMIN");
 
         ResponseEntity<String> response = exchange("/api/v1/tenant", token);
 

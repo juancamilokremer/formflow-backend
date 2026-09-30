@@ -1,7 +1,9 @@
 package com.kodelabs.formflow.modules.auth.domain.port.out;
 
 import com.kodelabs.formflow.modules.auth.domain.model.User;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,4 +22,10 @@ public interface UserRepositoryPort {
     boolean existsByEmailAndTenantId(String email, UUID tenantId);
 
     long countByTenantIdAndActiveTrue(UUID tenantId);
+
+    /** Active (non-revoked) users of the tenant, for the admin listing (backend#8). */
+    List<User> findAllByTenantIdAndActiveTrue(UUID tenantId);
+
+    /** Used to enforce "at least one active TENANT_ADMIN must remain" (backend#8). */
+    long countByTenantIdAndRoleAndActiveTrue(UUID tenantId, UserRole role);
 }

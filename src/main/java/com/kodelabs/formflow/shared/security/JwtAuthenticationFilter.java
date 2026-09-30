@@ -2,7 +2,9 @@ package com.kodelabs.formflow.shared.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
+import com.kodelabs.formflow.modules.auth.domain.model.User;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
+import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.tenant.TenantContext;
 import com.kodelabs.formflow.shared.web.ApiResponse;
@@ -36,6 +38,8 @@ import java.util.UUID;
  * tenant has since been suspended (backend#5) — in that case the request is rejected
  * with 403 right here, since a JWT issued before the suspension is otherwise still
  * valid for up to its 24h TTL and LoginService's check-at-login only covers new logins.
+ * Same reasoning for a user whose access was revoked (backend#8, active=false) — rejected
+ * with 401 here instead of 403, since that's the status its own acceptance criterion asks for.
  * When invalid or absent: continues unauthenticated; protected routes will
  * respond 401 through the AuthenticationEntryPoint.
  */
@@ -49,6 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final TenantRepositoryPort tenantRepository;
+    private final UserRepositoryPort userRepository;
     private final ObjectMapper objectMapper;
     private final Messages messages;
 
@@ -87,6 +92,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return false;
         }
 
+        User user = userRepository.findByIdAndTenantId(UUID.fromString(userId), UUID.fromString(tenantId)).orElse(null);
+        if (user == null || !user.isActive()) {
+            log.warn("Request rejected: user '{}' is {}", userId, user == null ? "unknown" : "revoked");
+            writeUnauthorized(request, response);
+            return false;
+        }
+
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
         var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -107,6 +119,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(objectMapper.writeValueAsString(
                 ApiResponse.error(messages.getForLocale("error.tenant.suspended", localeFor(request)))));
+    }
+
+    private void writeUnauthorized(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(
+                ApiResponse.error(messages.getForLocale("error.auth.unauthorized", localeFor(request)))));
     }
 
     /**

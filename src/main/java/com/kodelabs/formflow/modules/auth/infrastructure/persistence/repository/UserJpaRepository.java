@@ -4,6 +4,7 @@ import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.infrastructure.persistence.entity.UserJpaEntity;
 import org.springframework.data.repository.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,4 +23,8 @@ public interface UserJpaRepository extends Repository<UserJpaEntity, UUID> {
     Optional<UserJpaEntity> findFirstByTenantIdAndRole(UUID tenantId, UserRole role);
 
     long countByTenantIdAndActiveTrue(UUID tenantId);
+
+    List<UserJpaEntity> findAllByTenantIdAndActiveTrue(UUID tenantId);
+
+    long countByTenantIdAndRoleAndActiveTrue(UUID tenantId, UserRole role);
 }
