@@ -139,6 +139,16 @@ public class FormResponseRepositoryAdapter implements FormResponseRepositoryPort
     }
 
     @Override
+    public long countByTenantId(UUID tenantId, Instant submittedAtFrom, Instant submittedAtTo) {
+        return responseJpa.countByTenantId(tenantId, submittedAtFrom, submittedAtTo);
+    }
+
+    @Override
+    public long countAllSince(Instant submittedAtFrom, Instant submittedAtTo) {
+        return responseJpa.countAllSince(submittedAtFrom, submittedAtTo);
+    }
+
+    @Override
     public Map<UUID, Integer> countByFormIds(List<UUID> formIds) {
         Map<UUID, Integer> result = new HashMap<>();
         for (Object[] row : responseJpa.countGroupedByFormIds(formIds)) {

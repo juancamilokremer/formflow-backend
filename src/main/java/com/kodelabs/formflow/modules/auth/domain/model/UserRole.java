@@ -9,5 +9,7 @@ public enum UserRole {
     /** Can create and edit forms. */
     EDITOR,
     /** Read-only access to results. */
-    VIEWER
+    VIEWER,
+    /** Kode Labs platform administrator: access to /admin/** across all tenants. */
+    SUPER_ADMIN
 }
