@@ -64,4 +64,15 @@ class RevokeUserAccessServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.user.must_keep_one_admin");
     }
+
+    @Test
+    void rejectsRevokingASuperAdmin() {
+        User target = User.builder().id(targetUserId).tenantId(tenantId).role(UserRole.SUPER_ADMIN).active(true).build();
+        when(userRepository.findByIdAndTenantId(targetUserId, tenantId)).thenReturn(Optional.of(target));
+
+        assertThatThrownBy(() -> service.execute(new RevokeUserAccessCommand(tenantId, actingUserId, targetUserId)))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.user.invalid_role");
+        verify(userRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    }
 }

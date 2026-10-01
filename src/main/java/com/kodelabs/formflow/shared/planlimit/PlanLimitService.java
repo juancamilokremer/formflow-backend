@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Ticker;
 import com.kodelabs.formflow.modules.auth.domain.model.PlanLimits;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.TenantPlan;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantUsagePort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
@@ -125,7 +126,7 @@ public class PlanLimitService {
                 tenant.getPlan(),
                 tenantUsagePort.countForms(tenantId),
                 tenantUsagePort.countResponsesThisMonth(tenantId, monthStart, monthEnd),
-                userRepository.countByTenantIdAndActiveTrue(tenantId),
+                userRepository.countByTenantIdAndActiveTrueAndRoleNot(tenantId, UserRole.SUPER_ADMIN),
                 tenantUsagePort.countConvocatorias(tenantId));
     }
 }

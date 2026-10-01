@@ -28,7 +28,7 @@ class ListUsersServiceTest {
         UUID tenantId = UUID.randomUUID();
         User user = User.builder().id(UUID.randomUUID()).tenantId(tenantId)
                 .email("a@b.com").firstName("Ana").lastName("Gomez").role(UserRole.VIEWER).active(true).build();
-        when(userRepository.findAllByTenantIdAndActiveTrue(tenantId)).thenReturn(List.of(user));
+        when(userRepository.findAllByTenantIdAndActiveTrueAndRoleNot(tenantId, UserRole.SUPER_ADMIN)).thenReturn(List.of(user));
 
         List<UserResult> results = service.execute(new ListUsersQuery(tenantId));
 

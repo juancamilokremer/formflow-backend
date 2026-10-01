@@ -3,6 +3,7 @@ package com.kodelabs.formflow.shared.planlimit;
 import com.github.benmanes.caffeine.cache.Ticker;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.TenantPlan;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantUsagePort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
@@ -83,7 +84,7 @@ class PlanLimitServiceTest {
     @Test
     void rejectsAtTheUserLimit() {
         stubTenant(TenantPlan.FREE);
-        when(userRepository.countByTenantIdAndActiveTrue(tenantId)).thenReturn(1L);
+        when(userRepository.countByTenantIdAndActiveTrueAndRoleNot(tenantId, UserRole.SUPER_ADMIN)).thenReturn(1L);
 
         assertThatThrownBy(() -> service.checkUserLimit(tenantId))
                 .isInstanceOf(PlanLimitExceededException.class)

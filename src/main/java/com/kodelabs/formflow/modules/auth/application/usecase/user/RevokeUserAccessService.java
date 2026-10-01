@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.auth.application.usecase.user;
 
 import com.kodelabs.formflow.modules.auth.domain.model.User;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.in.RevokeUserAccessUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.RevokeUserAccessCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
@@ -25,6 +26,10 @@ public class RevokeUserAccessService implements RevokeUserAccessUseCase {
 
         User user = userRepository.findByIdAndTenantId(command.targetUserId(), command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.user.not_found", HttpStatus.NOT_FOUND));
+
+        if (user.getRole() == UserRole.SUPER_ADMIN) {
+            throw new BusinessException("error.user.invalid_role", HttpStatus.BAD_REQUEST);
+        }
 
         LastAdminGuard.assertAnotherAdminRemains(userRepository, user);
 

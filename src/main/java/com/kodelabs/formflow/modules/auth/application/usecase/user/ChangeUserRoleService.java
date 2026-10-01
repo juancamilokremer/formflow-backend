@@ -24,7 +24,7 @@ public class ChangeUserRoleService implements ChangeUserRoleUseCase {
         User user = userRepository.findByIdAndTenantId(command.targetUserId(), command.tenantId())
                 .orElseThrow(() -> new BusinessException("error.user.not_found", HttpStatus.NOT_FOUND));
 
-        if (command.newRole() == UserRole.SUPER_ADMIN) {
+        if (command.newRole() == UserRole.SUPER_ADMIN || user.getRole() == UserRole.SUPER_ADMIN) {
             throw new BusinessException("error.user.invalid_role", HttpStatus.BAD_REQUEST);
         }
         if (command.newRole() != UserRole.TENANT_ADMIN) {

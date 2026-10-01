@@ -73,4 +73,14 @@ class ChangeUserRoleServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("error.user.invalid_role");
     }
+
+    @Test
+    void rejectsChangingRoleOfASuperAdmin() {
+        User user = User.builder().id(userId).tenantId(tenantId).role(UserRole.SUPER_ADMIN).build();
+        when(userRepository.findByIdAndTenantId(userId, tenantId)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.execute(new ChangeUserRoleCommand(tenantId, userId, UserRole.EDITOR)))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("error.user.invalid_role");
+    }
 }
