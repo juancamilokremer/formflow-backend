@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.auth.application.usecase.tenant;
 
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.TenantPlan;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.GetTenantUsageQuery;
 import com.kodelabs.formflow.modules.auth.domain.port.in.result.TenantUsageResult;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
@@ -37,7 +38,7 @@ class GetTenantUsageServiceTest {
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
         when(tenantUsagePort.countForms(tenantId)).thenReturn(2L);
         when(tenantUsagePort.countResponsesThisMonth(eq(tenantId), any(), any())).thenReturn(38L);
-        when(userRepository.countByTenantIdAndActiveTrue(tenantId)).thenReturn(1L);
+        when(userRepository.countByTenantIdAndActiveTrueAndRoleNot(tenantId, UserRole.SUPER_ADMIN)).thenReturn(1L);
 
         TenantUsageResult result = service.execute(new GetTenantUsageQuery(tenantId));
 
@@ -57,7 +58,7 @@ class GetTenantUsageServiceTest {
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
         when(tenantUsagePort.countForms(tenantId)).thenReturn(120L);
         when(tenantUsagePort.countResponsesThisMonth(eq(tenantId), any(), any())).thenReturn(9000L);
-        when(userRepository.countByTenantIdAndActiveTrue(tenantId)).thenReturn(4L);
+        when(userRepository.countByTenantIdAndActiveTrueAndRoleNot(tenantId, UserRole.SUPER_ADMIN)).thenReturn(4L);
 
         TenantUsageResult result = service.execute(new GetTenantUsageQuery(tenantId));
 

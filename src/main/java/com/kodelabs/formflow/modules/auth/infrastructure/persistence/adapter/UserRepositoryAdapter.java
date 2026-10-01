@@ -43,13 +43,14 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     }
 
     @Override
-    public long countByTenantIdAndActiveTrue(UUID tenantId) {
-        return jpaRepository.countByTenantIdAndActiveTrue(tenantId);
+    public long countByTenantIdAndActiveTrueAndRoleNot(UUID tenantId, UserRole role) {
+        return jpaRepository.countByTenantIdAndActiveTrueAndRoleNot(tenantId, role);
     }
 
     @Override
-    public List<User> findAllByTenantIdAndActiveTrue(UUID tenantId) {
-        return jpaRepository.findAllByTenantIdAndActiveTrue(tenantId).stream().map(mapper::toDomain).toList();
+    public List<User> findAllByTenantIdAndActiveTrueAndRoleNot(UUID tenantId, UserRole role) {
+        return jpaRepository.findAllByTenantIdAndActiveTrueAndRoleNot(tenantId, role).stream()
+                .map(mapper::toDomain).toList();
     }
 
     @Override

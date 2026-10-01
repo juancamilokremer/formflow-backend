@@ -22,9 +22,13 @@ public interface UserJpaRepository extends Repository<UserJpaEntity, UUID> {
 
     Optional<UserJpaEntity> findFirstByTenantIdAndRole(UUID tenantId, UserRole role);
 
-    long countByTenantIdAndActiveTrue(UUID tenantId);
+    /** Excludes SUPER_ADMIN — platform support accounts never count toward a tenant's
+     *  plan usage. See #176. */
+    long countByTenantIdAndActiveTrueAndRoleNot(UUID tenantId, UserRole role);
 
-    List<UserJpaEntity> findAllByTenantIdAndActiveTrue(UUID tenantId);
+    /** Excludes SUPER_ADMIN — platform support accounts are invisible to the tenant's
+     *  own team listing. See #176. */
+    List<UserJpaEntity> findAllByTenantIdAndActiveTrueAndRoleNot(UUID tenantId, UserRole role);
 
     long countByTenantIdAndRoleAndActiveTrue(UUID tenantId, UserRole role);
 }

@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.auth.application.usecase.tenant;
 
 import com.kodelabs.formflow.modules.auth.domain.model.PlanLimits;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.in.GetTenantUsageUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.GetTenantUsageQuery;
 import com.kodelabs.formflow.modules.auth.domain.port.in.result.TenantUsageResult;
@@ -36,7 +37,7 @@ public class GetTenantUsageService implements GetTenantUsageUseCase {
 
         long formsUsed = tenantUsagePort.countForms(tenant.getId());
         long responsesThisMonth = tenantUsagePort.countResponsesThisMonth(tenant.getId(), monthStart, monthEnd);
-        long usersCount = userRepository.countByTenantIdAndActiveTrue(tenant.getId());
+        long usersCount = userRepository.countByTenantIdAndActiveTrueAndRoleNot(tenant.getId(), UserRole.SUPER_ADMIN);
 
         return new TenantUsageResult(
                 tenant.getPlan(), formsUsed, limits.formsLimit(),

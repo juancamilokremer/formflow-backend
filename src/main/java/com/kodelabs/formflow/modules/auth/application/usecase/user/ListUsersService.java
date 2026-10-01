@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.auth.application.usecase.user;
 
+import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
 import com.kodelabs.formflow.modules.auth.domain.port.in.ListUsersUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.ListUsersQuery;
 import com.kodelabs.formflow.modules.auth.domain.port.in.result.UserResult;
@@ -17,7 +18,7 @@ public class ListUsersService implements ListUsersUseCase {
 
     @Override
     public List<UserResult> execute(ListUsersQuery query) {
-        return userRepository.findAllByTenantIdAndActiveTrue(query.tenantId()).stream()
+        return userRepository.findAllByTenantIdAndActiveTrueAndRoleNot(query.tenantId(), UserRole.SUPER_ADMIN).stream()
                 .map(UserResult::from)
                 .toList();
     }
