@@ -35,6 +35,8 @@ public class User {
 
     private String lastName;
 
+    private String avatarUrl;
+
     @Builder.Default
     private UserRole role = UserRole.VIEWER;
 
