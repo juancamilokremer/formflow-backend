@@ -48,11 +48,13 @@ class GetInvitationServiceTest {
                 .tenantId(tenantId).email("x@y.com").role(UserRole.EDITOR)
                 .status(InvitationStatus.PENDING).expiresAt(Instant.now().plusSeconds(3600)).build();
         when(invitationRepository.findByTokenHash("hashed-token")).thenReturn(Optional.of(invitation));
-        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(Tenant.builder().id(tenantId).name("Empresa ABC").build()));
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(
+                Tenant.builder().id(tenantId).name("Empresa ABC").slug("empresa-abc").build()));
 
         InvitationPreviewResult result = service.execute(new GetInvitationQuery("raw-token"));
 
         assertThat(result.tenantName()).isEqualTo("Empresa ABC");
+        assertThat(result.tenantSlug()).isEqualTo("empresa-abc");
         assertThat(result.email()).isEqualTo("x@y.com");
         assertThat(result.role()).isEqualTo(UserRole.EDITOR);
     }

@@ -27,6 +27,7 @@ public class GetInvitationService implements GetInvitationUseCase {
         Tenant tenant = tenantRepository.findById(invitation.getTenantId())
                 .orElseThrow(() -> new BusinessException("error.tenant.not_found"));
 
-        return new InvitationPreviewResult(tenant.getName(), invitation.getEmail(), invitation.getRole());
+        return new InvitationPreviewResult(
+                tenant.getName(), tenant.getSlug(), invitation.getEmail(), invitation.getRole());
     }
 }
