@@ -13,6 +13,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositor
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class AddQuestionService implements AddQuestionUseCase {
     private final FormQuestionRepositoryPort questionRepository;
     private final QuestionConfigFactory configFactory;
     private final ConditionalLogicValidator conditionalLogicValidator;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -55,8 +57,8 @@ public class AddQuestionService implements AddQuestionUseCase {
                 .sectionId(section.getId())
                 .formId(command.formId())
                 .tenantId(command.tenantId())
-                .title(command.title())
-                .description(command.description())
+                .title(htmlSanitizer.sanitize(command.title()))
+                .description(htmlSanitizer.sanitize(command.description()))
                 .type(command.type())
                 .position(nextPosition)
                 .required(command.required())

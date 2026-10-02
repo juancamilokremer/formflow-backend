@@ -13,6 +13,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.QuestionResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class UpdateQuestionService implements UpdateQuestionUseCase {
     private final QuestionConfigFactory configFactory;
     private final ConditionalLogicValidator conditionalLogicValidator;
     private final ObjectMapper objectMapper;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -69,8 +71,8 @@ public class UpdateQuestionService implements UpdateQuestionUseCase {
                     HttpStatus.BAD_REQUEST, command.type().code());
         }
 
-        question.setTitle(command.title());
-        question.setDescription(command.description());
+        question.setTitle(htmlSanitizer.sanitize(command.title()));
+        question.setDescription(htmlSanitizer.sanitize(command.description()));
         question.setType(command.type());
         question.setRequired(command.required());
         question.setCategoryId(command.categoryId());

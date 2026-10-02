@@ -80,11 +80,15 @@ public class UploadAnswerFileService implements UploadAnswerFileUseCase {
     }
 
     /** Keeps only the leaf filename — strips any path segments a malicious client could send
-     *  (e.g. "../../etc/passwd") since this is used as-is as the stored file's name. */
+     *  (e.g. "../../etc/passwd") — and replaces characters illegal in filenames (quotes,
+     *  control chars, Windows-reserved `<>:"|?*`) since this is used as-is both as the stored
+     *  file's name on disk (LocalFileStorageAdapter) and, on download, inside the
+     *  Content-Disposition header. */
     private String sanitizeFilename(String originalFilename) {
         String leaf = originalFilename.replace('\\', '/');
         int lastSlash = leaf.lastIndexOf('/');
         leaf = lastSlash >= 0 ? leaf.substring(lastSlash + 1) : leaf;
+        leaf = leaf.replaceAll("[\\x00-\\x1f\"<>:|?*]", "_");
         return leaf.isBlank() ? "archivo" : leaf;
     }
 }

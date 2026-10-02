@@ -7,6 +7,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormSummaryResu
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class UpdateFormService implements UpdateFormUseCase {
 
     private final FormRepositoryPort formRepository;
     private final FormSectionRepositoryPort sectionRepository;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -27,8 +29,8 @@ public class UpdateFormService implements UpdateFormUseCase {
                 .orElseThrow(() -> new BusinessException("error.form.not_found", HttpStatus.NOT_FOUND,
                         command.formId().toString()));
 
-        form.setName(command.name());
-        form.setDescription(command.description());
+        form.setName(htmlSanitizer.sanitize(command.name()));
+        form.setDescription(htmlSanitizer.sanitize(command.description()));
         form.setTimeLimitSeconds(command.timeLimitSeconds());
         form.setUpdatedBy(command.userId());
 

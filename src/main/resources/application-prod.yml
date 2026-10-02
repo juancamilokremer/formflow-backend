@@ -36,3 +36,8 @@ springdoc:
 app:
   cors:
     allowed-origins: ${CORS_ORIGINS}
+  # No fallback here (unlike the dev-convenience default in application.yml) — a missing
+  # JWT_SECRET in production must fail the app at startup, never silently sign tokens with
+  # the well-known placeholder value.
+  jwt:
+    secret: ${JWT_SECRET}

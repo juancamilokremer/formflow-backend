@@ -10,10 +10,12 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.AddCandidateCo
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -34,6 +36,7 @@ class AddCandidateServiceTest {
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
     @Mock private ConvocatoriaEmailSender emailSender;
+    @Spy private HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
 
     @InjectMocks private AddCandidateService service;
 

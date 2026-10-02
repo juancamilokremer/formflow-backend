@@ -16,6 +16,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.QuestionResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,8 +45,9 @@ class UpdateQuestionServiceTest {
     @Mock private QuestionConfigFactory configFactory;
     @Mock private ConditionalLogicValidator conditionalLogicValidator;
 
-    // Real instance (not mocked) — structural JsonNode comparison needs genuine behavior.
+    // Real instances (not mocked) — structural JsonNode comparison and sanitization need genuine behavior.
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
 
     private UpdateQuestionService service;
 
@@ -65,7 +67,8 @@ class UpdateQuestionServiceTest {
         tenantId   = UUID.randomUUID();
         userId     = UUID.randomUUID();
         service = new UpdateQuestionService(
-                formLoader, questionRepository, formRepository, configFactory, conditionalLogicValidator, objectMapper);
+                formLoader, questionRepository, formRepository, configFactory, conditionalLogicValidator,
+                objectMapper, htmlSanitizer);
         question = FormQuestion.builder().id(questionId).sectionId(sectionId)
                 .formId(formId).tenantId(tenantId).title("Vieja").type(QuestionType.TEXT)
                 .config(TextConfig.builder().maxLength(2000).build()).position(0).build();

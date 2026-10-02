@@ -77,6 +77,16 @@ class UploadAnswerFileServiceTest {
     }
 
     @Test
+    void replacesCharactersIllegalInFilenames() {
+        var command = new UploadAnswerFileCommand(formId, questionId, "cv\"; filename=\"evil.pdf", "x".getBytes());
+
+        UploadAnswerFileResult result = service.execute(command);
+
+        assertThat(result.filename()).isEqualTo("cv_; filename=_evil.pdf");
+        verify(fileStorage).store(any(), eq("cv_; filename=_evil.pdf"), any());
+    }
+
+    @Test
     void rejectsAFileLargerThanTheConfiguredMax() {
         byte[] tooLarge = new byte[6 * 1024 * 1024]; // maxSizeMb is 5
         var command = new UploadAnswerFileCommand(formId, questionId, "big.pdf", tooLarge);
