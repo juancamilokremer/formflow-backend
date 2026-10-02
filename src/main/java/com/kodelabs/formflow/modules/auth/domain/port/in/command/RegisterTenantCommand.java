@@ -9,5 +9,6 @@ public record RegisterTenantCommand(
         String email,
         String password,
         String firstName,
-        String lastName
+        String lastName,
+        boolean acceptedTerms
 ) {}

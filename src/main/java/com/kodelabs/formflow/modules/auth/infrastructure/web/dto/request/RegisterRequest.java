@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.web.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -38,5 +39,9 @@ public record RegisterRequest(
         @Schema(description = "Apellido del administrador", example = "Kremer")
         @NotBlank(message = "{validation.last_name.required}")
         @Size(max = 100, message = "{validation.last_name.size}")
-        String lastName
+        String lastName,
+
+        @Schema(description = "Aceptación explícita de los Términos y la Política de Privacidad", example = "true")
+        @AssertTrue(message = "{validation.accepted_terms.required}")
+        boolean acceptedTerms
 ) {}

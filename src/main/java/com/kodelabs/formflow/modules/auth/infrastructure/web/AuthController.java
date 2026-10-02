@@ -79,7 +79,8 @@ public class AuthController {
     public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest request) {
         var result = registerTenantUseCase.execute(new RegisterTenantCommand(
                 request.companyName(), request.slug(), request.email(),
-                request.password(), request.firstName(), request.lastName()));
+                request.password(), request.firstName(), request.lastName(),
+                request.acceptedTerms()));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(messages.get("success.tenant.registered"), RegisterResponse.from(result)));
     }

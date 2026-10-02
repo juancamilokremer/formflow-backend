@@ -1,0 +1,1 @@
+ALTER TABLE tenants ADD COLUMN accepted_terms_at TIMESTAMPTZ NULL;

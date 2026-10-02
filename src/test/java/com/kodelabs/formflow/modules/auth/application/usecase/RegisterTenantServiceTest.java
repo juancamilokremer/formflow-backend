@@ -46,7 +46,7 @@ class RegisterTenantServiceTest {
     void setUp() {
         command = new RegisterTenantCommand(
                 "Empresa ABC", "empresa-abc", "admin@abc.com",
-                "password123", "Juan", "Kremer");
+                "password123", "Juan", "Kremer", true);
     }
 
     @Test
@@ -65,6 +65,7 @@ class RegisterTenantServiceTest {
 
         assertThat(result.tenant().getId()).isEqualTo(tenantId);
         assertThat(result.user().getEmail()).isEqualTo("admin@abc.com");
+        assertThat(result.tenant().getAcceptedTermsAt()).isNotNull();
 
         // The admin user is created with the hashed password, never plain text
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -101,7 +102,7 @@ class RegisterTenantServiceTest {
 
         var uppercasedEmail = new RegisterTenantCommand(
                 "Empresa ABC", "empresa-abc", "  Admin@ABC.com ",
-                "password123", "Juan", "Kremer");
+                "password123", "Juan", "Kremer", true);
 
         service.execute(uppercasedEmail);
 

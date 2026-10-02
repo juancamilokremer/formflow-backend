@@ -44,6 +44,9 @@ public class Tenant {
     @Builder.Default
     private TenantStatus status = TenantStatus.ACTIVE;
 
+    /** When the admin accepted the Terms and Privacy Policy at registration (Ley 1581/2012). */
+    private Instant acceptedTermsAt;
+
     private Instant createdAt;
 
     private Instant updatedAt;
