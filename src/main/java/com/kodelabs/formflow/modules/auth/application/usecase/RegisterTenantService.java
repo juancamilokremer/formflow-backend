@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 /**
  * Implementation of the RegisterTenantUseCase input port.
  */
@@ -56,6 +58,7 @@ public class RegisterTenantService implements RegisterTenantUseCase {
         return tenantRepository.save(Tenant.builder()
                 .slug(command.slug())
                 .name(command.companyName())
+                .acceptedTermsAt(Instant.now())
                 .build());
     }
 

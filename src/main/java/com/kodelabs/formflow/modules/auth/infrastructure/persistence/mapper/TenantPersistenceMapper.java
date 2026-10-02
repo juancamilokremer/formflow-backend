@@ -23,6 +23,7 @@ public class TenantPersistenceMapper {
                 .secondaryColor(entity.getSecondaryColor())
                 .plan(entity.getPlan())
                 .status(entity.getStatus())
+                .acceptedTermsAt(entity.getAcceptedTermsAt())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -41,6 +42,7 @@ public class TenantPersistenceMapper {
                 .secondaryColor(domain.getSecondaryColor())
                 .plan(domain.getPlan())
                 .status(domain.getStatus())
+                .acceptedTermsAt(domain.getAcceptedTermsAt())
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
                 .build();

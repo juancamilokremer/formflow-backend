@@ -61,6 +61,8 @@ public class TenantJpaEntity {
     @Column(nullable = false)
     private TenantStatus status;
 
+    private Instant acceptedTermsAt;
+
     @CreationTimestamp
     @Column(updatable = false)
     private Instant createdAt;
