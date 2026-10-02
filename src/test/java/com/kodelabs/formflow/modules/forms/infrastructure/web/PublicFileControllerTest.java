@@ -96,6 +96,52 @@ class PublicFileControllerTest {
     }
 
     @Test
+    void sanitizesAFilenameContainingAQuoteCharacter() {
+        UUID tenantId = UUID.randomUUID();
+        Form form = formRepository.save(Form.builder()
+                .tenantId(tenantId).name("Encuesta").type(FormType.REGISTRATION).status(FormStatus.ACTIVE).version(1)
+                .build());
+        FormSection section = sectionRepository.save(FormSection.builder()
+                .formId(form.getId()).tenantId(tenantId).title("Sección").position(0).build());
+        FormQuestion question = questionRepository.save(FormQuestion.builder()
+                .formId(form.getId()).sectionId(section.getId()).tenantId(tenantId)
+                .title("Sube tu CV").type(QuestionType.FILE).position(0).required(false)
+                .config(FileConfig.builder().maxSizeMb(5).allowedTypes(List.of("pdf")).build())
+                .build());
+
+        byte[] fileBytes = "contenido".getBytes();
+        String uploadUrl = "http://localhost:" + port
+                + "/api/v1/public/forms/" + form.getId() + "/questions/" + question.getId() + "/files";
+
+        // A quote in the original filename could otherwise break both the on-disk path
+        // (LocalFileStorageAdapter) and the `filename="..."` attribute in the
+        // Content-Disposition header on download.
+        String maliciousFilename = "cv\"; filename=\"evil.pdf";
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new ByteArrayResource(fileBytes) {
+            @Override
+            public String getFilename() { return maliciousFilename; }
+        });
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        ResponseEntity<ApiResponse<UploadedFileResponse>> uploadResponse = restTemplate.exchange(
+                uploadUrl, HttpMethod.POST, new HttpEntity<>(body, headers),
+                new ParameterizedTypeReference<>() {});
+
+        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        String downloadUrl = uploadResponse.getBody().getData().url();
+
+        ResponseEntity<byte[]> downloadResponse = restTemplate.getForEntity(downloadUrl, byte[].class);
+
+        assertThat(downloadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        String rawHeader = downloadResponse.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION);
+        // RFC 6266 encoding (quoted-printable / percent-encoding) means no raw quote or
+        // semicolon survives unescaped — a literal `"; filename="` would mean the value broke
+        // out of its attribute and injected a second one.
+        assertThat(rawHeader).doesNotContain("\"; filename=\"");
+    }
+
+    @Test
     void rejectsAFileTypeNotAllowedByTheQuestion() {
         UUID tenantId = UUID.randomUUID();
         Form form = formRepository.save(Form.builder()
