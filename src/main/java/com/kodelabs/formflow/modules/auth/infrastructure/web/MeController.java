@@ -1,13 +1,16 @@
 package com.kodelabs.formflow.modules.auth.infrastructure.web;
 
+import com.kodelabs.formflow.modules.auth.domain.port.in.ChangeMyPasswordUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.DeleteAvatarUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.GetMeUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.UpdateMeUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.UploadAvatarUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.ChangeMyPasswordCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.DeleteAvatarCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.GetMeQuery;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.UpdateMeCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.UploadAvatarCommand;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.request.ChangeMyPasswordRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.request.UpdateMeRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response.MeResponse;
 import com.kodelabs.formflow.shared.web.ApiResponse;
@@ -50,6 +53,7 @@ public class MeController {
     private final UpdateMeUseCase updateMe;
     private final UploadAvatarUseCase uploadAvatar;
     private final DeleteAvatarUseCase deleteAvatar;
+    private final ChangeMyPasswordUseCase changeMyPassword;
 
     @GetMapping
     @Operation(summary = "Obtener mis datos")
@@ -86,5 +90,14 @@ public class MeController {
     public ResponseEntity<ApiResponse<MeResponse>> deleteAvatar(Authentication auth) {
         var result = deleteAvatar.execute(new DeleteAvatarCommand(userId(auth), tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(MeResponse.from(result)));
+    }
+
+    @PutMapping("/password")
+    @Operation(summary = "Cambiar mi contraseña", description = "Requiere la contraseña actual — a diferencia del flujo de \"olvidé mi contraseña\", aquí ya hay una sesión activa.")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody ChangeMyPasswordRequest request, Authentication auth) {
+        changeMyPassword.execute(new ChangeMyPasswordCommand(
+                userId(auth), tenantId(), request.currentPassword(), request.newPassword()));
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }
