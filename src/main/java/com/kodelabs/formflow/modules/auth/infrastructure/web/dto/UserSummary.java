@@ -8,10 +8,11 @@ import java.util.UUID;
  * Basic user data returned by the authentication endpoints.
  * emailVerified drives the verification banner in the frontend.
  */
-public record UserSummary(UUID id, String email, String fullName, String role, boolean emailVerified) {
+public record UserSummary(
+        UUID id, String email, String fullName, String role, boolean emailVerified, String avatarUrl) {
 
     public static UserSummary from(User user) {
         return new UserSummary(user.getId(), user.getEmail(), user.getFullName(),
-                user.getRole().name(), user.isEmailVerified());
+                user.getRole().name(), user.isEmailVerified(), user.getAvatarUrl());
     }
 }

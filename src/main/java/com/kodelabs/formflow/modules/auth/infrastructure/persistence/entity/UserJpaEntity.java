@@ -54,6 +54,8 @@ public class UserJpaEntity {
     @Column(nullable = false, length = 100)
     private String lastName;
 
+    private String avatarUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
