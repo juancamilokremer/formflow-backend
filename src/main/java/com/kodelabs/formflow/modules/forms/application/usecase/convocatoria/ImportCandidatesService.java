@@ -10,6 +10,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.ImportResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class ImportCandidatesService implements ImportCandidatesUseCase {
     private final CandidateRepositoryPort candidateRepository;
     private final CsvParserService csvParser;
     private final ConvocatoriaEmailSender emailSender;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -75,7 +77,7 @@ public class ImportCandidatesService implements ImportCandidatesUseCase {
         return Candidate.builder()
                 .convocatoriaId(convocatoria.getId())
                 .tenantId(convocatoria.getTenantId())
-                .name(row.name())
+                .name(htmlSanitizer.sanitize(row.name()))
                 .email(row.email())
                 .invitedAt(Instant.now())
                 .build();

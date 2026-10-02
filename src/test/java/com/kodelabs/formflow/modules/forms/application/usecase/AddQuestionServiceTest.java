@@ -17,12 +17,14 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.FormQuestionRepositor
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -46,6 +48,7 @@ class AddQuestionServiceTest {
     @Mock private FormQuestionRepositoryPort questionRepository;
     @Mock private QuestionConfigFactory configFactory;
     @Mock private ConditionalLogicValidator conditionalLogicValidator;
+    @Spy private HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
     @InjectMocks private AddQuestionService service;
 
     private UUID formId;

@@ -18,11 +18,13 @@ import com.kodelabs.formflow.shared.exception.BusinessException;
 import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.planlimit.PlanLimitExceededException;
 import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -50,6 +52,7 @@ class CreateConvocatoriaFormServiceTest {
     @Mock private FormCloner formCloner;
     @Mock private Messages messages;
     @Mock private PlanLimitService planLimitService;
+    @Spy private HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
     @InjectMocks private CreateConvocatoriaFormService service;
 
     private final UUID tenantId = UUID.randomUUID();

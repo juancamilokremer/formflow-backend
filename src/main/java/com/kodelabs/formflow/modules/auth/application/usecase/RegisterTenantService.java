@@ -11,6 +11,7 @@ import com.kodelabs.formflow.modules.auth.domain.port.out.PasswordHasherPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,7 @@ public class RegisterTenantService implements RegisterTenantUseCase {
     private final UserRepositoryPort userRepository;
     private final PasswordHasherPort passwordHasher;
     private final AuthEmailSender authEmailSender;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -57,7 +59,7 @@ public class RegisterTenantService implements RegisterTenantUseCase {
     private Tenant createTenant(RegisterTenantCommand command) {
         return tenantRepository.save(Tenant.builder()
                 .slug(command.slug())
-                .name(command.companyName())
+                .name(htmlSanitizer.sanitize(command.companyName()))
                 .acceptedTermsAt(Instant.now())
                 .build());
     }

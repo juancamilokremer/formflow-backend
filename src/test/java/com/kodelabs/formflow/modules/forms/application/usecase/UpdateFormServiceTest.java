@@ -8,11 +8,13 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.FormSummaryResu
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.FormSectionRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -29,6 +31,7 @@ class UpdateFormServiceTest {
 
     @Mock private FormRepositoryPort formRepository;
     @Mock private FormSectionRepositoryPort sectionRepository;
+    @Spy private HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
     @InjectMocks private UpdateFormService service;
 
     private UUID formId;

@@ -15,6 +15,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.FormRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class CreateConvocatoriaFormService implements CreateConvocatoriaFormUseC
     private final FormCloner formCloner;
     private final Messages messages;
     private final PlanLimitService planLimitService;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -67,7 +69,7 @@ public class CreateConvocatoriaFormService implements CreateConvocatoriaFormUseC
         FormType type = command.type() != null ? command.type() : convocatoria.getType();
         return formRepository.save(Form.builder()
                 .tenantId(command.tenantId())
-                .name(command.name())
+                .name(htmlSanitizer.sanitize(command.name()))
                 .type(type)
                 .createdBy(command.userId())
                 .updatedBy(command.userId())
