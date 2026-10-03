@@ -229,6 +229,15 @@
                         </exclude>
                     </excludes>
                 </configuration>
+                <executions>
+                    <!-- Writes META-INF/build-info.properties so BuildProperties can report
+                         the real project version — see backend#28, the public health endpoint. -->
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
