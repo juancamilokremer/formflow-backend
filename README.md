@@ -451,6 +451,48 @@ Los cubos viven en **Caffeine** (heap de la JVM). `expireAfterAccess=3600s` desc
 | `EMAIL_POOL_CORE` / `EMAIL_POOL_MAX` / `EMAIL_QUEUE_CAPACITY` | Executor de envío asíncrono (defaults: 2 / 4 / 100) |
 | `RATE_LIMIT_ENABLED` | Activar rate limiting en endpoints públicos (default: `true`; poner `false` en tests) |
 
+## Cuenta SUPER_ADMIN (bootstrap)
+
+`SUPER_ADMIN` es el rol de plataforma de Kode Labs (`/api/v1/admin/**` — listar/suspender/
+activar tenants, cambiar planes, stats globales). No hay forma de crearlo desde la UI ni
+desde `/auth/register` (que siempre crea `TENANT_ADMIN`) ni desde invitaciones (el `CHECK`
+constraint de `user_invitations` lo excluye a propósito) — es intencional, para que no sea
+un rol que cualquiera pueda otorgarse. La única forma de crear la primera cuenta de un
+entorno nuevo (dev/staging/prod) es este comando, una vez por entorno.
+
+La cuenta vive en un **tenant interno dedicado** (`kodelabs` por defecto — nunca dentro del
+tenant de un cliente real), creado automáticamente la primera vez que se corre el comando.
+
+```bash
+mvn spring-boot:run \
+  -Dspring-boot.run.profiles=seed-super-admin \
+  -Dspring-boot.run.arguments="--seed.email=admin@kodelabs.com --seed.password=... --seed.first-name=Ada --seed.last-name=Lovelace"
+```
+
+Contra un jar ya empaquetado (ej. una shell de un solo uso en Railway):
+
+```bash
+java -jar app.jar --spring.profiles.active=seed-super-admin \
+  --seed.email=admin@kodelabs.com --seed.password=... --seed.first-name=Ada --seed.last-name=Lovelace
+```
+
+La app arranca completa (igual que cualquier otro boot — Flyway, el servidor web, etc.),
+corre el seeder y se apaga sola; no queda nada escuchando. Usa el `PasswordEncoder` real de
+la app (nunca un hash armado a mano). Es **seguro volver a correrlo**: si la cuenta ya
+existe, actualiza contraseña/nombre en vez de fallar — útil para rotar la contraseña.
+
+| Argumento | Obligatorio | Default |
+|-----------|:-----------:|---------|
+| `--seed.email` | Sí | — |
+| `--seed.password` | Sí | — |
+| `--seed.first-name` | Sí | — |
+| `--seed.last-name` | Sí | — |
+| `--seed.tenant-slug` | No | `kodelabs` |
+| `--seed.tenant-name` | No | `Kode Labs` |
+
+Si falta algún argumento obligatorio, el comando lista todos los que faltan de una vez y
+termina con código de salida 1 — sin tocar la base de datos.
+
 ## CI/CD
 
 - **CI** (GitHub Actions): `mvn verify` en cada PR y push a `main` — compila, corre los tests
