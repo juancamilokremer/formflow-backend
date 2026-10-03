@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.forms.application.usecase.form;
 
+import com.kodelabs.formflow.modules.forms.application.service.QuestionConfigFactory;
 import com.kodelabs.formflow.modules.forms.domain.model.Form;
 import com.kodelabs.formflow.modules.forms.domain.model.FormQuestion;
 import com.kodelabs.formflow.modules.forms.domain.model.FormSection;
@@ -28,6 +29,7 @@ public class GetPublicFormService implements GetPublicFormUseCase {
 
     private final FormRepositoryPort formRepository;
     private final TenantInfoPort tenantInfoPort;
+    private final QuestionConfigFactory configFactory;
 
     @Override
     public PublicFormResult execute(GetPublicFormQuery query) {
@@ -74,6 +76,6 @@ public class GetPublicFormService implements GetPublicFormUseCase {
         return new PublicQuestionResult(
                 q.getId(), q.getTitle(), q.getDescription(), q.getType(),
                 q.getPosition(), q.isRequired(), q.getTimeLimitSeconds(),
-                q.getConditionalLogic(), q.getConfig());
+                q.getConditionalLogic(), configFactory.redactForPublic(q.getType(), q.getConfig()));
     }
 }
