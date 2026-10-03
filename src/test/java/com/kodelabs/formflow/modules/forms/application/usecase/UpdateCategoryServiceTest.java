@@ -6,11 +6,13 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateCategory
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.CategoryResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CategoryRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -28,6 +30,7 @@ import static org.mockito.Mockito.when;
 class UpdateCategoryServiceTest {
 
     @Mock private CategoryRepositoryPort categoryRepository;
+    @Spy private HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
     @InjectMocks private UpdateCategoryService service;
 
     private UUID id;
@@ -54,6 +57,18 @@ class UpdateCategoryServiceTest {
 
         assertThat(result.name()).isEqualTo("Actualizada");
         assertThat(result.color()).isEqualTo("#FF0000");
+        assertThat(result.description()).isEqualTo("nueva desc");
+    }
+
+    @Test
+    void sanitizesNameAndDescriptionBeforePersisting() {
+        when(categoryRepository.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.of(existing));
+        when(categoryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CategoryResult result = service.execute(new UpdateCategoryCommand(
+                id, tenantId, "<script>alert(1)</script>Actualizada", "#FF0000", "<b>nueva</b> desc"));
+
+        assertThat(result.name()).isEqualTo("Actualizada");
         assertThat(result.description()).isEqualTo("nueva desc");
     }
 

@@ -7,6 +7,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaRes
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,12 +21,13 @@ public class UpdateConvocatoriaService implements UpdateConvocatoriaUseCase {
 
     private final ConvocatoriaRepositoryPort convocatoriaRepository;
     private final CandidateRepositoryPort candidateRepository;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
     public ConvocatoriaResult execute(UpdateConvocatoriaCommand command) {
         Convocatoria convocatoria = loadDraftConvocatoria(command.id(), command.tenantId());
-        convocatoria.setName(command.name());
+        convocatoria.setName(htmlSanitizer.sanitize(command.name()));
         if (command.scoringConfig() != null) convocatoria.setScoringConfig(command.scoringConfig());
         Convocatoria saved = convocatoriaRepository.save(convocatoria);
         var candidates = candidateRepository.findAllByConvocatoriaId(saved.getId());

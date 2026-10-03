@@ -14,6 +14,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositor
 import com.kodelabs.formflow.shared.exception.BusinessException;
 import com.kodelabs.formflow.shared.planlimit.PlanLimitExceededException;
 import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +44,7 @@ class CreateConvocatoriaServiceTest {
     @Mock private ConvocatoriaFormValidator formValidator;
     @Spy  private ConvocatoriaWeightValidator weightValidator = new ConvocatoriaWeightValidator();
     @Mock private PlanLimitService planLimitService;
+    @Spy private HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
 
     @InjectMocks private CreateConvocatoriaService service;
 
@@ -68,6 +70,19 @@ class CreateConvocatoriaServiceTest {
         assertThat(result.type()).isEqualTo(FormType.CANDIDATES);
         assertThat(result.status()).isEqualTo(ConvocatoriaStatus.DRAFT.name());
         assertThat(result.candidates()).isEmpty();
+    }
+
+    @Test
+    void sanitizesTheNameBeforePersisting() {
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CreateConvocatoriaCommand command = new CreateConvocatoriaCommand(
+                tenantId, userId, formId, "<script>alert(1)</script>Analista RRHH",
+                FormType.CANDIDATES, List.of(), null);
+
+        ConvocatoriaResult result = service.execute(command);
+
+        assertThat(result.name()).isEqualTo("Analista RRHH");
     }
 
     @Test

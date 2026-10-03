@@ -12,6 +12,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaRes
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaFormRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.planlimit.PlanLimitService;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
     private final ConvocatoriaFormValidator formValidator;
     private final ConvocatoriaWeightValidator weightValidator;
     private final PlanLimitService planLimitService;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -53,7 +55,7 @@ public class CreateConvocatoriaService implements CreateConvocatoriaUseCase {
     private Convocatoria buildConvocatoria(CreateConvocatoriaCommand command) {
         return Convocatoria.builder()
                 .tenantId(command.tenantId())
-                .name(command.name())
+                .name(htmlSanitizer.sanitize(command.name()))
                 .type(command.type())
                 .scoringConfig(command.scoringConfig() != null ? command.scoringConfig() : ScoringConfig.defaults())
                 .build();

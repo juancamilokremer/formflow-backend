@@ -10,10 +10,12 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.result.ConvocatoriaRes
 import com.kodelabs.formflow.modules.forms.domain.port.out.CandidateRepositoryPort;
 import com.kodelabs.formflow.modules.forms.domain.port.out.ConvocatoriaRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -31,6 +33,7 @@ class UpdateConvocatoriaServiceTest {
 
     @Mock private ConvocatoriaRepositoryPort convocatoriaRepository;
     @Mock private CandidateRepositoryPort candidateRepository;
+    @Spy private HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
     @InjectMocks private UpdateConvocatoriaService service;
 
     private final UUID tenantId = UUID.randomUUID();
@@ -48,6 +51,19 @@ class UpdateConvocatoriaServiceTest {
                 new UpdateConvocatoriaCommand(convId, tenantId, userId, "Proceso Actualizado", null));
 
         assertThat(result.name()).isEqualTo("Proceso Actualizado");
+    }
+
+    @Test
+    void sanitizesTheNameBeforePersisting() {
+        Convocatoria draft = draftConvocatoria();
+        when(convocatoriaRepository.findByIdAndTenantId(convId, tenantId)).thenReturn(Optional.of(draft));
+        when(convocatoriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(candidateRepository.findAllByConvocatoriaId(convId)).thenReturn(List.of());
+
+        ConvocatoriaResult result = service.execute(new UpdateConvocatoriaCommand(
+                convId, tenantId, userId, "<script>alert(1)</script>Proceso", null));
+
+        assertThat(result.name()).isEqualTo("Proceso");
     }
 
     @Test
