@@ -2,7 +2,9 @@ package com.kodelabs.formflow.modules.forms.application.service.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.config.AnswerOption;
 import com.kodelabs.formflow.modules.forms.domain.model.config.MultipleConfig;
+import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
@@ -48,5 +50,18 @@ public class MultipleTypeHandler implements QuestionTypeHandler<MultipleConfig> 
     @Override
     public Set<ConditionOperator> supportedOperators() {
         return Set.of(ConditionOperator.CONTAINS, ConditionOperator.NOT_CONTAINS);
+    }
+
+    @Override
+    public QuestionConfig redactForPublic(QuestionConfig config) {
+        MultipleConfig c = (MultipleConfig) config;
+        return MultipleConfig.builder()
+                .options(c.getOptions().stream()
+                        .map(o -> AnswerOption.builder().id(o.getId()).label(o.getLabel()).build())
+                        .toList())
+                .maxSelections(c.getMaxSelections())
+                .randomize(c.isRandomize())
+                .scoringType(c.getScoringType())
+                .build();
     }
 }

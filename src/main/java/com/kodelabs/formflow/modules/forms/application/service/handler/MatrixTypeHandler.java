@@ -2,7 +2,9 @@ package com.kodelabs.formflow.modules.forms.application.service.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.config.MatrixColumn;
 import com.kodelabs.formflow.modules.forms.domain.model.config.MatrixConfig;
+import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
@@ -49,5 +51,17 @@ public class MatrixTypeHandler implements QuestionTypeHandler<MatrixConfig> {
     @Override
     public Set<ConditionOperator> supportedOperators() {
         return Set.of();
+    }
+
+    @Override
+    public QuestionConfig redactForPublic(QuestionConfig config) {
+        MatrixConfig c = (MatrixConfig) config;
+        return MatrixConfig.builder()
+                .rows(c.getRows())
+                .columns(c.getColumns().stream()
+                        .map(col -> MatrixColumn.builder().id(col.getId()).label(col.getLabel()).build())
+                        .toList())
+                .scoringType(c.getScoringType())
+                .build();
     }
 }

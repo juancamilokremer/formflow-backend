@@ -16,4 +16,9 @@ public class QuestionConfigFactory {
     public QuestionConfig build(QuestionType type, Map<String, Object> raw) {
         return registry.get(type).build(raw == null ? Map.of() : raw);
     }
+
+    /** Strips scoring data from a config before it reaches an unauthenticated respondent. */
+    public QuestionConfig redactForPublic(QuestionType type, QuestionConfig config) {
+        return registry.get(type).redactForPublic(config);
+    }
 }

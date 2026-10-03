@@ -2,6 +2,8 @@ package com.kodelabs.formflow.modules.forms.application.service.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.config.AnswerOption;
+import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.config.SingleConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -48,5 +50,17 @@ public class SingleTypeHandler implements QuestionTypeHandler<SingleConfig> {
     @Override
     public Set<ConditionOperator> supportedOperators() {
         return Set.of(ConditionOperator.EQUALS, ConditionOperator.NOT_EQUALS);
+    }
+
+    @Override
+    public QuestionConfig redactForPublic(QuestionConfig config) {
+        SingleConfig c = (SingleConfig) config;
+        return SingleConfig.builder()
+                .options(c.getOptions().stream()
+                        .map(o -> AnswerOption.builder().id(o.getId()).label(o.getLabel()).build())
+                        .toList())
+                .randomize(c.isRandomize())
+                .scoringType(c.getScoringType())
+                .build();
     }
 }

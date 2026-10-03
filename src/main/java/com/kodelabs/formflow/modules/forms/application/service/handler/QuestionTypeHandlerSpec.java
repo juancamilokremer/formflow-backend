@@ -18,4 +18,12 @@ public interface QuestionTypeHandlerSpec {
     Map<String, Object> defaultSchema();
 
     Set<ConditionOperator> supportedOperators();
+
+    /** Strips scoring data (option/column point values) before a config reaches an
+     *  unauthenticated respondent — seeing which answer is worth more would let them
+     *  game the evaluation instead of answering honestly. No-op for types with no
+     *  scoring (text, date, file, info, nps); overridden by single/multiple/scale/matrix. */
+    default QuestionConfig redactForPublic(QuestionConfig config) {
+        return config;
+    }
 }

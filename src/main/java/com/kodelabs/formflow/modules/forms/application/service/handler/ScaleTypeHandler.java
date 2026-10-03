@@ -2,6 +2,7 @@ package com.kodelabs.formflow.modules.forms.application.service.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kodelabs.formflow.modules.forms.domain.model.QuestionType;
+import com.kodelabs.formflow.modules.forms.domain.model.config.QuestionConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.config.ScaleConfig;
 import com.kodelabs.formflow.modules.forms.domain.model.config.ScoringType;
 import lombok.RequiredArgsConstructor;
@@ -50,5 +51,17 @@ public class ScaleTypeHandler implements QuestionTypeHandler<ScaleConfig> {
     public Set<ConditionOperator> supportedOperators() {
         return Set.of(ConditionOperator.EQUALS, ConditionOperator.GREATER_THAN,
                 ConditionOperator.LESS_THAN, ConditionOperator.BETWEEN);
+    }
+
+    @Override
+    public QuestionConfig redactForPublic(QuestionConfig config) {
+        ScaleConfig c = (ScaleConfig) config;
+        return ScaleConfig.builder()
+                .min(c.getMin())
+                .max(c.getMax())
+                .minLabel(c.getMinLabel())
+                .maxLabel(c.getMaxLabel())
+                .scoringType(c.getScoringType())
+                .build();
     }
 }
