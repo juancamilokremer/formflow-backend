@@ -6,12 +6,14 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.CreateCategory
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.CategoryResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CategoryRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -28,6 +30,7 @@ import static org.mockito.Mockito.when;
 class CreateCategoryServiceTest {
 
     @Mock private CategoryRepositoryPort categoryRepository;
+    @Spy private HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
     @InjectMocks private CreateCategoryService service;
 
     private UUID tenantId;
@@ -51,6 +54,19 @@ class CreateCategoryServiceTest {
 
         assertThat(result.name()).isEqualTo("Técnicas");
         assertThat(result.color()).isEqualTo("#FF5733");
+        assertThat(result.description()).isEqualTo("Competencias técnicas");
+    }
+
+    @Test
+    void sanitizesNameAndDescriptionBeforePersisting() {
+        when(categoryRepository.existsByNameAndTenantId("Técnicas", tenantId)).thenReturn(false);
+        when(categoryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CategoryResult result = service.execute(new CreateCategoryCommand(
+                tenantId, "<script>alert(1)</script>Técnicas", "#FF5733",
+                "<b>Competencias</b> técnicas"));
+
+        assertThat(result.name()).isEqualTo("Técnicas");
         assertThat(result.description()).isEqualTo("Competencias técnicas");
     }
 

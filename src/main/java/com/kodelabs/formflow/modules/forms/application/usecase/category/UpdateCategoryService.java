@@ -6,6 +6,7 @@ import com.kodelabs.formflow.modules.forms.domain.port.in.command.UpdateCategory
 import com.kodelabs.formflow.modules.forms.domain.port.in.result.CategoryResult;
 import com.kodelabs.formflow.modules.forms.domain.port.out.CategoryRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.sanitize.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateCategoryService implements UpdateCategoryUseCase {
 
     private final CategoryRepositoryPort categoryRepository;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -25,15 +27,16 @@ public class UpdateCategoryService implements UpdateCategoryUseCase {
                 .orElseThrow(() -> new BusinessException("error.category.not_found",
                         HttpStatus.NOT_FOUND, command.id().toString()));
 
-        if (!category.getName().equals(command.name()) &&
-                categoryRepository.existsByNameAndTenantId(command.name(), command.tenantId())) {
+        String name = htmlSanitizer.sanitize(command.name());
+        if (!category.getName().equals(name) &&
+                categoryRepository.existsByNameAndTenantId(name, command.tenantId())) {
             throw new BusinessException("error.category.name_already_exists",
-                    HttpStatus.CONFLICT, command.name());
+                    HttpStatus.CONFLICT, name);
         }
 
-        category.setName(command.name());
+        category.setName(name);
         category.setColor(command.color());
-        category.setDescription(command.description());
+        category.setDescription(htmlSanitizer.sanitize(command.description()));
 
         return CategoryResult.from(categoryRepository.save(category));
     }
