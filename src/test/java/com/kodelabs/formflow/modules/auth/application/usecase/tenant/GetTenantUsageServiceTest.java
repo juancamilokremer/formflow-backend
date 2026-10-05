@@ -64,7 +64,7 @@ class GetTenantUsageServiceTest {
 
         assertThat(result.formsLimit()).isEqualTo(-1);
         assertThat(result.responsesLimit()).isEqualTo(-1);
-        assertThat(result.usersLimit()).isEqualTo(10);
+        assertThat(result.usersLimit()).isEqualTo(-1);
         assertThat(result.canExportExcel()).isTrue();
     }
 }
