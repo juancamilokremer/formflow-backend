@@ -18,8 +18,7 @@ public record PlanLimits(
         return switch (plan) {
             case FREE -> new PlanLimits(2, 50, 1, 0, false);
             case STARTER -> new PlanLimits(10, 500, 3, 5, true);
-            case PRO -> new PlanLimits(UNLIMITED, UNLIMITED, 10, UNLIMITED, true);
-            case BUSINESS, ENTERPRISE -> new PlanLimits(UNLIMITED, UNLIMITED, UNLIMITED, UNLIMITED, true);
+            case PRO, ENTERPRISE -> new PlanLimits(UNLIMITED, UNLIMITED, UNLIMITED, UNLIMITED, true);
         };
     }
 }
