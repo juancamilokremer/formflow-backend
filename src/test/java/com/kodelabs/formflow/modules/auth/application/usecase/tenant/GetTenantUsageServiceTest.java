@@ -1,5 +1,6 @@
 package com.kodelabs.formflow.modules.auth.application.usecase.tenant;
 
+import com.kodelabs.formflow.modules.auth.domain.model.PlanLimits;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.TenantPlan;
 import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
@@ -8,6 +9,7 @@ import com.kodelabs.formflow.modules.auth.domain.port.in.result.TenantUsageResul
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantUsagePort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitsCatalog;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +30,7 @@ class GetTenantUsageServiceTest {
     @Mock private TenantRepositoryPort tenantRepository;
     @Mock private UserRepositoryPort userRepository;
     @Mock private TenantUsagePort tenantUsagePort;
+    @Mock private PlanLimitsCatalog planLimitsCatalog;
     @InjectMocks private GetTenantUsageService service;
 
     private final UUID tenantId = UUID.randomUUID();
@@ -36,6 +39,7 @@ class GetTenantUsageServiceTest {
     void combinesRealUsageWithThePlanLimits() {
         Tenant tenant = Tenant.builder().id(tenantId).plan(TenantPlan.FREE).build();
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(planLimitsCatalog.forPlan(TenantPlan.FREE)).thenReturn(new PlanLimits(2, 50, 1, 0, false));
         when(tenantUsagePort.countForms(tenantId)).thenReturn(2L);
         when(tenantUsagePort.countResponsesThisMonth(eq(tenantId), any(), any())).thenReturn(38L);
         when(userRepository.countByTenantIdAndActiveTrueAndRoleNot(tenantId, UserRole.SUPER_ADMIN)).thenReturn(1L);
@@ -56,6 +60,7 @@ class GetTenantUsageServiceTest {
     void reportsUnlimitedAsANegativeSentinelForUnlimitedPlans() {
         Tenant tenant = Tenant.builder().id(tenantId).plan(TenantPlan.PRO).build();
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(planLimitsCatalog.forPlan(TenantPlan.PRO)).thenReturn(new PlanLimits(-1, -1, -1, -1, true));
         when(tenantUsagePort.countForms(tenantId)).thenReturn(120L);
         when(tenantUsagePort.countResponsesThisMonth(eq(tenantId), any(), any())).thenReturn(9000L);
         when(userRepository.countByTenantIdAndActiveTrueAndRoleNot(tenantId, UserRole.SUPER_ADMIN)).thenReturn(4L);

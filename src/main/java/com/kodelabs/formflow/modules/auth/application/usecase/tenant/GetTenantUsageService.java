@@ -10,6 +10,7 @@ import com.kodelabs.formflow.modules.auth.domain.port.out.TenantRepositoryPort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.TenantUsagePort;
 import com.kodelabs.formflow.modules.auth.domain.port.out.UserRepositoryPort;
 import com.kodelabs.formflow.shared.exception.BusinessException;
+import com.kodelabs.formflow.shared.planlimit.PlanLimitsCatalog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,13 +25,14 @@ public class GetTenantUsageService implements GetTenantUsageUseCase {
     private final TenantRepositoryPort tenantRepository;
     private final UserRepositoryPort userRepository;
     private final TenantUsagePort tenantUsagePort;
+    private final PlanLimitsCatalog planLimitsCatalog;
 
     @Override
     public TenantUsageResult execute(GetTenantUsageQuery query) {
         Tenant tenant = tenantRepository.findById(query.tenantId())
                 .orElseThrow(() -> new BusinessException("error.tenant.not_found"));
 
-        PlanLimits limits = PlanLimits.forPlan(tenant.getPlan());
+        PlanLimits limits = planLimitsCatalog.forPlan(tenant.getPlan());
         YearMonth currentMonth = YearMonth.now(ZoneOffset.UTC);
         Instant monthStart = currentMonth.atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant monthEnd = currentMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneOffset.UTC).toInstant();

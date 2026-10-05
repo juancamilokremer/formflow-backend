@@ -1,8 +1,10 @@
 package com.kodelabs.formflow.modules.auth.domain.model;
 
 /**
- * Usage limits for a subscription plan (backend#6). -1 means unlimited.
- * A static lookup only — enforcement (PlanLimitService) is out of scope for #5.
+ * Usage limits for a subscription plan. -1 means unlimited.
+ * A pure value object — values are admin-editable, stored in the plan_limits
+ * table and looked up via PlanLimitsRepositoryPort (see shared.planlimit.PlanLimitsCatalog
+ * for the cached lookup used by enforcement).
  */
 public record PlanLimits(
         int formsLimit,
@@ -11,14 +13,5 @@ public record PlanLimits(
         int convocatoriasLimit,
         boolean canExportExcel
 ) {
-
-    private static final int UNLIMITED = -1;
-
-    public static PlanLimits forPlan(TenantPlan plan) {
-        return switch (plan) {
-            case FREE -> new PlanLimits(2, 50, 1, 0, false);
-            case STARTER -> new PlanLimits(10, 500, 3, 5, true);
-            case PRO, ENTERPRISE -> new PlanLimits(UNLIMITED, UNLIMITED, UNLIMITED, UNLIMITED, true);
-        };
-    }
+    public static final int UNLIMITED = -1;
 }
