@@ -1,6 +1,7 @@
 package com.kodelabs.formflow.shared.planlimit;
 
 import com.github.benmanes.caffeine.cache.Ticker;
+import com.kodelabs.formflow.modules.auth.domain.model.PlanLimits;
 import com.kodelabs.formflow.modules.auth.domain.model.Tenant;
 import com.kodelabs.formflow.modules.auth.domain.model.TenantPlan;
 import com.kodelabs.formflow.modules.auth.domain.model.UserRole;
@@ -28,9 +29,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PlanLimitServiceTest {
 
+    private static final PlanLimits FREE_LIMITS = new PlanLimits(2, 50, 1, 0, false);
+    private static final PlanLimits STARTER_LIMITS = new PlanLimits(10, 500, 3, 5, true);
+    private static final PlanLimits UNLIMITED_LIMITS = new PlanLimits(-1, -1, -1, -1, true);
+
     @Mock private TenantRepositoryPort tenantRepository;
     @Mock private TenantUsagePort tenantUsagePort;
     @Mock private UserRepositoryPort userRepository;
+    @Mock private PlanLimitsCatalog planLimitsCatalog;
 
     private final AtomicLong nanos = new AtomicLong();
     private final Ticker testTicker = nanos::get;
@@ -40,12 +46,21 @@ class PlanLimitServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PlanLimitService(tenantRepository, tenantUsagePort, userRepository, testTicker);
+        service = new PlanLimitService(tenantRepository, tenantUsagePort, userRepository, planLimitsCatalog, testTicker);
     }
 
     private void stubTenant(TenantPlan plan) {
         when(tenantRepository.findById(tenantId))
                 .thenReturn(Optional.of(Tenant.builder().id(tenantId).plan(plan).build()));
+        when(planLimitsCatalog.forPlan(plan)).thenReturn(limitsFor(plan));
+    }
+
+    private PlanLimits limitsFor(TenantPlan plan) {
+        return switch (plan) {
+            case FREE -> FREE_LIMITS;
+            case STARTER -> STARTER_LIMITS;
+            case PRO, ENTERPRISE -> UNLIMITED_LIMITS;
+        };
     }
 
     @Test

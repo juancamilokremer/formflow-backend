@@ -37,20 +37,22 @@ public class PlanLimitService {
     private final TenantRepositoryPort tenantRepository;
     private final TenantUsagePort tenantUsagePort;
     private final UserRepositoryPort userRepository;
+    private final PlanLimitsCatalog planLimitsCatalog;
     private final Cache<UUID, UsageSnapshot> cache;
 
     @Autowired
     public PlanLimitService(TenantRepositoryPort tenantRepository, TenantUsagePort tenantUsagePort,
-                             UserRepositoryPort userRepository) {
-        this(tenantRepository, tenantUsagePort, userRepository, Ticker.systemTicker());
+                             UserRepositoryPort userRepository, PlanLimitsCatalog planLimitsCatalog) {
+        this(tenantRepository, tenantUsagePort, userRepository, planLimitsCatalog, Ticker.systemTicker());
     }
 
     /** Package-private: lets PlanLimitServiceTest advance a fake ticker to prove the TTL works. */
     PlanLimitService(TenantRepositoryPort tenantRepository, TenantUsagePort tenantUsagePort,
-                      UserRepositoryPort userRepository, Ticker ticker) {
+                      UserRepositoryPort userRepository, PlanLimitsCatalog planLimitsCatalog, Ticker ticker) {
         this.tenantRepository = tenantRepository;
         this.tenantUsagePort = tenantUsagePort;
         this.userRepository = userRepository;
+        this.planLimitsCatalog = planLimitsCatalog;
         this.cache = Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofMinutes(1))
                 .ticker(ticker)
@@ -59,13 +61,13 @@ public class PlanLimitService {
 
     public void checkFormLimit(UUID tenantId) {
         UsageSnapshot usage = snapshotFor(tenantId);
-        PlanLimits limits = PlanLimits.forPlan(usage.plan());
+        PlanLimits limits = planLimitsCatalog.forPlan(usage.plan());
         assertUnderLimit(usage.formsUsed(), limits.formsLimit(), "error.plan_limit.forms", usage.plan());
     }
 
     public void checkMonthlyResponseLimit(UUID tenantId) {
         UsageSnapshot usage = snapshotFor(tenantId);
-        PlanLimits limits = PlanLimits.forPlan(usage.plan());
+        PlanLimits limits = planLimitsCatalog.forPlan(usage.plan());
         assertUnderLimit(usage.responsesThisMonth(), limits.responsesLimit(), "error.plan_limit.responses", usage.plan());
     }
 
@@ -73,18 +75,18 @@ public class PlanLimitService {
      *  user-invitation flow to gate (backend#8 hasn't been built). */
     public void checkUserLimit(UUID tenantId) {
         UsageSnapshot usage = snapshotFor(tenantId);
-        PlanLimits limits = PlanLimits.forPlan(usage.plan());
+        PlanLimits limits = planLimitsCatalog.forPlan(usage.plan());
         assertUnderLimit(usage.usersCount(), limits.usersLimit(), "error.plan_limit.users", usage.plan());
     }
 
     public void checkConvocatoriaLimit(UUID tenantId) {
         UsageSnapshot usage = snapshotFor(tenantId);
-        PlanLimits limits = PlanLimits.forPlan(usage.plan());
+        PlanLimits limits = planLimitsCatalog.forPlan(usage.plan());
         assertUnderLimit(usage.convocatoriasUsed(), limits.convocatoriasLimit(), "error.plan_limit.convocatorias", usage.plan());
     }
 
     public boolean canExportExcel(UUID tenantId) {
-        return PlanLimits.forPlan(snapshotFor(tenantId).plan()).canExportExcel();
+        return planLimitsCatalog.forPlan(snapshotFor(tenantId).plan()).canExportExcel();
     }
 
     public void invalidate(UUID tenantId) {

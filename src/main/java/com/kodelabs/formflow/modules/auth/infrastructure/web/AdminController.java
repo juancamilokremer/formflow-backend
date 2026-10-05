@@ -2,10 +2,13 @@ package com.kodelabs.formflow.modules.auth.infrastructure.web;
 
 import com.kodelabs.formflow.modules.auth.domain.port.in.ActivateTenantUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.ChangeTenantPlanUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.GetAllPlanLimitsUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.GetGlobalStatsUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.GetTenantByIdUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.ListAllTenantsUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.SuspendTenantUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.UpdatePlanLimitsUseCase;
+import com.kodelabs.formflow.modules.auth.domain.model.PlanLimits;
 import com.kodelabs.formflow.modules.auth.domain.model.TenantPlan;
 import com.kodelabs.formflow.modules.auth.domain.model.TenantStatus;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.ActivateTenantCommand;
@@ -13,8 +16,11 @@ import com.kodelabs.formflow.modules.auth.domain.port.in.command.ChangeTenantPla
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.GetTenantByIdQuery;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.ListTenantsQuery;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.SuspendTenantCommand;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.UpdatePlanLimitsCommand;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.request.ChangeTenantPlanRequest;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.request.UpdatePlanLimitsRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response.GlobalStatsResponse;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response.PlanLimitsResponse;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response.TenantPageResponse;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response.TenantResponse;
 import com.kodelabs.formflow.shared.web.ApiResponse;
@@ -33,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -52,6 +59,8 @@ public class AdminController {
     private final ActivateTenantUseCase activateTenant;
     private final ChangeTenantPlanUseCase changeTenantPlan;
     private final GetGlobalStatsUseCase getGlobalStats;
+    private final GetAllPlanLimitsUseCase getAllPlanLimits;
+    private final UpdatePlanLimitsUseCase updatePlanLimits;
 
     @GetMapping("/tenants")
     @Operation(summary = "Listar tenants", description = "Todos los tenants de la plataforma, paginados y con filtros opcionales.")
@@ -98,5 +107,28 @@ public class AdminController {
     public ResponseEntity<ApiResponse<GlobalStatsResponse>> globalStats() {
         var result = getGlobalStats.execute();
         return ResponseEntity.ok(ApiResponse.ok(GlobalStatsResponse.from(result)));
+    }
+
+    @GetMapping("/plan-limits")
+    @Operation(summary = "Límites de cada plan", description = "Los mismos 4 planes que alimenta la página pública de precios.")
+    public ResponseEntity<ApiResponse<List<PlanLimitsResponse>>> getPlanLimits() {
+        var result = getAllPlanLimits.execute().stream().map(PlanLimitsResponse::from).toList();
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    @PutMapping("/plan-limits/{plan}")
+    @Operation(summary = "Editar los límites de un plan", description = "Aplica de inmediato a todos los tenants en ese plan.")
+    public ResponseEntity<ApiResponse<PlanLimitsResponse>> updatePlanLimits(
+            @PathVariable TenantPlan plan, @Valid @RequestBody UpdatePlanLimitsRequest request) {
+        var command = new UpdatePlanLimitsCommand(
+                plan, unlimitedIfNull(request.formsLimit()), unlimitedIfNull(request.responsesLimit()),
+                unlimitedIfNull(request.usersLimit()), unlimitedIfNull(request.convocatoriasLimit()),
+                request.canExportExcel());
+        var result = updatePlanLimits.execute(command);
+        return ResponseEntity.ok(ApiResponse.ok(PlanLimitsResponse.from(result)));
+    }
+
+    private static int unlimitedIfNull(Integer value) {
+        return value == null ? PlanLimits.UNLIMITED : value;
     }
 }
