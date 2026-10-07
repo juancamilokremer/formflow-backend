@@ -103,6 +103,9 @@ app:
     from-name: ${MAIL_FROM_NAME:FormFlow}
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+  # Documentación de usuario, enlazada desde el email de bienvenida (backend#8) —
+  # placeholder hasta que exista documentación real.
+  docs-url: ${DOCS_URL:https://docs.formflow.app/placeholder}
   # Executor del envío asíncrono de correos (AsyncConfig)
   async:
     email:

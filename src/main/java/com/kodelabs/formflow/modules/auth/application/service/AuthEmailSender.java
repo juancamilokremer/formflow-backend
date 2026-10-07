@@ -32,11 +32,15 @@ public class AuthEmailSender {
     @Value("${app.frontend.base-url}")
     private String frontendBaseUrl;
 
+    @Value("${app.docs-url}")
+    private String docsUrl;
+
     public void sendWelcome(User user, Tenant tenant) {
         Map<String, Object> model = new HashMap<>();
         model.put(MODEL_KEY_USERNAME, user.getFirstName());
         model.put("tenantName", tenant.getName());
         model.put("appUrl", frontendBaseUrl);
+        model.put("docsUrl", docsUrl);
         sendEmail.send(EmailType.WELCOME, user.getEmail(), model);
     }
 

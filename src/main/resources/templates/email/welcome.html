@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Variables: userName, tenantName, tenantLogoUrl (optional), appUrl -->
+<!-- Variables: userName, tenantName, tenantLogoUrl (optional), appUrl, docsUrl (optional) -->
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <body>
 <div th:replace="~{email/base-styles :: layout(~{::content})}">
@@ -15,6 +15,10 @@
            style="display:inline-block; background-color:#3B82F6; color:#ffffff; text-decoration:none;
                   padding:12px 28px; border-radius:6px; font-size:15px; font-weight:bold;"
            th:text="#{email.welcome.cta}">Ir a FormFlow</a>
+        <p th:if="${docsUrl}" style="margin:20px 0 0;">
+            <a th:href="${docsUrl}" style="color:#3B82F6; font-size:14px; text-decoration:underline;"
+               th:text="#{email.welcome.docs_cta}">Ver documentación</a>
+        </p>
     </th:block>
 </div>
 </body>
