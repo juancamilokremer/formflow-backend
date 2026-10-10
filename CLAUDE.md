@@ -3,7 +3,7 @@
 > Para contexto completo del proyecto ver: `E:\emprendimiento\KodeLabs\formflow\CLAUDE.md`
 
 ## Stack
-- Java 17 (migrar a Java 21 LTS cuando sea posible)
+- Java 21 LTS (Amazon Corretto) — migrado desde Java 17 en backend#200
 - Spring Boot 3.3.4 + Maven
 - PostgreSQL + Flyway (migraciones)
 - Spring Security + JWT (jjwt 0.12.5)
