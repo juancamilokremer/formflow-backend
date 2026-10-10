@@ -106,6 +106,8 @@ app:
   # Documentación de usuario, enlazada desde el email de bienvenida (backend#8) —
   # placeholder hasta que exista documentación real.
   docs-url: ${DOCS_URL:https://docs.formflow.app/placeholder}
+  # Destino de las solicitudes de upgrade de plan (backend#191) — equipo de ventas de Kode Labs.
+  sales-email: ${SALES_EMAIL:ventas@formflow.app}
   # Executor del envío asíncrono de correos (AsyncConfig)
   async:
     email:
