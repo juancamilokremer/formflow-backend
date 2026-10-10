@@ -2,13 +2,17 @@ package com.kodelabs.formflow.modules.auth.infrastructure.web;
 
 import com.kodelabs.formflow.modules.auth.domain.port.in.GetTenantUsageUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.GetTenantUseCase;
+import com.kodelabs.formflow.modules.auth.domain.port.in.RequestPlanUpgradeUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.UpdateTenantUseCase;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.GetTenantQuery;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.GetTenantUsageQuery;
+import com.kodelabs.formflow.modules.auth.domain.port.in.command.RequestPlanUpgradeCommand;
 import com.kodelabs.formflow.modules.auth.domain.port.in.command.UpdateTenantCommand;
+import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.request.RequestPlanUpgradeRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.request.UpdateTenantRequest;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response.TenantResponse;
 import com.kodelabs.formflow.modules.auth.infrastructure.web.dto.response.TenantUsageResponse;
+import com.kodelabs.formflow.shared.i18n.Messages;
 import com.kodelabs.formflow.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -17,13 +21,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.kodelabs.formflow.shared.web.ControllerUtils.tenantId;
+import static com.kodelabs.formflow.shared.web.ControllerUtils.userId;
 
 /**
  * Self-service for the tenant admin over its own tenant. Never reads a tenant id
@@ -40,6 +47,8 @@ public class TenantController {
     private final GetTenantUseCase getTenant;
     private final UpdateTenantUseCase updateTenant;
     private final GetTenantUsageUseCase getTenantUsage;
+    private final RequestPlanUpgradeUseCase requestPlanUpgrade;
+    private final Messages messages;
 
     @GetMapping
     @Operation(summary = "Obtener el tenant actual", description = "Información de la empresa del usuario autenticado.")
@@ -62,5 +71,15 @@ public class TenantController {
     public ResponseEntity<ApiResponse<TenantUsageResponse>> usage() {
         var result = getTenantUsage.execute(new GetTenantUsageQuery(tenantId()));
         return ResponseEntity.ok(ApiResponse.ok(TenantUsageResponse.from(result)));
+    }
+
+    @PostMapping("/plan-upgrade-request")
+    @Operation(summary = "Solicitar upgrade de plan",
+            description = "Envía la solicitud al equipo de ventas de Kode Labs — no hay checkout de Stripe para esto todavía (post-MVP).")
+    public ResponseEntity<ApiResponse<Void>> requestPlanUpgrade(
+            @Valid @RequestBody RequestPlanUpgradeRequest request, Authentication auth) {
+        requestPlanUpgrade.execute(new RequestPlanUpgradeCommand(
+                userId(auth), tenantId(), request.requestedPlan(), request.message()));
+        return ResponseEntity.ok(ApiResponse.ok(messages.get("success.tenant.plan_upgrade_request"), null));
     }
 }
